@@ -1,0 +1,113 @@
+
+\title{Litterature search}
+\author{
+        Kasper Videbæk \\
+}
+\date{\today}
+
+\documentclass[12pt]{article}
+\usepackage[hidelinks]{hyperref}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This documents my literature search method and result.
+\end{abstract}
+
+\section{Problem formulation}
+The overall goal of the project is to minimize conflicts happening in version control systems, when merging source code, by merging on the syntax tree level. This creates a few different problem formulations which might be present in the current literature. Below is a list of three questions that seem relevant.
+
+All of the below search words, and combinations thereof have been included in a search on Google Scholar.
+
+\subsection{What work have been on merging syntax tree in VCSs so far?}
+This problem formulation is the most general, straightforward to derive out of the overall problem formulation, and no explanation seems necessary. The term-map of the search can be found below.
+
+\begin{tabular}{ | l | l | l | l |}
+    \hline
+    \textbf{Term} & Version Control & Merge & Syntax Tree \\ \hline
+    \textbf{Major term} & Changes & & Fine grained, Structure" \\ \hline
+    \textbf{Minor term} & git, svn, hg, cvs  & diff, patch & \\ \hline
+\end{tabular}
+
+\subsection{What work have been on creating generalized syntax trees so far?}
+The idea here is to research whether there exists literature that has tried to generalize syntax trees between languages which would hopefully help when we need to do the same.
+
+\begin{tabular}{ | l | l | l | l |}
+    \hline
+    \textbf{Term} & Syntax Tree & Generalization \\ \hline
+    \textbf{Major term} & Structure & Abstraction \\ \hline
+\end{tabular}
+
+
+\subsection{What work have been done on general tree change detection?}
+Tree change detection is quite an algorithmic problem. The point here is to find work on this specific topic and identify techniques to minimize the running time of a tree differencing algorithm.
+
+\begin{tabular}{ | l | l | l | l |}
+    \hline
+    \textbf{Term} & Tree & diff, difference \\ \hline
+    \textbf{Major term} & Structure, Graph & Change detection \\ \hline
+    \textbf{Minor term} & XML & & Edit distance
+\end{tabular}
+
+\clearpage
+\subsection{Results}
+VCS merging: \\
+\begin{tabular}{ | l | l | }
+	1989 & \href{http://dl.acm.org/citation.cfm?id=65980}{Integrating noninterfering versions of programs } \\
+	1991 & \href{http://dl.acm.org/citation.cfm?id=111071}{Structure-oriented merging of revisions of software documents } \\
+	1995 & \href{http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=393613}{Version management for tightly integrated software engineering environments } \\
+	1996 & \href{http://link.springer.com/chapter/10.1007%2FBFb0023079?LI=true0}{(Kasper Østerby PDF) Fine Grained Version Control of Configurations in COOP/Orm } \\
+	2002 & \href{http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=1000449}{A state-of-the-art survey on software merging } \\
+	2002 & \href{http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=1167813}{A fine-grained version and configuration model in analysis and design } \\
+	2004 & \href{http://www.sciencedirect.com/science/article/pii/S1571066104051916}{Refactoring-aware versioning in Eclipse } \\
+	2005 & \href{http://ieeexplore.ieee.org/xpl/articleDetails.jsp?tp=&arnumber=1532125}{The visual code navigator: an interactive toolset for source code investigation	} \\
+	2006 & \href{http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=1631103&tag=1}{Classifying Change Types for Qualifying Change Couplings } \\
+	2006 & \href{http://dl.acm.org/citation.cfm?id=1134461}{Refactoring-aware version control } \\
+	2006 & \href{http://dl.acm.org/citation.cfm?id=1137999}{Program element matching for multi-version program analyses. } \\
+	2007 & \href{http://ieeexplore.ieee.org/xpl/articleDetails.jsp?tp=&arnumber=4339230}{Change Distilling:Tree Differencing for Fine-Grained Source Code Change Extraction } \\
+	2008 & \href{http://ieeexplore.ieee.org/xpl/articleDetails.jsp?tp=&arnumber=4656419}{Diff/TS: A Tool for Fine-Grained Structural Change Analysis } \\
+	2009 & \href{http://ieeexplore.ieee.org/xpl/articleDetails.jsp?tp=&arnumber=4721180}{Change Analysis with Evolizer and ChangeDistiller } \\
+\end{tabular}
+\\
+Including semantics: \\
+\begin{tabular}{ | l | l | }
+	2004 & \href{http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=1357803&tag=1}{Dex: a semantic-graph differencing tool for studying changes in large code bases } \\
+	2009 & \href{http://www.andres-loeh.de/gdiff-wgp.pdf}{Type-Safe Diff for Families of Datatypes } \\
+\end{tabular}
+\\
+Unstructured merge: \\
+\begin{tabular}{ | l | l | }
+	2007 & \href{http://www.cis.upenn.edu/~bcpierce/papers/diff3-short.pdf}{A Formal Investigation of Diff3 } \\
+	2009 & \href{http://ieeexplore.ieee.org/xpl/articleDetails.jsp?tp=&arnumber=5070564}{Ldiff: An enhanced line differencing tool } \\
+\end{tabular}
+\\
+Higer-order abstract syntax: \\
+\begin{tabular}{ | l | l | }
+	1988 & \href{http://dl.acm.org/citation.cfm?id=54010}{Higher-order abstract syntax} \\
+	1995 & \href{http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=514712&tag=1}{Reengineering procedural into object-oriented systems} \\	
+\end{tabular}
+\\
+Tree diffing algorithms: \\
+\begin{tabular}{ | l | l | }
+	1995 & \href{http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.48.8675}{A Parallel Tree Difference Algorithm } \\
+	2003 & \href{http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.128.7059}{A survey on tree edit distance and related problems } \\
+%	???? & \href{http://link.springer.com/chapter/10.1007\%2F3-540-44888-8_7?LI=true}{Analysis of Tree Edit Distance Algorithms
+	2003 & \href{http://www.sciencedirect.com/science/article/pii/S0167865502002556}{Computing approximate tree edit distance using relaxation labeling} \\
+	2003 & \href{http://www.sciencedirect.com/science/article/pii/0304397595800299}{Alignment of trees — an alternative to tree edit} \\
+\end{tabular}
+\\
+Other: \\
+\begin{tabular}{ | l | l | }
+	2004 & \href{http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=1357805}{Supporting source code difference analysis } \\
+\end{tabular}
+
+
+
+
+
+
+\bibliographystyle{abbrv}
+\bibliography{main}
+
+\end{document}

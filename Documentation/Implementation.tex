@@ -1,0 +1,37 @@
+
+\title{Implementation thoughts}
+\author{
+        Kasper Videbæk \\
+}
+\date{\today}
+
+\documentclass[12pt]{article}
+\usepackage[hidelinks]{hyperref}
+
+\begin{document}
+\maketitle
+
+Check om der er mere arbejde fra PhD personen der skrev "Refactoring aware Version controL"
+Local og Global commutation - forstaa det bedre!
+
+\section{Overall merge process}
+We will try perform threeway merge on the syntax trees. We start by finding diffs of both revisions compared to the base. After this we need to identify atomic operations on the diffs. Then we will cancel them out, then perform the diff, and at then end execute all the atomic operations.
+
+There is quite some work in getting from a syntax tree and back to concrete syntax. What to do? Also, trivia (comments) should be included in the merge, even though it does not exists in the syntax tree.
+
+\section{Atomic operations}
+Atomic operations are refactorings of the program, with no semantic meaning. For example renaming an identifier, reordering some parameters extracting a function, inlining a function and so forth.
+
+\section{Random thoughts}
+Sometimes we do want conflicts - we should merge too greedily. We want conflicts when semantic meaning of the merge is not clear. But then again - after a merge functionality should ofcourse be tested. For example, if somebody deletes a line, and somebody else changes it - this is indisputable something that a user should look into.
+
+Some nodes in a syntax tree is smart to make "unupdateable", since a fine-grained diff might be less comprehensible.	
+
+
+
+
+
+\bibliographystyle{abbrv}
+\bibliography{main}
+
+\end{document}

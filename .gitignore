@@ -2,3 +2,5 @@
 *.dvi
 *.log
 *.pdf
+/Documentation/*.gz
+/Documentation/*.out

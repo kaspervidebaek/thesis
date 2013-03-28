@@ -4,3 +4,7 @@
 *.pdf
 /Documentation/*.gz
 /Documentation/*.out
+obj
+bin
+
+*.suo

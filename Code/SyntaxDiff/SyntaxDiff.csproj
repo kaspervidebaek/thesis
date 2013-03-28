@@ -57,6 +57,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Class1.cs" />
+    <Compile Include="SyntaxNodeExtensions.cs" />
     <Content Include="CodeSnippets\QuickSortRight.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -66,6 +67,9 @@
     <Content Include="CodeSnippets\QuickSortBase.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Compile Include="Examples.cs" />
+    <Compile Include="JavaMatching.cs" />
+    <Compile Include="Matching.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

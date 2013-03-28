@@ -8,14 +8,13 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Roslyn.Compilers.CSharp;
-using util;
 using SyntaxDiff;
 
 namespace WindowApp
 {
     public partial class Form1 : Form
     {
-        public TreeNode buildTree(Differ.MergeTreeNode node)
+        public TreeNode buildTree(MergeTreeNode node)
         {
             var children = new List<TreeNode>();
             foreach (var child in node.children)
@@ -24,13 +23,13 @@ namespace WindowApp
 
                 switch (child.type)
                 {
-                    case Differ.MergeTreeNode.MergeType.Delete:
+                    case MergeType.Delete:
                         vchild.ForeColor = Color.Red;
                         break;
-                    case Differ.MergeTreeNode.MergeType.Insert:
+                    case MergeType.Insert:
                         vchild.ForeColor = Color.Blue;
                         break;
-                    case Differ.MergeTreeNode.MergeType.Update:
+                    case MergeType.Update:
                         vchild.ForeColor = Color.Green;
                         break;
                 }
@@ -38,11 +37,15 @@ namespace WindowApp
                 children.Add(vchild);
             }
 
-            return new TreeNode(Differ.getType(node.node), children.ToArray());
+            return new TreeNode(node.node.getLabel(), children.ToArray());
         }
 
-        public void addTreeToView(TreeView view, SyntaxTree btree, SyntaxTree otree, List<Tuple<LblTree, LblTree>> diffs, int pos)
+        public void addTreeToView(TreeView view, SyntaxTree btree, SyntaxTree otree, int pos)
         {
+            List<Matching> diffs = null;
+            if (btree != otree)
+                diffs = Differ.GetDiff(btree, otree);
+
             var tree = buildTree(Differ.mergeTree(btree.GetRoot(), otree.GetRoot(), diffs));
 
             view.Nodes.Add(tree);
@@ -55,10 +58,10 @@ namespace WindowApp
             view.ExpandAll();
         }
 
-        public string DiffToString(List<Tuple<LblTree, LblTree>> diff)
+        public string DiffToString(List<Matching> diff)
         {
             var s = "";
-            diff.ForEach(x => s += SyntaxDiff.Differ.getType(x.Item1) + " -> " + SyntaxDiff.Differ.getType(x.Item2) + "\n");
+            diff.ForEach(x => s += x.bas.getLabel() + " -> " + x.other.getLabel() + "\n");
             return s;
         }
 
@@ -66,20 +69,15 @@ namespace WindowApp
         {
             InitializeComponent();
 
-            var baseSyntax = SyntaxDiff.Differ.baseTree;
-            var leftSyntax = SyntaxDiff.Differ.leftTree;
-            var rightSyntax = SyntaxDiff.Differ.rightTree;
+            var baseSyntax = Examples.baseTree;
+            var leftSyntax = Examples.leftTree;
+            var rightSyntax = Examples.rightTree;
 
 
 
-            addTreeToView(baseTree, baseSyntax, baseSyntax, null, 0);
-            addTreeToView(leftTree, baseSyntax, leftSyntax, SyntaxDiff.Differ.GetDiff(baseSyntax, leftSyntax), 0);
-            addTreeToView(rightTree, baseSyntax, rightSyntax, SyntaxDiff.Differ.GetDiff(baseSyntax, rightSyntax), 0);
-        }
-
-        private void leftTree_AfterSelect(object sender, TreeViewEventArgs e)
-        {
-
+            addTreeToView(baseTree, baseSyntax, baseSyntax, 0);
+            addTreeToView(leftTree, baseSyntax, leftSyntax, 0);
+            addTreeToView(rightTree, baseSyntax, rightSyntax, 0);
         }
     }
 }

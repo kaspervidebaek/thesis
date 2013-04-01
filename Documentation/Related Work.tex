@@ -1,15 +1,61 @@
-
-\title{Related work}
+\title{Theory}
 \author{
         Kasper Videbæk \\
 }
 \date{\today}
 
 \documentclass[12pt]{article}
+\usepackage[numbers]{natbib}
+
 \usepackage[hidelinks]{hyperref}
 
 \begin{document}
 \maketitle
+
+\section{Theory}
+Several topics are related to the work that will be done in this thesis. In this section I will give a brief overview of what areas we will be going through, and what related work has already been done in those areas. In the first subsection we will look into research that already have worked on embedding syntax tree knowledge into version control systems, and in the second section, we will look into tree differencing. In the last section we will look into general knowledge about merging trees.
+
+\subsection{Automatic merging}
+TODO: Add whitespace ignores, hdiff - talk about prettyprinters.
+
+Merging in version controls is the process of producing a single file, given two files that have evolved in different directions from a common ancestor. Merging source is an inherent part of software development, and has gone through some development and automation since the rice of CVS. Merging algorithms generally work by matching content between the two branches and the common ancestor. Given these matchings it is possible to merge the content into one common child. If this is not possible a conflict is detected and this is presented to the user.
+
+Merging tools of version control systems are mostly line based and oblivious to the structure of the content of the files contained. This can probably attributed to such an approach working relatively well with source code, XML and other files often found in repositories. Structure matching will most definitely also be a more time consuming task, and given some commits in version control systems, it might not actually be worth the extra computation time. Further, since programs are undecidable, it would be impossible to actually decide whether a merge will work as intended by the user, without the user assessing it manually.
+
+One very commonly used algorithm for merging is Diff3. \citet{Khanna} investigated it formally by regarding a file as a sequence where each line was an item in the sequence. They set up a number of expectations of what you would expect from a merge, and showed that many of these assumptions does not hold: Conflicts can happen even when only unrelated regions are changed, differencing after a merge does not produce empty output, merging fails when both branches are very different from the ancestor and so forth. Even though this is the case, Diff3 continuous to be widely used with few complaints of it shortcomings - it seems that the situations where Diff3 breaks are quite uncommon in version control systems.
+
+Common algorithms for merging are state based in the sense that they work by comparing the final state of branches, and creating a series of operations that will transform one document from one state into another. \citet{Lippe} described a different approach, where editing tools instead would remember the operations used to transform the data, and where the merge process will be a matter of applying these transformations in the right order to minimize the amount of conflicts
+
+\subsection{Syntax Trees in Version Control}
+Several attempts has been at creating more structure aware into version control systems with several different goals. \citet{Freese} describes the idea of version control systems that would not only understand the code inside a code repository, but would also have capabilities of migrating code automatically when the public API is changed and new code is merged that relies on the old API. 
+
+
+\citet{Hunt} describes the idea of using renaming and move-detection to avoid conflicts in language aware merging tools, and the idea of redefining the definition of conflicts to include some semantic conflicts, where the user should be warned about branches interfering in each others code. They do not provide much low level information about the algorithm.
+
+\citet{Ekman} also looks into refactorings using the ideas of \citet{Lippe}. The idea is to log refactorings and normal code changes, they apply traditional changes first and thereafter apply any refactoring. Further they discuss how preconditions can be detected and used to detect merge conflicts.
+
+
+Version control systems use line based merging today
+- Adjustable Syntactic Merge of Java Programs
+
+
+\subsection{Tree difffing and merging}
+- Change distilling: Tree Differencing for Finegrained source code change extraction
+- Diff/Ts: A Tool for Fine-Grained Structural Change Analysis
+- RTED: A robust algorithm for the Tree Edit Distance problem
+- A Survey on Tree Edit Distances
+- A 3-way Merging Algorithm for Synchronizing Ordered Trees
+
+\subsection{My approach}
+
+- Work with any editor.
+- Fast.
+- Mostly 
+
+- Beskriv antagelser i diff (træ og ikke træ)
+- Beskriv mulige operationer der kan diffes
+- Beskriv situationer der akn undgåes)
+
 
 \section{Metode i dette dokument}
 Først skriver jeg et regerat for hver enkelt artikel. Herefter finder jeg nogle temaer og grupperer hver enkelt af dem.
@@ -41,9 +87,15 @@ Merges with "Rename" and "Move" added. Many of the same things described as my t
 \subsection{Adjustable Syntactic Merge of Java Programs}
 Thesis that does textual merge and starts a syntactic merge when this fails. Does not understand renames and only moves in some areas. Seems to use exact algorithms. Uses 3-way merging.
 
+\subsection{A Formal Investigation of Diff3}
+Investigates foramlly how Diff3 works. Defines a couple of properties that intuitively should be true for merging:
+- Locality of changes should not produce conflicts. (Not true unless unqieie elements)
+- Idempotence: When a diff has been applied, applying the same diffs to the result should yield no change.
+- Diff3 fails for very close versions of A and B, when they are very far from base.
+- Stability in the closeness on similir inputs (but different orders)
 
 
-\bibliographystyle{abbrv}
-\bibliography{main}
+\bibliographystyle{plainnat}
+\bibliography{libary}
 
 \end{document}

@@ -19,6 +19,8 @@ We will try perform threeway merge on the syntax trees. We start by finding diff
 
 There is quite some work in getting from a syntax tree and back to concrete syntax. What to do? Also, trivia (comments) should be included in the merge, even though it does not exists in the syntax tree.
 
+Merging an entire tree is too time consuming iregardless of algorithms. We will try to be much more fine grained with the tree - only merge in the context where the conflict exists.
+
 \section{Atomic operations}
 Atomic operations are refactorings of the program, with no semantic meaning. For example renaming an identifier, reordering some parameters extracting a function, inlining a function and so forth.
 

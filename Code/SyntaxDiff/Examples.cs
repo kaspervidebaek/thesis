@@ -9,7 +9,10 @@ namespace SyntaxDiff
 {
     public class Examples
     {
-        public static SyntaxTree QSbaseTree = SyntaxTree.ParseFile(@"CodeSnippets\QuickSortBase.cs");
+        public static SyntaxTree smartAlgorithmTree = SyntaxTree.ParseFile(@"CodeSnippets\SmartAlgorithm.cs");
+        public static SyntaxTree flowAlgorithm = SyntaxTree.ParseFile(@"CodeSnippets\FlowAlgorithm.cs");
+
+        public static SyntaxTree QSbaseTree = SyntaxTree.ParseFile(@"CodeSnippets\QuickSortBasE.cs");
         public static SyntaxTree QSleftTree = SyntaxTree.ParseFile(@"CodeSnippets\QuickSortLeft.cs");
         public static SyntaxTree QSrightTree = SyntaxTree.ParseFile(@"CodeSnippets\QuickSortRight.cs");
 

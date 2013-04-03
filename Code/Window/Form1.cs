@@ -65,15 +65,23 @@ namespace WindowApp
             return s;
         }
 
+        public int cntNode(SyntaxNode n)
+        {
+            if (n.ChildNodes().Count() == 0)
+                return 1;
+            return n.ChildNodes().Sum(x => cntNode(x));
+        }
+
         public Form1()
         {
             InitializeComponent();
 
-            var baseSyntax = Examples.baseTree;
-            var leftSyntax = Examples.leftTree;
-            var rightSyntax = Examples.rightTree;
+            var baseSyntax = Examples.flowAlgorithm;
+            var leftSyntax = Examples.QSleftTree;
+            var rightSyntax = Examples.QSrightTree;
 
-
+            var x = cntNode(Examples.smartAlgorithmTree.GetRoot());
+            var y = cntNode(Examples.flowAlgorithm.GetRoot());
 
             addTreeToView(baseTree, baseSyntax, baseSyntax, 0);
             addTreeToView(leftTree, baseSyntax, leftSyntax, 0);

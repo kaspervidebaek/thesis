@@ -57,6 +57,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Class1.cs" />
+    <Content Include="CodeSnippets\SmartAlgorithm.cs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="CodeSnippets\FlowAlgorithm.cs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Compile Include="SyntaxNodeExtensions.cs" />
     <Content Include="CodeSnippets\QuickSortRight.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

@@ -25,7 +25,6 @@ namespace SyntaxDiff
                         static void Main()
                         {
                             if(false)
-                                while(1 == 1)
                                     Console.WriteLine(""Hello, new World!"");
                         }
                     }

@@ -63,6 +63,8 @@
     <Content Include="CodeSnippets\FlowAlgorithm.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Compile Include="Diff3.cs" />
+    <Compile Include="NeedlemannAlignment.cs" />
     <Compile Include="SyntaxNodeExtensions.cs" />
     <Content Include="CodeSnippets\QuickSortRight.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

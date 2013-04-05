@@ -76,9 +76,10 @@ namespace WindowApp
         {
             InitializeComponent();
 
-            var baseSyntax = Examples.flowAlgorithm;
-            var leftSyntax = Examples.QSleftTree;
-            var rightSyntax = Examples.QSrightTree;
+            var baseSyntax = Examples.baseTree;
+            var leftSyntax = Examples.leftTree;
+            var rightSyntax = Examples.rightTree;
+
 
             var x = cntNode(Examples.smartAlgorithmTree.GetRoot());
             var y = cntNode(Examples.flowAlgorithm.GetRoot());

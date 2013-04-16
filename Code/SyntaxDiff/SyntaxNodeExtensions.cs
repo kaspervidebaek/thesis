@@ -7,8 +7,14 @@ using System.Threading.Tasks;
 
 namespace SyntaxDiff
 {
+    public enum CodeTreeType
+    {
+        Set, Sequence, Tree
+    }
     public static class SyntaxNodeExtensions
     {
+
+
         public static string getSyntaxString<T>(this SyntaxNode node, Func<T, string> f) where T : SyntaxNode
         {
             if (node is T)
@@ -39,6 +45,19 @@ namespace SyntaxDiff
         {
             var childEnum = (n == null ? new List<SyntaxNode>() : n.ChildNodes()).ToList();
             return childEnum;
+        }
+
+
+        public static CodeTreeType getChildType(this SyntaxNode sn)
+        {
+            if (sn is CompilationUnitSyntax)
+                return CodeTreeType.Set;
+            else if (sn is NamespaceDeclarationSyntax)
+                return CodeTreeType.Set;
+            else if (sn is ClassDeclarationSyntax)
+                return CodeTreeType.Set;
+
+            return CodeTreeType.Sequence;
         }
     }
 }

@@ -124,8 +124,47 @@ Other: \\
 
 Three-way merge:
 http://tdm.berlios.de/3dm/doc/thesis.pdf
+Identifying Conflicts During Structural Merge 	http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.48.3795
+Integrating non-interfering versions of programs (1989)  http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.115.298
 
 
+
+\section{Metode i dette dokument}
+Først skriver jeg et regerat for hver enkelt artikel. Herefter finder jeg nogle temaer og grupperer hver enkelt af dem.
+
+\section{Introduction}
+We are going to draw from knowledge in several fields to find the correct way of merging source code through syntax trees. We will look into general approaches for differencing trees, and for merging them. Further we are going to look 	
+
+\subsection{Operation-based Merging}
+Describes that merging tools usually work in a state-based manner, and suggest that for some document types, a operation based approach might be better. These operations should be logged during changing documents, and applied by the diffing. Spends alot of time on conflict resolving, that will naturally occur on such opreations, and describes how to solve these. This relates much to many of the atomic operations we want to perform on syntax trees.
+
+\subsection{Diff/Ts: A Tool for Fine-Grained Structural Change Analysis}
+Describes a implementation of a tool to differencing structured changes in programs in VCS - have implementation for 4 different Object-oriented languages. It also discusses several applications. Describes that too fine-grained Diffs will actually be less comprehensible than changing the entire node. Describes a differencing algorithm as something that matches trees and afterwords creates an edit-script.
+
+\subsection{Refactoring aware version control}
+Describes the conceptual idea of embedding refectoring aware changes inside version control systems. The idea is not to merge, but to let version control systems do automatic refactoring when new files are checked in that uses an outdated API. 
+
+\subsection{Change distilling: Tree Differencing for Finegrained source code change extraction}
+Describes a diffing algorithm for trees, with specific details about code. It has the following edit operations: Instert, Delete, Move, Update(Value) and Allignemnt. Describes how dynamic heuristics can be used to define how gooda match a node is to another node (in both small and big cases of blocks). Also describes string similiarity measures which would be good for reordering of words in variablenames. Is an approximation algorithm.
+
+\subsection{A Survey on Tree Edit Distances.}
+Compares and provides a common framework for many tree differencing algorithms. Provides a nice table with overview of running time for different algorithms. Also describes the idea of constraining the edit distance we are interested in, to allow for better running times.
+
+\subsection{Extensible Language-Aware merging}
+Wants to merge on the semantic level, however only in very simplistic ways (e.g. test for side-effects of variables) - use heuristics. Propogates name changes between edit scripts before applying them to the base.
+
+\subsection{Refactoring-aware versioning in Eclips}
+Merges with "Rename" and "Move" added. Many of the same things described as my thoughts. Does not talk about running times.
+
+\subsection{Adjustable Syntactic Merge of Java Programs}
+Thesis that does textual merge and starts a syntactic merge when this fails. Does not understand renames and only moves in some areas. Seems to use exact algorithms. Uses 3-way merging.
+
+\subsection{A Formal Investigation of Diff3}
+Investigates foramlly how Diff3 works. Defines a couple of properties that intuitively should be true for merging:
+- Locality of changes should not produce conflicts. (Not true unless unqieie elements)
+- Idempotence: When a diff has been applied, applying the same diffs to the result should yield no change.
+- Diff3 fails for very close versions of A and B, when they are very far from base.
+- Stability in the closeness on similir inputs (but different orders)
 
 
 \bibliographystyle{abbrv}

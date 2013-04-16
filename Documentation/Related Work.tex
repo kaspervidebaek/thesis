@@ -17,90 +17,67 @@ Several topics are related to the work that will be done in this thesis. In this
 
 \subsection{Automatic merging}
 
-Merging in version controls is the process of producing a single file, given two files that have evolved in different directions from a common ancestor. Merging source is an inherent part of software development, and has gone through some development and automation since the rice of CVS. Merging algorithms generally work by matching content between the two branches and the common ancestor. Given these matchings it is possible to merge the content into one common child. If this is not possible a conflict is detected and this is presented to the user.
+Merging in version controls is the process of producing a single file, given two files that have evolved in different directions from a common ancestor. Merging source code is an inherent part of software development, and has gone through some development and automation since the rice of CVS. Merging algorithms generally work by matching content between the two branches and the common ancestor. Given these matchings it is possible to merge the content into one common child. If this is not possible a conflict is detected and presented to the user.
 
-Merging tools of version control systems are mostly line based and oblivious to the structure of the content of the files contained. This can probably attributed to such an approach working relatively well with source code, XML and other files often found in repositories. Structure matching will most definitely also be a more time consuming task, and given some commits in version control systems, it might not actually be worth the extra computation time. Further, since programs are undecidable, it would be impossible to actually decide whether a merge will work as intended by the user, without the user assessing it manually.
+Merging tools of version control systems are mostly line based and oblivious to the structure of the content of the files contained. This can probably attributed to such an approach working relatively well with source code, XML and other files often found in repositories. Structure matching will most definitely also be a more time consuming task, and given some commits in version control systems, it might be worth the extra computation time. Further, since programs are undecidable, it would be impossible to actually decide whether a merge will work as intended by the user, without the user assessing it manually.
 
 One very commonly used algorithm for merging is Diff3. \citet{Khanna} investigated it formally by regarding a file as a sequence where each line was an item in the sequence. They set up a number of expectations of what you would expect from a merge, and showed that many of these assumptions does not hold: Conflicts can happen even when only unrelated regions are changed, differencing after a merge does not produce empty output, merging fails when both branches are very different from the ancestor and so forth. Even though this is the case, Diff3 continues to be widely used with few complaints of it shortcomings - it seems that the situations where Diff3 breaks are quite uncommon in version control systems.
 
-Common algorithms for merging are state based in the sense that they work by comparing the final state of branches, and creating a series of operations that will transform one document from one state into another. \citet{Lippe} described a different approach, where editing tools instead would remember the operations used to transform the data, and where the merge process will be a matter of applying these transformations in the right order to minimize the amount of conflicts.
+Common algorithms for merging are state based. They compare the final state of branches, and creating a series of operations that will transform one document from one state into another. \citet{Lippe} described a different approach, where editing tools instead would remember the operations used to transform the data, and where the merge process will be a matter of applying these transformations in the right order to minimize the amount of conflicts.
 \todo[inline]{Mention whitespace ignoring}
 \todo[inline]{Mention horizontal differincing}
 \todo[inline]{Talk about prettyprinters.}
 \todo[inline]{Point out that merges might not compile.}
 
 \subsection{Syntax Trees in Version Control}
-There has been several attempts at creating more structure aware into version control systems with several different goals. \citet{Freese} describes the idea of version control systems that would not only understand the code inside a code repository, but would also have capabilities of migrating code automatically when the public API is changed and new code is merged that relies on the old API. 
+There has been several attempts at creating more structure awareness in version control systems with several different goals. \citet{Freese} describes the idea of version control systems that would understand the code in a repository, and also have capabilities of migrating newly committed code automatically when a public API has changed.
 
-Syntax tree differencing has generally been used to get overview of changes in version controls. \citet{Fluri} describes an approximating algorithm for trees, that could detect moves and which uses a heuristics approach to define how good a match a node is to another node, looking at not only its value but also the content of its children. They also describe string similarity measures in which reordering of words in variable names will be more similar and describe use cases for this. \citet{Hashimoto} also describes the idea of analysing code through syntax trees and discuss several applications. They presents an approach that works for four different object-oriented languages, and note that too fine-grained tree-edit-scripts will actually be less comprehensible than more coarse-grained.
+Syntax tree differencing has generally been used to get overview of changes in version controls. \citet{Fluri} describes an approximating algorithm for trees, that  detects moves and and uses a heuristics approach to define how good a match a node is to another node - looking at both the value but also the child nodes. They also describe string similarity measures in which reordering of words in variable names will be more similar and describe use cases for this. \citet{Hashimoto} also describes the idea of analysing code through syntax trees and discuss several applications. They presents an approach that works for four different object-oriented languages, and note that too fine-grained tree-edit-scripts will actually be less comprehensible than more coarse-grained.
 
 \citet{Hunt} describes the idea of using renaming and move-detection to avoid conflicts in language aware merging tools, and the idea of redefining the definition of conflicts to include some semantic conflicts, where the user should be warned about branches interfering in each others code. They do not provide much low level information about the algorithm.
 
 \citet{Ekman} also looks into refactorings using the ideas of \citet{Lippe}. The idea is to log refactorings and normal code changes, they apply traditional changes first and thereafter apply refactorings. Further they discuss how preconditions can be detected and used to detect merge conflicts.
 
-\citet{Apel} describes the idea of semistructured merge and creates a framework that will be extensible to several languages. They parse programs into unordered trees in which the leaves are for example functions that contain unstructured program code. This code in leafes are then merged by language specific conflict handlers or by an unstructured merge. They found that merge conflicts are generally minimized, and conclude that many conflicts are ordering conflicts. In 26\% of the cases there will actually be more conflicts, due to renaming creating conflicts in this approach as opposed to compile errors in unstructured merge.
+\citet{Apel} describes the idea of semistructured merge and creates a framework that will be extensible to several languages. They parse programs into unordered trees in which the leaves are functions that contain unstructured program code. The code in leaves is then merged by language specific conflict handlers or by an unstructured merge. They found that merge conflicts are generally minimized, and conclude that many conflicts are ordering conflicts. In 26\% of the cases there will actually be more conflicts, due to renaming creating conflicts in this approach as opposed to compile errors in unstructured merge.
 
-\citet{Olav} describes a system which first tries unstructured merge and afterwords does structured merge on conflicting JAVA files. The idea is to minimize the running time of the tools, to make them more convenient to use in real life scenarios. They report generally a lower amount of conflicts than unstructured merge and \citet{Apel} but in some scenarios, in the case of moved files, they produce more conflicts. They general cut off 50\% of the running time compared to a pure structured approach and are a factor 12 slower than a unstructured merge, however the improvement factor varies a lot from repository to repository. 
+\citet{Olav} describes a system which first tries unstructured merge and afterwords does structured merge on conflicting JAVA files. The idea is to minimize the running time of the tools, to make them more convenient to use in real life scenarios. They report generally a lower amount of conflicts than unstructured merge and \citet{Apel} but in some scenarios, in the case of moved files, they produce more conflicts. They general cut off 50\% of the running time compared to a pure structured approach, are a factor 12 slower than a unstructured merge, and a factor 6 faster than \citet{Apel}. However the improvement factor varies a lot from repository to repository. 
 
 
-\subsection{Tree difffing and merging}
-Tree differencing and merging has many usages in computer science, biology and related sciences. 
-- RTED: A robust algorithm for the Tree Edit Distance problem
-- A Survey on Tree Edit Distances
-- A 3-way Merging Algorithm for Synchronizing Ordered Trees
+\subsection{Tree differencing  and merging}
+Research in the area has shown that the problem generally can be solved in cubic time. Several different algorithms exists, that all build on different dynamic programming decompositions. They perform well in different circumstances, and algorithms for cubic time have been created. \citet{Pawlik} describes and algorithm that will perform in cubic time, and that dynamically will decide if other algorithms would perform better for a specific sub-problem - this algorithm seems to be the most promising in regards to differencing and running time.
 
-Ting der arbejder på tværs af sprog:
+\citet{Zhang} describes the idea of constraining mapping, such that the one of the common ancestors of two nodes needs to be the same. This provides and algorithm that runs in quadratic time. Later \citet{Lu} described a loosened constraint and provided an algorithm that was quadratic, but also dependant on the degree of the three.
+
+Merging is not a time consuming problem, as long as an edit script is provided. The different existing merging algorithms that exists for three-way merging on trees generally describe different properties that is desirable for how to resolve conflicts, or when to produce them. \citet{lindholm} describes a merging algorithm for XML documents, \citet{Horwitz,Asklund,Olav} describes merging properties interesting for program code.
+
+\todo{Ting der arbejder på tvaers af sprog:
 Semistroctored Merge: Rethinking Merge in Revision Control Systems
 Diff/TS: A tool for fine grained....
+}
 
-\subsection{My approach}
+\section{Proposed solution}
+Several people already have looked into structural differencing and merging of structured data and specifically program code. This research seems however to focus mostly on the conflict resolution part, and glances over the problem of running times. While some algorithmic research has been done with regards to approximation algorithms and creating effective exact tree differencing algorithms, they are still prone running times many factors larger than unstructured approaches due to the tree size, counted in nodes, is generally much larger than the amount of lines in a code file.
 
-- Work with any editor.
-- Fast.
-- Mostly 
+Every developer has their own preferences of development environment, which makes it essential that a tool can work with many environments, and as such a operation based approach where changes are logged by an editor, seems quite impractical, so we will keep the integration in the version control systems. Also, structured differencing tools will be only for specific languages or structures. This makes such tools impractical in version control systems, since they are designed to integrate with line based tools, and do not discriminate between file types. Some research has been done into making tools that will work with either several languages, or that combines a line based approach with a structured approach.
+\todo[inline]{Write about assumptions in differencing and about different possible differencing operations}
+\todo[inline]{Write about which situations we can probably avoid}
 
-- Beskriv antagelser i diff (træ og ikke træ)
-- Beskriv mulige operationer der kan diffes
-- Beskriv situationer der akn undgåes)
+It does not seem plausible to be able to make an algorithm that will make differencing an entire code file as a syntax tree possible in a time that will make it practically possible. I will implement a merging algorithm that is generally line based. Whenever a conflict is detected, I will try to identify a proper scope to parse into a syntax tree, and for the created syntax trees, we will do the actual merging. This means that the trees that will be merged will be relatively small and hopefully the computation time will not get too incomprehensible. Further, since it seems that moves is quite a big factor in conflicts, we will try to use a semi-structured approach on classes and their members.
 
-
-\section{Metode i dette dokument}
-Først skriver jeg et regerat for hver enkelt artikel. Herefter finder jeg nogle temaer og grupperer hver enkelt af dem.
-
-\section{Introduction}
-We are going to draw from knowledge in several fields to find the correct way of merging source code through syntax trees. We will look into general approaches for differencing trees, and for merging them. Further we are going to look 	
-
-\subsection{Operation-based Merging}
-Describes that merging tools usually work in a state-based manner, and suggest that for some document types, a operation based approach might be better. These operations should be logged during changing documents, and applied by the diffing. Spends alot of time on conflict resolving, that will naturally occur on such opreations, and describes how to solve these. This relates much to many of the atomic operations we want to perform on syntax trees.
-
-\subsection{Diff/Ts: A Tool for Fine-Grained Structural Change Analysis}
-Describes a implementation of a tool to differencing structured changes in programs in VCS - have implementation for 4 different Object-oriented languages. It also discusses several applications. Describes that too fine-grained Diffs will actually be less comprehensible than changing the entire node. Describes a differencing algorithm as something that matches trees and afterwords creates an edit-script.
-
-\subsection{Refactoring aware version control}
-Describes the conceptual idea of embedding refectoring aware changes inside version control systems. The idea is not to merge, but to let version control systems do automatic refactoring when new files are checked in that uses an outdated API. 
-
-\subsection{Change distilling: Tree Differencing for Finegrained source code change extraction}
-Describes a diffing algorithm for trees, with specific details about code. It has the following edit operations: Instert, Delete, Move, Update(Value) and Allignemnt. Describes how dynamic heuristics can be used to define how gooda match a node is to another node (in both small and big cases of blocks). Also describes string similiarity measures which would be good for reordering of words in variablenames. Is an approximation algorithm.
-
-\subsection{A Survey on Tree Edit Distances.}
-Compares and provides a common framework for many tree differencing algorithms. Provides a nice table with overview of running time for different algorithms. Also describes the idea of constraining the edit distance we are interested in, to allow for better running times.
-
-\subsection{Extensible Language-Aware merging}
-Wants to merge on the semantic level, however only in very simplistic ways (e.g. test for side-effects of variables) - use heuristics. Propogates name changes between edit scripts before applying them to the base.
-
-\subsection{Refactoring-aware versioning in Eclips}
-Merges with "Rename" and "Move" added. Many of the same things described as my thoughts. Does not talk about running times.
-
-\subsection{Adjustable Syntactic Merge of Java Programs}
-Thesis that does textual merge and starts a syntactic merge when this fails. Does not understand renames and only moves in some areas. Seems to use exact algorithms. Uses 3-way merging.
-
-\subsection{A Formal Investigation of Diff3}
-Investigates foramlly how Diff3 works. Defines a couple of properties that intuitively should be true for merging:
-- Locality of changes should not produce conflicts. (Not true unless unqieie elements)
-- Idempotence: When a diff has been applied, applying the same diffs to the result should yield no change.
-- Diff3 fails for very close versions of A and B, when they are very far from base.
-- Stability in the closeness on similir inputs (but different orders)
-
+An overall description for the proposed merge:
+\begin{enumerate}
+	\item Create syntax trees of each file.
+	\item Do an unordered match of classes and class-members.
+	\item Foreach member of a class do a unstructured merge.
+	\item If a conflict exists after the unstructured merge:
+	\begin{enumerate}
+		\item If the conflict is two updates on the same line, try to do a syntax tree merging. If the conflict persists, merge the entire function and include a rename detection.
+		\item If the conflict is the deletion of a block in one branch, and the insertion of the other - put this specific line aside for move detection.
+	\end{enumerate}exit
+	
+	\item Run through lines set aside for move detection, and see if it is possible to find a (heuristicly) corresponding insert. Do a merge, or a syntactic merge if this fails.
+	\item If conflicts cannot be resolved, present these to the user.
+\end{enumerate}
 
 \bibliographystyle{plainnat}
 \bibliography{libary}

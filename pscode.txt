@@ -1,0 +1,67 @@
+sorted: match on nodes but use sorted algoirthm
+unsorted: match on nodes, use unsorted algorithm
+codelines: match on textual lines.
+tree: do an actual tree merge.
+
+Treenode
+- Label
+- TreatChrildrenAs(sorted, unsorted, codeLines, Tree)
+- Code
+- Children
+
+// TODO: What is result? Answer: Codetree!
+
+func Merge(Tree base, Tree left, Tree right)
+	assert that base left and right's treat children as all equal.
+	if(t.TreatChilrenAs is Members) {
+		Match(base, left, right)
+	}
+	else if(t.treat as codelines) {
+		return linemerge();
+	}
+
+func LineMerge(base, left, right) {
+	var Ma = NeedlemanWunsch<String>.Allignment(A, O, cmp);
+	var Mb = NeedlemanWunsch<String>.Allignment(B, O, cmp);
+	
+	var totalMatch = match the O item of Ma and Mo together.
+	
+	group all matches into chuncks of unstable amtching and stable matchings
+	
+	foreach (var chunck in chuncks)
+		if (chunck.stable)
+			add all chunck.O
+		else if(chunck.O and chunk.A is empty)
+			add all chunck.B
+		else if (chunck.O and chunk.B is empty)
+			add all chunck.A
+		else { // Conflict
+			add syntaxMerge(chunck.A, chunck.O, chunck.B)
+		}
+}
+
+func match(Tree base, Tree left, Tree right)
+	var bl = Match(base, left);
+	var br = Match(base, right);
+
+	var matchings = zip(bl, br)
+	foreach(ln, bn, rn in matchings)
+		Merge(ln, bn, rn)
+
+func zipMatchings(bl, br)
+	order bl by base
+	order br by base
+	
+	rv = new list()
+	foreach(base, left, right in bl) {
+		rv.add((base, left, right))
+	}
+	
+	return rv
+
+convertTreeNode(SyntxaTree)
+	match tree:
+		tree is compilationUnit: return unsorted
+		tree is namespacedecleration: return unsorted
+		tree is classdecleration: return unsorted
+		tree is functiondecleration: return codelines

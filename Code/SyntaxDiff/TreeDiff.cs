@@ -30,9 +30,6 @@ namespace SyntaxDiff
 
     public class Differ
     {
-        
-
-
         public static MergeTreeNode mergeTreeOld(SyntaxNode btree, SyntaxNode otree, List<Matching> diffs)
         {
             var children = new List<MergeTreeNode>();

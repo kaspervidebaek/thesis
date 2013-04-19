@@ -22,24 +22,7 @@ namespace SyntaxDiff.Diff3
         }
     }
 
-    public class Diff<T>
-    {
-        public T A;
-        public T O;
-        public T B;
-
-        public Diff(Tuple<T, T> Item1, Tuple<T, T> Item2)
-        {
-            A = Item1 == null ? default(T) : Item1.Item1;
-            O = Item1 == null ? Item2.Item2 : Item1.Item2;
-            B = Item2 == null ? default(T) : Item2.Item1;
-        }
-
-        public override string ToString()
-        {
-            return "A:" + A + " O:" + O + " B:" + B;
-        }
-    }
+    
     public class Diff3<T>
     {
         public static List<T> Merge(List<T> A, List<T> O, List<T> B, Func<T, T, bool> comparer, Action<List<T>, Chunk<T>> HandleConflict)
@@ -48,7 +31,7 @@ namespace SyntaxDiff.Diff3
             var Ma = NeedlemanWunsch<T>.Allignment(A, O, comparer);
             var Mb = NeedlemanWunsch<T>.Allignment(B, O, comparer);
 
-            var totalMatch = NeedlemanWunsch<Tuple<T, T>>.Allignment(Ma, Mb, (a, b) => comparer(a.Item2, b.Item2)).Select(x => new Diff<T>(x.Item1, x.Item2)).ToList();
+            var totalMatch = NeedlemanWunsch<Tuple<T, T>>.Allignment(Ma, Mb, (a, b) => comparer(a.Item2, b.Item2)).Select(x => new SyntaxDiff.SmartDiff.Diff<T>(x.Item1, x.Item2)).ToList();
             var chuncks = getChunks(totalMatch, comparer);
 
             var mergedfile = new List<T>();
@@ -78,7 +61,7 @@ namespace SyntaxDiff.Diff3
 
 
 
-        private static List<Chunk<T>> getChunks(List<Diff<T>> totalMatch, Func<T, T, bool> comparer)
+        private static List<Chunk<T>> getChunks(List<SyntaxDiff.SmartDiff.Diff<T>> totalMatch, Func<T, T, bool> comparer)
         {
             var chuncks = new List<Chunk<T>>();
             Chunk<T> chunk = new Chunk<T>(false);

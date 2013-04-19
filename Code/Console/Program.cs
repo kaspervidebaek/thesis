@@ -12,6 +12,8 @@ namespace ConsoleApp
 
         private static void HandleConflict(List<String> mergedfile, Chunk<String> chunck)
         {
+            
+
             mergedfile.Add(">>> A");
             foreach (var line in chunck.A)
                 mergedfile.Add(line);
@@ -26,6 +28,21 @@ namespace ConsoleApp
 
         static void Main(string[] args)
         {
+
+#if true
+            var num1 = new List<int>(new int[] { 1, 2, 3 });
+            var num2 = new List<int>(new int[] { 0, 2, 3 });
+#else
+            var num1 = new List<int>(new int[] { 1, 2, 3, 4, 5 });
+            var num2 = new List<int>(new int[] { 2, 4, 5, 6, 7 });
+#endif
+            var match = SyntaxDiff.GraphMatching<int, int>.Match(num1, num2, (x, y) => Math.Abs(x - y));
+            match.ForEach(x => Console.WriteLine(x.Item1 + "->" + x.Item2));
+
+
+
+            Console.ReadLine();
+           
 #if true
             var fileA = new List<String>(new string[] { "1", "4", "5", "2", "3", "6" });
             var fileO = new List<String>(new string[] { "1", "2", "3", "4", "5", "6" });

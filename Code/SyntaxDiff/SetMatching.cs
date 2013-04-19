@@ -3,22 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
-namespace SyntaxDiff
-{
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using QuickGraph;
 using QuickGraph.Algorithms;
 using QuickGraph.Graphviz;
 
 
-namespace AlgoritmeTests
-{/*
-    class GraphAlgorithm
+namespace SyntaxDiff
+{
+    public class GraphMatching<X, Y> where X : new()
     {
         public static int cnt = 0;
         public class Node
@@ -45,21 +37,21 @@ namespace AlgoritmeTests
 
         public class yNode : Node
         {
-            public readonly Pixel p;
-            public yNode(Pixel p)
-                : base("px" + p.ToString(), false)
+            public readonly Y item;
+            public yNode(Y item)
+                : base("Y: " + item.ToString(), false)
             {
-                this.p = p;
+                this.item = item;
             }
         }
 
         public class xNode : Node
         {
-            public readonly Image i;
-            public xNode(Image i)
-                : base("im" + i.average.ToString(), false)
+            public readonly X item;
+            public xNode(X item)
+                : base("X: " + item.ToString(), false)
             {
-                this.i = i;
+                this.item = item;
             }
         }
 
@@ -122,12 +114,12 @@ namespace AlgoritmeTests
 
         public class Graph : AdjacencyGraph<Node, Edge>
         {
-            public readonly List<yNode> xs;
-            public readonly List<xNode> ys;
+            public readonly List<xNode> xs;
+            public readonly List<yNode> ys;
 
-            public static readonly Pixel fakePixel = new Pixel(-1, -1, -1);
+            public static readonly X fakeX = new X();
 
-            public Graph(List<yNode> xs, List<xNode> ys)
+            public Graph(List<xNode> xs, List<yNode> ys)
                 : base()
             {
                 this.xs = xs;
@@ -137,20 +129,19 @@ namespace AlgoritmeTests
             public struct CostElement
             {
                 public int cost;
-                public Pixel cs;
-                public Image pi;
-                public CostElement(int c, Pixel cs_, Image pi_)
+                public X xs;
+                public Y ys;
+                public CostElement(int c, X xs, Y ys)
                 {
                     cost = c;
-                    cs = cs_;
-                    pi = pi_;
+                    this.xs = xs;
+                    this.ys = ys;
                 }
             }
-            public static Graph CreateFromImageOrg(Image i, List<Image> il)
+            public static Graph CreateFromSets(List<X> xs_, List<Y> ys_, Func<X, Y, int> cost)
             {
-                var xs = i.list.Select(x => new yNode(x)).ToList();
-                var ys = il.Select(x => new xNode(x)).ToList();
-
+                var xs = xs_.Select(x => new xNode(x)).ToList();
+                var ys = ys_.Select(y => new yNode(y)).ToList();
 
                 var graph = new Graph(xs, ys);
 
@@ -158,15 +149,15 @@ namespace AlgoritmeTests
                 {
                     foreach (var y in ys)
                     {
-                        var edge = new Edge(x, y, x.p.CompareTo(y.i.average));
+                        var edge = new Edge(x, y, cost(x.item, y.item));
                         graph.AddVerticesAndEdge(edge);
                     }
                 }
 
-                var extraXs = new List<yNode>();
+                var extraXs = new List<xNode>();
                 while (xs.Count < ys.Count)
                 {
-                    var pn = new yNode(fakePixel);
+                    var pn = new xNode(fakeX);
                     extraXs.Add(pn);
                     xs.Add(pn);
                 }
@@ -183,182 +174,14 @@ namespace AlgoritmeTests
 
                 return graph;
             }
-            public static Tuple<List<Image>, Graph> CreateFromImage(Image c, List<Image> p)
-            {
-
-                var MergedCSLists = new List<CostElement>();
-                var cutOffCSLists = new Dictionary<Pixel, List<CostElement>>();
-
-                foreach (var cs in c.list)
-                {
-                    cutOffCSLists.Add(cs, new List<CostElement>());
-                    var sortedPI = new List<CostElement>();
-                    foreach (var pi in p)
-                    {
-                        sortedPI.Add(new CostElement(cs.CompareTo(pi.average), cs, pi));
-                    }
-                    sortedPI = sortedPI.OrderBy(a => a.cost).Take(c.list.Count).ToList();
-
-                    MergedCSLists.AddRange(sortedPI);
-                }
-                MergedCSLists = MergedCSLists.OrderBy(a => a.cost).ToList();
-
-                HashSet<Image> usedPImages = new HashSet<Image>();
-                Dictionary<Pixel, CostElement> usedCSImages = new Dictionary<Pixel, CostElement>();
-
-                int counter = 0;
-
-                while (usedCSImages.Keys.Count < c.list.Count)
-                {
-                    CostElement current = MergedCSLists[counter];
-                    if (!usedCSImages.ContainsKey(current.cs) && !usedPImages.Contains(current.pi))
-                    {
-                        if (usedCSImages.ContainsKey(current.cs))
-                            usedCSImages[current.cs] = current;
-                        else
-                        {
-                            usedCSImages.Add(current.cs, current);
-                            usedPImages.Add(current.pi);
-                        }
-                    }
-                    cutOffCSLists[current.cs].Add(current);
-                    counter++;
-                }
-                if (counter < MergedCSLists.Count)
-                {
-                    int cutOffCost = MergedCSLists[counter].cost;
-                    int temp = 0;
-                    foreach (var costEle in usedCSImages.Values)
-                    {
-                        temp += costEle.cost - cutOffCSLists[costEle.cs].First().cost;
-                    }
-                    cutOffCost+= (temp/ 2)+1;
-                    //var FakePixelMatches = new List<Image>();
-                    while (counter < MergedCSLists.Count && MergedCSLists[counter].cost <= cutOffCost)
-                    {
-                        CostElement current = MergedCSLists[counter];
-                        cutOffCSLists[current.cs].Add(current);
-                        //FakePixelMatches.Add(current.pi);
-                        counter++;
-                    }
-                }
-                var OriginallySelectedPI = MergedCSLists.Select(a => a.pi).Distinct();
-
-
-
-                var xs = c.list.Select(x => new yNode(x)).ToList();
-                var ys = MergedCSLists.Take(counter).Select(a => a.pi).Distinct().Select(x => new xNode(x)).ToList();
-
-                Dictionary<Pixel, yNode> pixelNodes = new Dictionary<Pixel, yNode>();
-                Dictionary<Image, xNode> imageNodes = new Dictionary<Image, xNode>();
-                foreach (var x in xs)
-                    pixelNodes.Add(x.p, x);
-                foreach (var y in ys)
-                    imageNodes.Add(y.i, y);
-
-                var graph = new Graph(xs, ys);
-
-
-                foreach (var x in xs)
-                {
-                    var edges = new List<Edge>();
-                    foreach (var y in cutOffCSLists[x.p])
-                    {
-                        edges.Add(new Edge(x, imageNodes[y.pi], y.cost));
-
-                    }
-                    graph.AddVerticesAndEdgeRange(edges);
-
-                }
-                var dontTakeforFakes = new List<Image>();
-                foreach (var x in xs)
-                    dontTakeforFakes.Add(cutOffCSLists[x.p].First().pi);
-                var extraXs = new List<yNode>();
-                while (xs.Count < ys.Count)
-                {
-                    var pn = new yNode(fakePixel);
-                    extraXs.Add(pn);
-                    xs.Add(pn);
-                }
-
-
-
-                foreach (var x in extraXs)
-                {
-                    foreach (var y in ys)
-                    {
-                        if (!dontTakeforFakes.Contains(y.i))
-                        {
-                            var edge = new Edge(x, y, 500);
-                            graph.AddVerticesAndEdge(edge);
-                        }
-                    }
-                }
-
-                var n = c.list.Count();
-
-                return new Tuple<List<Image>, Graph>(MergedCSLists.Take(counter).Select(a => a.pi).Distinct().ToList(), graph);
-            }
-            public static List<Image> GreedyAlgorithm(Image c, List<Image> p)
-            {
-
-                var MergedCSLists = new List<CostElement>();
-                var cutOffCSLists = new Dictionary<Pixel, List<CostElement>>();
-
-                foreach (var cs in c.list)
-                {
-                    cutOffCSLists.Add(cs, new List<CostElement>());
-                    var sortedPI = new List<CostElement>();
-                    foreach (var pi in p)
-                    {
-                        sortedPI.Add(new CostElement(cs.CompareTo(pi.average), cs, pi));
-                    }
-                    sortedPI = sortedPI.OrderBy(a => a.cost).Take(c.list.Count).ToList();
-
-                    MergedCSLists.AddRange(sortedPI);
-                }
-                MergedCSLists = MergedCSLists.OrderBy(a => a.cost).ToList();
-
-                HashSet<Image> usedPImages = new HashSet<Image>();
-                Dictionary<Pixel, CostElement> usedCSImages = new Dictionary<Pixel, CostElement>();
-                List<CostElement> assignmentList = new List<CostElement>();
-                int counter = 0;
-                var returnList = new List<Image>();
-                while (usedCSImages.Keys.Count < c.list.Count)
-                {
-                    CostElement current = MergedCSLists[counter];
-                    if (!usedCSImages.ContainsKey(current.cs) && !usedPImages.Contains(current.pi))
-                    {
-                        if (usedCSImages.ContainsKey(current.cs))
-                            usedCSImages[current.cs] = current;
-                        else
-                        {
-                            usedCSImages.Add(current.cs, current);
-                            usedPImages.Add(current.pi);
-                            assignmentList.Add(current);
-                        }
-
-                    }
-                    cutOffCSLists[current.cs].Add(current);
-                    counter++;
-                    
-                }
-                
-                return assignmentList.OrderBy(x => c.list.IndexOf(x.cs)).Select(x => x.pi).ToList();
-            }
 
             static Dictionary<Node, QuickGraph.Graphviz.Dot.GraphvizPoint> pd = new Dictionary<Node, QuickGraph.Graphviz.Dot.GraphvizPoint>();
 
 
             public void RenderToFile(string name, List<Edge> markEdges, Dictionary<Node, int> prices, Matching m)
             {
-                if (!Program.writeGraphs)
-                    return;
-
 
                 var graphviz = new GraphvizAlgorithm<Node, Edge>(this);
-
-
 
                 graphviz.FormatEdge += (sender, edge) =>
                 {
@@ -449,7 +272,7 @@ namespace AlgoritmeTests
                 string output = graphviz.Generate();
                 //Console.WriteLine(output);
 
-                System.IO.File.WriteAllText(@"C:\Users\Kasper\Desktop\Algoritme design\" + name + ".gv", output);
+                System.IO.File.WriteAllText(@"C:\Users\Kasper\Desktop\Algorihtms\GV\" + name + ".gv", output);
             }
 
         }
@@ -564,7 +387,7 @@ namespace AlgoritmeTests
                 {
                     if (e.isSourceEdge())
                     {
-                        if (e.Source is yNode && e.Target is xNode)
+                        if (e.Source is xNode && e.Target is yNode)
                         {
                             if (m.Exists(e.Source))
                             {
@@ -579,17 +402,13 @@ namespace AlgoritmeTests
                 return m;
             }
         }
+        public static int RunCount = 0;
 
-
-        static public int RunCount = 0;
-        public static List<Image> MinAlgorithm(Image i, List<Image> il)
+        public static List<Tuple<X, Y>> Match(List<X> xs, List<Y> ys, Func<X, Y, int> cost)
         {
             RunCount++;
-            var tuple = Graph.CreateFromImage(i, il);
 
-            var flowgraph = tuple.Item2;
-
-            int nrOfEdges = flowgraph.Edges.Count();
+            var flowgraph = Graph.CreateFromSets(xs, ys, cost);
 
             var M = new Matching();
 
@@ -599,65 +418,11 @@ namespace AlgoritmeTests
             flowgraph.xs.ToList().ForEach(x => p.Add(x, 0));
             flowgraph.ys.ToList().ForEach(y => p.Add(y, int.MaxValue));
             flowgraph.Edges.ToList().ForEach(x => p[x.Target] = Math.Min(p[x.Target], x.Tag));
+
             int cnt = 1;
-            while (M.Count != tuple.Item1.Count)
+            while (M.Count != ys.Count)
             {
                 var Gm = new ResidualGraph(flowgraph, M);
-                Gm.RenderToFile(RunCount + "it" + cnt++, null, p, M);
-
-                var dijkstra = Gm.ShortestPathsDijkstra(x => x.TagPrice(p), Gm.source);
-                var target = Gm.sink;
-                IEnumerable<Edge> path;
-                if (dijkstra(target, out path))
-                {
-                    var M_ = Gm.Augment(M, path.ToList());
-                    Gm.RenderToFile(RunCount + "it" + cnt++, path.ToList(), p, M);
-                    p = getNewPrices(dijkstra, p);
-                    M = M_;
-                }
-                else throw new Exception("no path");
-
-            }
-            var endGm = new ResidualGraph(flowgraph, M);
-            endGm.RenderToFile(RunCount + "it" + cnt++, null, p, M);
-
-
-            var rl = new Image[i.list.Count];
-            foreach (var m in M.edges)
-            {
-                if (((yNode)m.Value.Source).p != Graph.fakePixel)
-                    rl[i.list.IndexOf(((yNode)m.Value.Source).p)] = ((xNode)m.Value.Target).i;
-            }
-
-
-            System.Console.WriteLine("WE SAVED: " + (il.Count - tuple.Item1.Count) + " VERTICES <3 Caps");
-            countSavedVertices += il.Count - tuple.Item1.Count;
-            System.Console.WriteLine("WE SAVED: " + (Math.Pow(Program.noImages, 2) - nrOfEdges) + " EDGES!!");
-            countSavedEdges += (int)Math.Pow(Program.noImages, 2) - nrOfEdges;
-            return rl.ToList();
-        }
-        public static int countSavedVertices = 0;
-        public static int countSavedEdges = 0;
-        public static List<Image> MinAlgorithmOrg(Image i, List<Image> il)
-        {
-            RunCount++;
-
-
-            var flowgraph = Graph.CreateFromImageOrg(i, il);
-
-            var M = new Matching();
-
-            var p = new Dictionary<Node, int>();
-            flowgraph.RenderToFile(RunCount + "it0", null, null, null);
-
-            flowgraph.xs.ToList().ForEach(x => p.Add(x, 0));
-            flowgraph.ys.ToList().ForEach(y => p.Add(y, int.MaxValue));
-            flowgraph.Edges.ToList().ForEach(x => p[x.Target] = Math.Min(p[x.Target], x.Tag));
-            int cnt = 1;
-            while (M.Count != il.Count)
-            {
-                var Gm = new ResidualGraph(flowgraph, M);
-
 
                 var dijkstra = Gm.ShortestPathsDijkstra(x => x.TagPrice(p), Gm.source);
                 var target = Gm.sink;
@@ -675,11 +440,12 @@ namespace AlgoritmeTests
             var _Gm = new ResidualGraph(flowgraph, M);
             _Gm.RenderToFile(RunCount + "it" + cnt++, null, p, M);
 
-            var rl = new Image[i.list.Count];
+            var rl = new List<Tuple<X, Y>>();
             foreach (var m in M.edges)
             {
-                if (((yNode)m.Value.Source).p != Graph.fakePixel)
-                    rl[i.list.IndexOf(((yNode)m.Value.Source).p)] = ((xNode)m.Value.Target).i;
+                var x = ((xNode)m.Value.Source).item;
+                var y = ((yNode)m.Value.Target).item;
+                rl.Add(Tuple.Create(x, y));
             }
 
             return rl.ToList();
@@ -704,6 +470,5 @@ namespace AlgoritmeTests
 
 
 
-    }*/
-}
+    }
 }

@@ -11,6 +11,25 @@ namespace SyntaxDiff
 {
     public class SmartDiff
     {
+        public class Diff<T>
+        {
+            public T A;
+            public T O;
+            public T B;
+
+            public Diff(Tuple<T, T> Item1, Tuple<T, T> Item2)
+            {
+                A = Item1 == null ? default(T) : Item1.Item1;
+                O = Item1 == null ? Item2.Item2 : Item1.Item2;
+                B = Item2 == null ? default(T) : Item2.Item1;
+            }
+
+            public override string ToString()
+            {
+                return "A:" + A + " O:" + O + " B:" + B;
+            }
+        }
+
         public static List<String> Merge(SyntaxNode A, SyntaxNode O, SyntaxNode B)
         {
             if (!(A.getChildType() == O.getChildType() && O.getChildType() == B.getChildType()))
@@ -66,22 +85,23 @@ namespace SyntaxDiff
                 var Mb = NeedlemanWunsch<MemberDeclarationSyntax>.Allignment(Bc, Oc, comparer);
 
                 var totalMatch = NeedlemanWunsch<Tuple<MemberDeclarationSyntax, MemberDeclarationSyntax>>.Allignment(Ma, Mb, (a, b) => comparer(a.Item2, b.Item2))
-                    .Select(x => new {
-                        A = x.Item1 == null ? null : x.Item1.Item1,
-                        O = x.Item1 == null ? x.Item2.Item2 : x.Item1.Item2,
-                        B = x.Item2 == null ? null : x.Item2.Item2
-                    }).ToList();
+                    .Select(x => new Diff<MemberDeclarationSyntax>(x.Item1, x.Item2)).ToList();
+
+
+                var matchesWithBase = new List<Diff<MemberDeclarationSyntax>>();
+                var matchesWithoutBases = new List<Diff<MemberDeclarationSyntax>>();
 
                 var newO = O;
                 foreach (var m in totalMatch)
                 {
-                    if (m.A != null && m.B != null && m.O != null)
-                    {
-                        var member = Merge(m.A, m.O, m.B);
-                        var tree = (MemberDeclarationSyntax)SyntaxTree.ParseText(String.Join("\n", member)).GetRoot().ChildNodes().First();
-                        newO = newO.ReplaceNode(m.O, tree);
-                    }
+
                 }
+                /*if (m.A != null && m.B != null && m.O != null)
+                {
+                    var member = Merge(m.A, m.O, m.B);
+                    var tree = (MemberDeclarationSyntax)SyntaxTree.ParseText(String.Join("\n", member)).GetRoot().ChildNodes().First();
+                    newO = newO.ReplaceNode(m.O, tree);
+                }*/
 
 
 

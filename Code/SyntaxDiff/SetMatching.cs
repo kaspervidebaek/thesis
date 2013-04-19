@@ -10,7 +10,7 @@ using QuickGraph.Graphviz;
 
 namespace SyntaxDiff
 {
-    public class GraphMatching<X, Y> where X : new()
+    public class GraphMatching<X, Y>
     {
         public static int cnt = 0;
         public class Node
@@ -48,10 +48,16 @@ namespace SyntaxDiff
         public class xNode : Node
         {
             public readonly X item;
+            public readonly bool fakeNode = false;
             public xNode(X item)
                 : base("X: " + item.ToString(), false)
             {
                 this.item = item;
+            }
+            public xNode()
+                : base("fake", false)
+            {
+                fakeNode = true;
             }
         }
 
@@ -117,8 +123,6 @@ namespace SyntaxDiff
             public readonly List<xNode> xs;
             public readonly List<yNode> ys;
 
-            public static readonly X fakeX = new X();
-
             public Graph(List<xNode> xs, List<yNode> ys)
                 : base()
             {
@@ -138,7 +142,7 @@ namespace SyntaxDiff
                     this.ys = ys;
                 }
             }
-            public static Graph CreateFromSets(List<X> xs_, List<Y> ys_, Func<X, Y, int> cost)
+            public static Graph CreateFromSets(List<X> xs_, List<Y> ys_, Func<X, Y, int?> cost)
             {
                 var xs = xs_.Select(x => new xNode(x)).ToList();
                 var ys = ys_.Select(y => new yNode(y)).ToList();
@@ -149,15 +153,18 @@ namespace SyntaxDiff
                 {
                     foreach (var y in ys)
                     {
-                        var edge = new Edge(x, y, cost(x.item, y.item));
-                        graph.AddVerticesAndEdge(edge);
+                        var c = cost(x.item, y.item);
+                        if(c.HasValue) {
+                            var edge = new Edge(x, y, c.Value);
+                            graph.AddVerticesAndEdge(edge);
+                        }
                     }
                 }
 
                 var extraXs = new List<xNode>();
                 while (xs.Count < ys.Count)
                 {
-                    var pn = new xNode(fakeX);
+                    var pn = new xNode();
                     extraXs.Add(pn);
                     xs.Add(pn);
                 }
@@ -404,7 +411,7 @@ namespace SyntaxDiff
         }
         public static int RunCount = 0;
 
-        public static List<Tuple<X, Y>> Match(List<X> xs, List<Y> ys, Func<X, Y, int> cost)
+        public static List<Tuple<X, Y>> Match(List<X> xs, List<Y> ys, Func<X, Y, int?> cost)
         {
             RunCount++;
 

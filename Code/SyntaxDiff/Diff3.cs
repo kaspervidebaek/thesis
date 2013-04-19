@@ -81,29 +81,29 @@ namespace SyntaxDiff.Diff3
         private static List<Chunk<T>> getChunks(List<Diff<T>> totalMatch, Func<T, T, bool> comparer)
         {
             var chuncks = new List<Chunk<T>>();
+            Chunk<T> chunk = new Chunk<T>(false);
+            bool stableChunk = false;
+
+            foreach (var m in totalMatch)
             {
-                Chunk<T> chunk = new Chunk<T>(false);
-                var stableChunk = false;
+                var isStable = comparer(m.A, m.O) && comparer( m.O, m.B);
 
-                foreach (var m in totalMatch)
+                if (!stableChunk && isStable || stableChunk && !isStable)
                 {
-                    var isStable = comparer(m.A, m.O) && comparer( m.O, m.B);
-
-                    if (!stableChunk && isStable || stableChunk && !isStable)
-                    {
-                        stableChunk = !stableChunk;
-                        chunk = new Chunk<T>(stableChunk);
-                        chuncks.Add(chunk);
-                    }
-
-                    if (m.A != null)
-                        chunk.A.Add(m.A);
-                    if (m.O != null)
-                        chunk.O.Add(m.O);
-                    if (m.B != null)
-                        chunk.B.Add(m.B);
+                    stableChunk = !stableChunk;
+                    chunk = new Chunk<T>(stableChunk);
+                    chuncks.Add(chunk);
                 }
+
+                if (m.A != null)
+                    chunk.A.Add(m.A);
+                if (m.O != null)
+                    chunk.O.Add(m.O);
+                if (m.B != null)
+                    chunk.B.Add(m.B);
             }
+            if (!chuncks.Contains(chunk)) // TODO: Improve runtime
+                chuncks.Add(chunk);
             return chuncks;
         }
 

@@ -13,7 +13,12 @@ namespace SyntaxDiff
     }
     public static class SyntaxNodeExtensions
     {
-
+        public static string getMemberDeclerationIdentifier(this MemberDeclarationSyntax node)
+        {
+            if (node is MethodDeclarationSyntax)
+                return (node as MethodDeclarationSyntax).Identifier.ToString();
+            throw new NotImplementedException();
+        }
 
         public static string getSyntaxString<T>(this SyntaxNode node, Func<T, string> f) where T : SyntaxNode
         {

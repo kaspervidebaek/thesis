@@ -24,8 +24,12 @@ namespace SyntaxDiff
                     {
                         static void Main()
                         {
-                            if(false)
+                            if(true)
                                     Console.WriteLine(""Hello, new World!"");
+                        }
+                        static void Main2()
+                        {
+                            Console.WriteLine(""Hello, new World!"");
                         }
                     }
                 }");
@@ -40,14 +44,24 @@ namespace SyntaxDiff
                             if(false)
                                 Console.WriteLine(""Hello, new World!"");
                         }   
-                    }
+                        static void Inserted()
+                        {
+                        }
+                        static void Main2()
+                        {
+                            Console.WriteLine(""Hello, new World!"");
+                        }                    }
                 }");
         public static SyntaxTree rightTree = SyntaxTree.ParseText(@"using System;
                 using System.Linq;
                 namespace HelloWorld
                 {
-                    class Program2
+                    class Program
                     {
+                        static void Main1(string args)
+                        {
+                            Console.WriteLine(""Hello, new right World!"");
+                        }
                         static void Main2(string args)
                         {
                             Console.WriteLine(""Hello, new right World!"");

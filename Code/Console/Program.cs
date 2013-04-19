@@ -30,7 +30,6 @@ namespace ConsoleApp
             var fileA = new List<String>(new string[] { "1", "4", "5", "2", "3", "6" });
             var fileO = new List<String>(new string[] { "1", "2", "3", "4", "5", "6" });
             var fileB = new List<String>(new string[] { "1", "2", "4", "5", "3", "6" });
-
 #else
             var fileA = new List<String>(new string[] { "1", "3", "5" });
             var fileO = new List<String>(new string[] { "1", "2", "5"});
@@ -44,12 +43,13 @@ namespace ConsoleApp
             }*/
 
 
-            var left = SyntaxDiff.Examples.leftTree.GetRoot().DescendantNodes().OfType<MethodDeclarationSyntax>().First();
-            var bas = SyntaxDiff.Examples.baseTree.GetRoot().DescendantNodes().OfType<MethodDeclarationSyntax>().First();
-            var right = SyntaxDiff.Examples.rightTree.GetRoot().DescendantNodes().OfType<MethodDeclarationSyntax>().First();
+            var left = SyntaxDiff.Examples.leftTree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>().First();
+            var bas = SyntaxDiff.Examples.baseTree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>().First();
+            var right = SyntaxDiff.Examples.rightTree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>().First();
 
             var merge = SyntaxDiff.SmartDiff.Merge(left, bas, right);
 
+            merge.ForEach(Console.WriteLine);
 
             Console.ReadLine();
 

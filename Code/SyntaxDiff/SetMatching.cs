@@ -249,12 +249,12 @@ namespace SyntaxDiff
                             x = 12;
                             y = maxY / 2;
                         }
-                        if (n is xNode)
+                        if (n is yNode)
                         {
                             x = 9;
                             y = yCounted++ * distanceBetweenPoints;
                         }
-                        if (n is yNode)
+                        if (n is xNode)
                         {
                             x = 4;
 

@@ -15,6 +15,7 @@ namespace SyntaxDiff
         public static int cnt = 0;
         public class Node
         {
+            public readonly bool fakeNode = false;
             public readonly string Name;
             public readonly bool a;
 
@@ -22,6 +23,11 @@ namespace SyntaxDiff
             {
                 this.Name = name;
                 this.a = a;
+            }
+            public Node()
+                : this("fake", false)
+            {
+                fakeNode = true;
             }
 
             public override string ToString()
@@ -43,21 +49,21 @@ namespace SyntaxDiff
             {
                 this.item = item;
             }
+            public yNode() : base()
+            {
+            }
         }
 
         public class xNode : Node
         {
             public readonly X item;
-            public readonly bool fakeNode = false;
             public xNode(X item)
                 : base("X: " + item.ToString(), false)
             {
                 this.item = item;
             }
-            public xNode()
-                : base("fake", false)
+            public xNode() : base()
             {
-                fakeNode = true;
             }
         }
 
@@ -118,16 +124,18 @@ namespace SyntaxDiff
 
         }
 
-        public class Graph : AdjacencyGraph<Node, Edge>
+        public class BipartiteGraph : AdjacencyGraph<Node, Edge>
         {
             public readonly List<xNode> xs;
             public readonly List<yNode> ys;
+            public readonly List<Node> extras;
 
-            public Graph(List<xNode> xs, List<yNode> ys)
+            public BipartiteGraph(List<xNode> xs, List<yNode> ys, List<Node> extras)
                 : base()
             {
                 this.xs = xs;
                 this.ys = ys;
+                this.extras = extras;
             }
 
             public struct CostElement
@@ -142,12 +150,13 @@ namespace SyntaxDiff
                     this.ys = ys;
                 }
             }
-            public static Graph CreateFromSets(List<X> xs_, List<Y> ys_, Func<X, Y, int?> cost)
+            public static BipartiteGraph CreateFromSets(List<X> xs_, List<Y> ys_, Func<X, Y, int?> cost)
             {
                 var xs = xs_.Select(x => new xNode(x)).ToList();
                 var ys = ys_.Select(y => new yNode(y)).ToList();
 
-                var graph = new Graph(xs, ys);
+                var extras = new List<Node>();
+                var graph = new BipartiteGraph(xs, ys, extras);
 
                 foreach (var x in xs)
                 {
@@ -160,21 +169,22 @@ namespace SyntaxDiff
                         }
                     }
                 }
-
-                var extraXs = new List<xNode>();
-                while (xs.Count < ys.Count)
+                if (xs.Count < ys.Count)
                 {
-                    var pn = new xNode();
-                    extraXs.Add(pn);
-                    xs.Add(pn);
-                }
-
-                foreach (var x in extraXs)
-                {
-                    foreach (var y in ys)
+                    while (xs.Count < ys.Count)
                     {
-                        var edge = new Edge(x, y, 500);
-                        graph.AddVerticesAndEdge(edge);
+                        var pn = new xNode();
+                        extras.Add(pn);
+                        xs.Add(pn);
+                    }
+
+                    foreach (var x in extras)
+                    {
+                        foreach (var y in ys)
+                        {
+                            var edge = new Edge(x, y, 500);
+                            graph.AddVerticesAndEdge(edge);
+                        }
                     }
                 }
 
@@ -341,13 +351,13 @@ namespace SyntaxDiff
             }
         }
 
-        public class ResidualGraph : Graph
+        public class ResidualGraph : BipartiteGraph
         {
             public readonly Node source;
             public readonly Node sink;
 
-            public ResidualGraph(Graph g, Matching matching)
-                : base(g.xs, g.ys)
+            public ResidualGraph(BipartiteGraph g, Matching matching)
+                : base(g.xs, g.ys, g.extras)
             {
                 source = new Node("source", true);
                 sink = new Node("sink", true);
@@ -415,7 +425,7 @@ namespace SyntaxDiff
         {
             RunCount++;
 
-            var flowgraph = Graph.CreateFromSets(xs, ys, cost);
+            var flowgraph = BipartiteGraph.CreateFromSets(xs, ys, cost);
 
             var M = new Matching();
 

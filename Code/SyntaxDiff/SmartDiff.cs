@@ -79,6 +79,28 @@ namespace SyntaxDiff
                 var Ac = A.ChildNodes().Select(x => (MemberDeclarationSyntax)x).ToList();
                 var Oc = O.ChildNodes().Select(x => (MemberDeclarationSyntax)x).ToList();
                 var Bc = B.ChildNodes().Select(x => (MemberDeclarationSyntax)x).ToList();
+
+                Func<MemberDeclarationSyntax, MemberDeclarationSyntax, int?> cost = (x, y) =>
+                {
+                    var xI = x.getMemberDeclerationIdentifier();
+                    var yI = y.getMemberDeclerationIdentifier();
+                    return 1;
+                };
+
+                var Ma = GraphMatching<MemberDeclarationSyntax, MemberDeclarationSyntax>.Match(Ac, Oc, cost);
+                var Mb = GraphMatching<MemberDeclarationSyntax, MemberDeclarationSyntax>.Match(Bc, Oc, cost);
+
+
+
+            }
+
+
+            // Below code does ordered matching
+            /*if (A is ClassDeclarationSyntax && O is ClassDeclarationSyntax && B is ClassDeclarationSyntax)
+            {
+                var Ac = A.ChildNodes().Select(x => (MemberDeclarationSyntax)x).ToList();
+                var Oc = O.ChildNodes().Select(x => (MemberDeclarationSyntax)x).ToList();
+                var Bc = B.ChildNodes().Select(x => (MemberDeclarationSyntax)x).ToList();
                 Func<MemberDeclarationSyntax, MemberDeclarationSyntax, bool> comparer = (x, y) => x != null && y != null && x.getMemberDeclerationIdentifier() == y.getMemberDeclerationIdentifier();
 
                 var Ma = NeedlemanWunsch<MemberDeclarationSyntax>.Allignment(Ac, Oc, comparer);
@@ -94,19 +116,15 @@ namespace SyntaxDiff
                 var newO = O;
                 foreach (var m in totalMatch)
                 {
-
+                    if (m.A != null && m.B != null && m.O != null)
+                    {
+                        var member = Merge(m.A, m.O, m.B);
+                        var tree = (MemberDeclarationSyntax)SyntaxTree.ParseText(String.Join("\n", member)).GetRoot().ChildNodes().First();
+                        newO = newO.ReplaceNode(m.O, tree);
+                    }
                 }
-                /*if (m.A != null && m.B != null && m.O != null)
-                {
-                    var member = Merge(m.A, m.O, m.B);
-                    var tree = (MemberDeclarationSyntax)SyntaxTree.ParseText(String.Join("\n", member)).GetRoot().ChildNodes().First();
-                    newO = newO.ReplaceNode(m.O, tree);
-                }*/
-
-
-
                 return LinesFromFunction(newO);
-            }
+            }*/
 
             throw new NotImplementedException();
         }

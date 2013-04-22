@@ -111,19 +111,29 @@ namespace SyntaxDiff
                                                     return null;
                                                 }).Select(u => new Diff<MemberDeclarationSyntax>(u.Item1, u.Item2)).ToList() ;
 
-                var newO = O;
+                var mergedFunctions = new List<MemberDeclarationSyntax>();
                 foreach (var m in totalMatch)
                 {
-                    if (m.A != null && m.B != null && m.O != null)
+                    if (m.A != null && m.B != null && m.O != null) // Function exists in all revisions
                     {
-                        var member = Merge(m.A, m.O, m.B);
-                        var tree = SyntaxTree.ParseText(String.Join("\n", member));
+                        var merge = Merge(m.A, m.O, m.B);
+                        var tree = SyntaxTree.ParseText(String.Join("\n", merge));
                         var child = (MemberDeclarationSyntax)tree.GetRoot().ChildNodes().First();
-                        newO = newO.ReplaceNode(m.O, child);
+                        mergedFunctions.Add(child);
+                    }
+                    else if (m.A == null && m.O == null && m.B != null) // Function only exists in B
+                    {
+                        mergedFunctions.Add(m.B);
+                    }
+                    else if (m.A != null && m.O == null && m.B == null) // Function only exists in A
+                    {
+                        mergedFunctions.Add(m.A);
                     }
                 }
-                return LinesFromFunction(newO);
 
+
+
+                return LinesFromFunction(null);
             }
 
             throw new NotImplementedException();

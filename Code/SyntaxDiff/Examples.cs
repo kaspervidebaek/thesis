@@ -22,14 +22,22 @@ namespace SyntaxDiff
                 {
                     class Program
                     {
-                        static void Main()
+                        static void ShouldConflict()
                         {
                             if(true)
                                     Console.WriteLine(""Hello, new World!"");
                         }
-                        static void Main2()
+                        static void Conflicts()
                         {
-                            Console.WriteLine(""Hello, new World!"");
+                            Console.WriteLine(""Hello, base!"");
+                        }
+                        static void EndsAsLeft()
+                        {
+                            Console.WriteLine(""Base"");
+                        }
+                        static void EndsAsRight()
+                        {
+                            Console.WriteLine(""Base"");
                         }
                     }
                 }");
@@ -39,7 +47,7 @@ namespace SyntaxDiff
                 {
                     class Program
                     {
-                        static void Main()
+                        static void ShouldConflict()
                         {
                             if(false)
                                 Console.WriteLine(""Hello, new World!"");
@@ -47,9 +55,17 @@ namespace SyntaxDiff
                         static void InsertedInLeft()
                         {
                         }
-                        static void Main2()
+                        static void Conflicts()
                         {
-                            Console.WriteLine(""Hello, new World!"");
+                            Console.WriteLine(""Hello, left!"");
+                        }
+                        static void EndsAsLeft()
+                        {
+                            Console.WriteLine(""Left"");
+                        }
+                        static void EndsAsRight()
+                        {
+                            Console.WriteLine(""Base"");
                         }
                     }
                 }");
@@ -59,16 +75,24 @@ namespace SyntaxDiff
                 {
                     class Program
                     {
-                        static void Main2(string args)
+                        static void Conflicts(string args)
                         {
                             Console.WriteLine(""Hello, new right World!"");
                         }
                         static void InsertedInRight()
                         {
                         }
-                        static void Main(string args)
+                        static void ShouldConflict(string args)
                         {
-                            Console.WriteLine(""Hello, new right World!"");
+                            Console.WriteLine(""Hello, right!"");
+                        }
+                        static void EndsAsLeft()
+                        {
+                            Console.WriteLine(""Base"");
+                        }
+                        static void EndsAsRight()
+                        {
+                            Console.WriteLine(""Right"");
                         }
                     }
                 }");

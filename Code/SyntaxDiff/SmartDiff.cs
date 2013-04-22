@@ -66,9 +66,8 @@ namespace SyntaxDiff
 
         private static List<string> SequenceMerge(SyntaxNode A, SyntaxNode O, SyntaxNode B)
         {
-            // TODO: What happens with conflicts?
-            // TODO: actually test this.
-            // Todo: make this into lists of lines.
+            // TODO: If there are conflicts - use syntax tree merge.
+
             Action<List<String>, Chunk<String>> a = (output, chunk) => {
                 output.Add("// Conflict. Base: ---------");
                 output.AddRange(chunk.O);
@@ -83,10 +82,10 @@ namespace SyntaxDiff
             return merged.Select(x => x.ToString()).ToList();
         }
 
-
-
         private static List<string> SetMerge(SyntaxNode A, SyntaxNode O, SyntaxNode B)
         {
+            // TODO: Order of merging
+
             if (A is ClassDeclarationSyntax && O is ClassDeclarationSyntax && B is ClassDeclarationSyntax)
             {
                 var aR = A as ClassDeclarationSyntax;
@@ -98,7 +97,7 @@ namespace SyntaxDiff
                 var Bc = B.ChildNodes().Select(x => (MemberDeclarationSyntax)x).ToList();
 
                 Func<MemberDeclarationSyntax, MemberDeclarationSyntax, int?> cost = (x, y) =>
-                {
+                { // TODO: Implement heristic to also indicate closeness in body, in parameter list and identifiers.
                     var xI = x.getMemberDeclerationIdentifier();
                     var yI = y.getMemberDeclerationIdentifier();
                     if (xI == yI)
@@ -131,12 +130,10 @@ namespace SyntaxDiff
 
                         var merge = Merge(m.A, m.O, m.B);
                         var tree = SyntaxTree.ParseText(String.Join("\n", merge));
-//                        var exists = members.Where(x => x == totalMatch[2].O).Count();
 
                         var child = (MemberDeclarationSyntax)tree.GetRoot().ChildNodes().First();
 
                         updateMember.Add(m.O, child);
-                        //merged = merged.ReplaceNode(m.O, child);
                     }
                     else if (m.A == null && m.O == null && m.B != null) // Function only exists in B - Inserted
                     {
@@ -146,15 +143,14 @@ namespace SyntaxDiff
                     {
                         addMembers.Add(m.A);
                     }
+                    else
+                        throw new NotImplementedException();
                 }
 
-                var merged = oR;
-                merged = oR.ReplaceNodes(updateMember.Keys.AsEnumerable(), (n1, n2) =>
+                var merged = oR.ReplaceNodes(updateMember.Keys.AsEnumerable(), (n1, n2) =>
                 {
                     return updateMember[n1];
-                });
-
-                merged = merged.AddMembers(addMembers.ToArray());
+                }).AddMembers(addMembers.ToArray());
 
 
                 return LinesFromSyntax(merged);

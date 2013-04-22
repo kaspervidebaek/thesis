@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowApp", "Window\WindowA
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{ADE255B2-379A-42E8-A1E4-309590CAF058}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoslynPlayGround", "RoslynPlayGround\RoslynPlayGround.csproj", "{820E9549-30BC-481B-BFB3-5AA4EF44BCC2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -31,6 +33,10 @@ Global
 		{ADE255B2-379A-42E8-A1E4-309590CAF058}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ADE255B2-379A-42E8-A1E4-309590CAF058}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{ADE255B2-379A-42E8-A1E4-309590CAF058}.Release|Any CPU.Build.0 = Release|Any CPU
+		{820E9549-30BC-481B-BFB3-5AA4EF44BCC2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{820E9549-30BC-481B-BFB3-5AA4EF44BCC2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{820E9549-30BC-481B-BFB3-5AA4EF44BCC2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{820E9549-30BC-481B-BFB3-5AA4EF44BCC2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

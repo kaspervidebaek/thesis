@@ -64,7 +64,15 @@ namespace SyntaxDiff
             // TODO: What happens with conflicts?
             // TODO: actually test this.
             // Todo: make this into lists of lines.
-            Action<List<String>, Chunk<String>> a = (output, chunk) => { output.AddRange(chunk.O.Select(x => "/*Conflict*/" + x)); };
+            Action<List<String>, Chunk<String>> a = (output, chunk) => {
+                output.Add("// Conflict. Base:");
+                output.AddRange(chunk.O);
+                output.Add("/* A: ");
+                output.AddRange(chunk.A);
+                output.Add("   B: ");
+                output.AddRange(chunk.B);
+                output.Add("*/");
+            };
             
             var merged = Diff3.Diff3<String>.Merge(LinesFromFunction(A), LinesFromFunction(O), LinesFromFunction(B), (x, y) => x != null && y != null && x.Trim() == y.Trim(), a);
             return merged.Select(x => x.ToString()).ToList();

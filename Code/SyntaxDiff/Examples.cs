@@ -44,13 +44,14 @@ namespace SyntaxDiff
                             if(false)
                                 Console.WriteLine(""Hello, new World!"");
                         }   
-                        static void Inserted()
+                        static void InsertedInLeft()
                         {
                         }
                         static void Main2()
                         {
                             Console.WriteLine(""Hello, new World!"");
-                        }                    }
+                        }
+                    }
                 }");
         public static SyntaxTree rightTree = SyntaxTree.ParseText(@"using System;
                 using System.Linq;
@@ -58,11 +59,14 @@ namespace SyntaxDiff
                 {
                     class Program
                     {
-                        static void Main1(string args)
+                        static void Main2(string args)
                         {
                             Console.WriteLine(""Hello, new right World!"");
                         }
-                        static void Main2(string args)
+                        static void InsertedInRight()
+                        {
+                        }
+                        static void Main(string args)
                         {
                             Console.WriteLine(""Hello, new right World!"");
                         }

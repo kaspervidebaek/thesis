@@ -55,11 +55,24 @@ namespace SyntaxDiff.Diff3
             O = new List<T>();
             B = new List<T>();
         }
+        public static bool ChunkEqual(List<T> x, List<T> y, Func<T, T, bool> comparer) { //TODO: This can be done in chunck generation
+            if(x.Count == y.Count) {
+                for (int i = 0; i < x.Count;i++ )
+                {
+                    if (!comparer(x[i], y[i]))
+                        return false;
+                }
+                return true;
+            }
+            return false;
+
+        }
     }
 
     
     public class Diff3<T>
     {
+
         public static List<T> Merge(List<T> A, List<T> O, List<T> B, Func<T, T, bool> comparer, Action<List<T>, Chunk<T>> HandleConflict)
         {
 
@@ -81,14 +94,35 @@ namespace SyntaxDiff.Diff3
                 }
 
 
-                if(chunck.O.Count == 0 && chunck.A.Count == 0)
+                if(chunck.O.Count == 0 && chunck.A.Count == 0) // Added B
                     foreach (var line in chunck.B)
                         mergedfile.Add(line);
-                else if (chunck.O.Count == 0 && chunck.B.Count == 0)
+                else if (chunck.O.Count == 0 && chunck.B.Count == 0) // Added A
                     foreach (var line in chunck.A)
                         mergedfile.Add(line);
-                else { // Conflict
-                    HandleConflict(mergedfile, chunck);
+                else { // This is an update.
+                    var AO = Chunk<T>.ChunkEqual(chunck.A, chunck.O, comparer);
+                    var BO = Chunk<T>.ChunkEqual(chunck.B, chunck.O, comparer);
+                    //var AB = Chunk<T>.ChunkEqual(B, O, comparer);
+                    if (AO && !BO)  // Updated B
+                        foreach (var line in chunck.B)
+                            mergedfile.Add(line);
+                    else if (BO && !AO)  // Updated A
+                        foreach (var line in chunck.A)
+                            mergedfile.Add(line);
+                    else
+                    {
+                        if (Chunk<T>.ChunkEqual(chunck.A, chunck.B, comparer)) // Added exactly the same in both files. Just add one of them.
+                        {
+                            foreach (var line in chunck.A)
+                                mergedfile.Add(line);
+                        }
+                        else
+                        {
+                            // Conflict
+                            HandleConflict(mergedfile, chunck);
+                        }
+                    }
                 }
             }
             return mergedfile;
@@ -101,7 +135,6 @@ namespace SyntaxDiff.Diff3
             var chuncks = new List<Chunk<T>>();
             Chunk<T> chunk = new Chunk<T>(false);
             bool stableChunk = false;
-            chuncks.Add(chunk);
 
             foreach (var m in totalMatch)
             {
@@ -110,6 +143,8 @@ namespace SyntaxDiff.Diff3
                 if (!stableChunk && isStable || stableChunk && !isStable)
                 {
                     stableChunk = !stableChunk;
+                    if (!chuncks.Contains(chunk)) // TODO: Improve runtime
+                        chuncks.Add(chunk);
                     chunk = new Chunk<T>(stableChunk);
                     chuncks.Add(chunk);
                 }

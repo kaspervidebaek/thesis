@@ -10,6 +10,16 @@ using QuickGraph.Graphviz;
 
 namespace SyntaxDiff
 {
+
+    public class GMTests {
+        public static void Test() {
+
+
+
+
+        }
+    }
+
     public class GraphMatching<X, Y>
     {
         public static int cnt = 0;
@@ -45,11 +55,12 @@ namespace SyntaxDiff
         {
             public readonly Y item;
             public yNode(Y item)
-                : base("Y: " + item.ToString(), false)
+                : base("Y: "/* + item.ToString()*/, false)
             {
                 this.item = item;
             }
-            public yNode() : base()
+            public yNode()
+                : base()
             {
             }
         }
@@ -58,11 +69,12 @@ namespace SyntaxDiff
         {
             public readonly X item;
             public xNode(X item)
-                : base("X: " + item.ToString(), false)
+                : base("X: "/* + item.ToString()*/, false)
             {
                 this.item = item;
             }
-            public xNode() : base()
+            public xNode()
+                : base()
             {
             }
         }
@@ -163,12 +175,17 @@ namespace SyntaxDiff
                     foreach (var y in ys)
                     {
                         var c = cost(x.item, y.item);
-                        if(c.HasValue) {
+                        if (c.HasValue)
+                        {
                             var edge = new Edge(x, y, c.Value);
                             graph.AddVerticesAndEdge(edge);
                         }
                     }
                 }
+
+                xs.ForEach(x => graph.AddVertex(x));
+                ys.ForEach(y => graph.AddVertex(y));
+
                 if (xs.Count < ys.Count)
                 {
                     while (xs.Count < ys.Count)
@@ -188,6 +205,24 @@ namespace SyntaxDiff
                     }
                 }
 
+                if (ys.Count < xs.Count)
+                {
+                    while (ys.Count < xs.Count)
+                    {
+                        var pn = new yNode();
+                        extras.Add(pn);
+                        ys.Add(pn);
+                    }
+
+                    foreach (var x in xs)
+                    {
+                        foreach (var y in extras)
+                        {
+                            var edge = new Edge(x, y, 500);
+                            graph.AddVerticesAndEdge(edge);
+                        }
+                    }
+                }
 
                 return graph;
             }
@@ -436,8 +471,10 @@ namespace SyntaxDiff
             flowgraph.ys.ToList().ForEach(y => p.Add(y, int.MaxValue));
             flowgraph.Edges.ToList().ForEach(x => p[x.Target] = Math.Min(p[x.Target], x.Tag));
 
+            var maxCount = ys.Count > xs.Count ? ys.Count : xs.Count;
+
             int cnt = 1;
-            while (M.Count != ys.Count)
+            while (M.Count != maxCount)
             {
                 var Gm = new ResidualGraph(flowgraph, M);
 
@@ -451,6 +488,8 @@ namespace SyntaxDiff
                     p = getNewPrices(dijkstra, p);
                     M = M_;
                 }
+                else
+                    break; // KV: No path found. This means that we have finished our matching, however there are still nodes left in the graph.
 
             }
 
@@ -464,6 +503,12 @@ namespace SyntaxDiff
                 var y = ((yNode)m.Value.Target).item;
                 rl.Add(Tuple.Create(x, y));
             }
+
+            var notMatchedXs = xs.Where(x => rl.SingleOrDefault(i => i.Item1 != null && i.Item1.Equals(x)) == null).ToList();
+            var notMatchedYs = ys.Where(y => rl.SingleOrDefault(i => i.Item2 != null && i.Item2.Equals(y)) == null).ToList();
+
+            notMatchedXs.ForEach(x => rl.Add(Tuple.Create(x, default(Y))));
+            notMatchedYs.ForEach(y => rl.Add(Tuple.Create(default(X), y)));
 
             return rl.ToList();
         }
@@ -479,7 +524,6 @@ namespace SyntaxDiff
                     p_.Add(kvp.Key, kvp.Value + path.Sum(x => x.TagPrice(p)));
                 }
                 //else throw new Exception("shit!");
-
             }
 
             return p_;

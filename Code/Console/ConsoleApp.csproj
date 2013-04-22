@@ -71,6 +71,10 @@
       <Project>{56c5b179-9770-4c34-9739-7f5e34fcfb4c}</Project>
       <Name>SyntaxDiff</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Tests\Tests.csproj">
+      <Project>{ade255b2-379a-42e8-a1e4-309590caf058}</Project>
+      <Name>Tests</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

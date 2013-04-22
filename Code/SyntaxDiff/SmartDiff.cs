@@ -64,7 +64,7 @@ namespace SyntaxDiff
             // TODO: What happens with conflicts?
             // TODO: actually test this.
             // Todo: make this into lists of lines.
-            Action<List<String>, Chunk<String>> a = (output, chunk) => { output.AddRange(chunk.O.Select(x => "Conflict: " + x)); };
+            Action<List<String>, Chunk<String>> a = (output, chunk) => { output.AddRange(chunk.O.Select(x => "/*Conflict*/" + x)); };
             
             var merged = Diff3.Diff3<String>.Merge(LinesFromFunction(A), LinesFromFunction(O), LinesFromFunction(B), (x, y) => x != null && y != null && x.Trim() == y.Trim(), a);
             return merged.Select(x => x.ToString()).ToList();
@@ -84,19 +84,46 @@ namespace SyntaxDiff
                 {
                     var xI = x.getMemberDeclerationIdentifier();
                     var yI = y.getMemberDeclerationIdentifier();
-                    return 1;
+                    if (xI == yI)
+                        return 1;
+                    return null;
                 };
 
                 var Ma = GraphMatching<MemberDeclarationSyntax, MemberDeclarationSyntax>.Match(Ac, Oc, cost);
                 var Mb = GraphMatching<MemberDeclarationSyntax, MemberDeclarationSyntax>.Match(Bc, Oc, cost);
 
+                var totalMatch = GraphMatching<
+                                            Tuple<MemberDeclarationSyntax, MemberDeclarationSyntax>,
+                                            Tuple<MemberDeclarationSyntax, MemberDeclarationSyntax>
+                                            >.Match(Ma, Mb,
+                                                (x, y) =>
+                                                {
+                                                    if (x.Item2 == y.Item2 && y.Item2 != null)
+                                                        return 1;
+                                                    return null;
+                                                }).Select(u => new Diff<MemberDeclarationSyntax>(u.Item1, u.Item2)).ToList() ;
 
+                var newO = O;
+                foreach (var m in totalMatch)
+                {
+                    if (m.A != null && m.B != null && m.O != null)
+                    {
+                        var member = Merge(m.A, m.O, m.B);
+                        var tree = SyntaxTree.ParseText(String.Join("\n", member));
+                        var child = (MemberDeclarationSyntax)tree.GetRoot().ChildNodes().First();
+                        newO = newO.ReplaceNode(m.O, child);
+                    }
+                }
+                return LinesFromFunction(newO);
 
             }
 
+            throw new NotImplementedException();
+        }
 
-            // Below code does ordered matching
-            /*if (A is ClassDeclarationSyntax && O is ClassDeclarationSyntax && B is ClassDeclarationSyntax)
+        public static List<string> OrderedMerge(SyntaxNode A, SyntaxNode O, SyntaxNode B)
+        {
+            if (A is ClassDeclarationSyntax && O is ClassDeclarationSyntax && B is ClassDeclarationSyntax)
             {
                 var Ac = A.ChildNodes().Select(x => (MemberDeclarationSyntax)x).ToList();
                 var Oc = O.ChildNodes().Select(x => (MemberDeclarationSyntax)x).ToList();
@@ -124,9 +151,9 @@ namespace SyntaxDiff
                     }
                 }
                 return LinesFromFunction(newO);
-            }*/
-
-            throw new NotImplementedException();
+            }
+            return null;
         }
+
     }
 }

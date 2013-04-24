@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
 using System.Linq;
+using Combinatorial;
 
 namespace Tests
 {
@@ -88,5 +89,41 @@ namespace Tests
             Assert.IsTrue(e.Current.Item1 == "2" && e.Current.Item2 == "2"); e.MoveNext();
             Assert.IsTrue(e.Current.Item1 == "3" && e.Current.Item2 == null);
         }
+
+        [TestMethod]
+        public void TestMinMatching()
+        {
+            var xs = new List<int>(new int[] { 1, 2, 7 });
+            var ys = new List<int>(new int[] { 1, 2, 5 });
+
+            var b = CalculateMinCostMatching(xs, ys, (x, y) => Math.Abs(x - y));
+            
+        }
+
+        public int CalculateMinCostMatching(List<int> xs, List<int> ys, Func<int, int, int> cost)
+        {
+            var numbers = Enumerable.Range(0, ys.Count()*2).Select(x => (int?)x).ToArray();
+            Variations combs = new Variations(numbers, xs.Count()*2);
+
+            var minCost = Double.MaxValue;
+            var minImgs = new List<int>();
+
+            while (combs.MoveNext())
+            {
+                var tCombs = combs.CurrentIndeces;
+                var thisYs = tCombs.Select(x => ys[x]);
+
+                /*var costs = thisYs.Sum;
+
+                if (cost < minCost)
+                {
+                    minCost = cost;
+                    minImgs = imgs;
+                }*/
+            }
+
+            return 0;
+        }
+
     }
 }

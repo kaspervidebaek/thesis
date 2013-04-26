@@ -34,16 +34,16 @@ namespace SyntaxDiff
 
         public override string ToString()
         {
+            var b = bas == null ? "" : bas.ToString().Trim();
+            var o = other == null ? "" : other.ToString().Trim();
             if (bas is SyntaxNode)
             {
                 var ba = bas as SyntaxNode;
                 var ot = other as SyntaxNode;
-                var b = ba == null ? "" : ba.GetText().ToString().Trim();
-                var o = ot == null ? "" : ot.GetText().ToString().Trim();
-
-                return b + "->" + o;
+                b = ba == null ? "" : ba.GetText().ToString().Trim();
+                o = ot == null ? "" : ot.GetText().ToString().Trim();
             }
-            return base.ToString();
+            return b + "->" + o;
         }
     }
 

@@ -106,8 +106,9 @@ namespace SyntaxDiff
                     {
                         static void Conflicts()
                         {
+                            var x = 2;
                             Console.WriteLine(""Hello, base!"");
-                            Console.WriteLine(""Hello, base2!"");
+                            Console.WriteLine(""Hello, base!"");
                         }
                     }
                 }");
@@ -120,7 +121,8 @@ namespace SyntaxDiff
                         static void Conflicts()
                         {
                             Console.WriteLine(""Hello, base!"");
-                            Console.WriteLine(""Hello, left!"");
+                            var x = 2;
+                            Console.WriteLine(""Hello, base!"");
                         }
                     }
                 }");

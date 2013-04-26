@@ -67,6 +67,7 @@
   <ItemGroup>
     <Compile Include="SetMatching.cs" />
     <Compile Include="SmartDiff.cs" />
+    <Compile Include="Tree.cs" />
     <Compile Include="TreeDiff.cs" />
     <Compile Include="TreeMerge.cs" />
     <Content Include="CodeSnippets\SmartAlgorithm.cs">

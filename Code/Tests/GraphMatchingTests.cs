@@ -105,7 +105,7 @@ namespace Tests
             var numbers = Enumerable.Range(0, ys.Count()*2).Select(x => (int?)x).ToArray();
             Variations combs = new Variations(numbers, xs.Count()*2);
 
-            var minCost = Double.MaxValue;
+            //var minCost = Double.MaxValue;
             var minImgs = new List<int>();
 
             while (combs.MoveNext())

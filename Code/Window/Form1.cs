@@ -14,12 +14,18 @@ namespace WindowApp
 {
     public partial class Form1 : Form
     {
-        public TreeNode buildTree(MergeTreeNode node)
+        public static Tree<SyntaxNode> convert(SyntaxNode n)
+        {
+            var children = n.ChildNodes().Select(x => convert(x)).ToArray();
+            return new Tree<SyntaxNode>(n, children);
+        }
+
+        public static TreeNode buildTree<T>(TreeDiff<T>.MergeTreeNode node, Func<TreeDiff<T>.MergeTreeNode, string> getLabel)
         {
             var children = new List<TreeNode>();
             foreach (var child in node.children)
             {
-                var vchild = buildTree(child);
+                var vchild = buildTree(child, getLabel);
 
                 switch (child.type)
                 {
@@ -37,31 +43,35 @@ namespace WindowApp
                 children.Add(vchild);
             }
 
-            return new TreeNode(node.node.getLabel(), children.ToArray());
+            return new TreeNode(getLabel(node), children.ToArray());
         }
 
-        public void addTreeToView(TreeView view, SyntaxTree btree, SyntaxTree otree, int pos)
+        public void addTreeToView<T>(TreeView view, Tree<T> btree, Tree<T> otree, int pos, Func<T, string> getLabel, Func<TreeDiff<T>.MergeTreeNode, string> getLabelMt)
         {
-            List<Matching> diffs = null;
-            if (btree != otree)
-                diffs = Differ.GetDiff(btree, otree);
 
-            var tree = buildTree(Differ.mergeTree(btree.GetRoot(), otree.GetRoot(), diffs));
+            List<Matching<T>> diffs = null;
+            if (btree != otree)
+            {
+                diffs = TreeDiff<T>.GetDiff(btree, otree, getLabel);
+            }
+
+            var mTree = TreeDiff<T>.mergeTree(btree, otree, diffs, getLabel);
+            var tree = buildTree<T>(mTree, getLabelMt);
 
             view.Nodes.Add(tree);
             view.Click += (x, y) =>
             {
                 var e = (MouseEventArgs)y;
                 if (e.Button == System.Windows.Forms.MouseButtons.Right)
-                    MessageBox.Show(DiffToString(diffs), "Alert", MessageBoxButtons.OK);
+                    MessageBox.Show(DiffToString(diffs, getLabel), "Alert", MessageBoxButtons.OK);
             };
             view.ExpandAll();
         }
 
-        public string DiffToString(List<Matching> diff)
+        public string DiffToString<T>(List<Matching<T>> diff, Func<T, string> getLabel)
         {
             var s = "";
-            diff.ForEach(x => s += x.bas.getLabel() + " -> " + x.other.getLabel() + "\n");
+            diff.ForEach(x => s += getLabel(x.bas) + " -> " + getLabel(x.other) + "\n");
             return s;
         }
 
@@ -76,17 +86,39 @@ namespace WindowApp
         {
             InitializeComponent();
 
+#if true
             var baseSyntax = Examples.SmallBaseTree;
             var leftSyntax = Examples.SmallLeftTree;
             var rightSyntax = Examples.SmallRightTree;
 
 
-            var x = cntNode(Examples.smartAlgorithmTree.GetRoot());
-            var y = cntNode(Examples.flowAlgorithm.GetRoot());
+            //var x = cntNode(Examples.smartAlgorithmTree.GetRoot());
+            //var y = cntNode(Examples.flowAlgorithm.GetRoot());
 
-            addTreeToView(baseTree, baseSyntax, baseSyntax, 0);
-            addTreeToView(leftTree, baseSyntax, leftSyntax, 0);
-            addTreeToView(rightTree, baseSyntax, rightSyntax, 0);
+            Func<SyntaxNode, string> getLabel = x => x.getLabel();
+            Func<TreeDiff<SyntaxNode>.MergeTreeNode, string> getLabelMt = x => getLabel(x.value);
+
+            var b = convert(baseSyntax.GetRoot());
+            var l = convert(leftSyntax.GetRoot());
+            var r = convert(rightSyntax.GetRoot());
+
+            addTreeToView(baseTree, b, b, 0, getLabel, getLabelMt);
+            addTreeToView(leftTree, b, l, 0, getLabel, getLabelMt);
+            addTreeToView(rightTree, b, r, 0, getLabel, getLabelMt);
+#else
+            var b = new Tree<string>("A", new Tree<string>("B", "X"), new Tree<string>("B", "X"), new Tree<string>("C", "Y"));
+            var l = new Tree<string>("A", new Tree<string>("C", "Y"), new Tree<string>("B", "X"));
+            var r = new Tree<string>("A", new Tree<string>("B", "X"));
+
+            Func<string, string> getLabel = x => x;
+            Func<TreeDiff<string>.MergeTreeNode, string> getLabelMt = x => getLabel(x.value);
+
+
+            addTreeToView(baseTree, b, b, 0, getLabel, getLabelMt);
+            addTreeToView(leftTree, b, l, 0, getLabel, getLabelMt);
+            addTreeToView(rightTree, b, r, 0, getLabel, getLabelMt);
+#endif
+
         }
     }
 }

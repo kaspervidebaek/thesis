@@ -10,135 +10,42 @@ using Microsoft.FSharp.Collections;
 
 namespace SyntaxDiff
 {
-    public class Matching : Matching<SyntaxNode>
-    {
-        public Matching(SyntaxNode bas, SyntaxNode other)
-            : base(bas, other)
-        {
-        }
-
-        public Matching(Matching<SyntaxNode> n)
-            : base(n.bas, n.other)
-        {
-        }
-    }
 
     public enum MergeType
     {
         None, Delete, Insert, Update
     }
 
-    public class MergeTreeNode
+    public class TreeDiff<T>
     {
-        public MergeType type = MergeType.None;
-        public SyntaxNode node;
-        public List<MergeTreeNode> children;
-
-        public MergeTreeNode(SyntaxNode node, List<MergeTreeNode> children)
+        public class MergeTreeNode
         {
-            this.node = node;
-            this.children = children;
-        }
-    }
-
-    public class Differ
-    {
-        public static MergeTreeNode mergeTreeOld(SyntaxNode btree, SyntaxNode otree, List<Matching> diffs)
-        {
-            var children = new List<MergeTreeNode>();
-            var bChildren = btree.getChildrenEnum();
-            var oChildren = otree.getChildrenEnum();
-
-            var bCnt = 0;
-            var oCnt = 0;
-
-            while (oCnt < oChildren.Count || bCnt < bChildren.Count)
+            public MergeType type;
+            public List<MergeTreeNode> children;
+            public T value;
+            public MergeTreeNode(T value, List<MergeTreeNode> children)
             {
-                SyntaxNode bChild = bCnt < bChildren.Count ? bChildren[bCnt] : null;
-                SyntaxNode oChild = oCnt < oChildren.Count ? oChildren[oCnt] : null;
-
-                MergeTreeNode cNode = null;
-                if (bChild == null) // The base is depleted print the remaining "other", as added nodes.
-                {
-                    oCnt++;
-                    cNode = mergeTreeOld(bChild, oChild, diffs);
-                    cNode.type = MergeType.Insert;
-                }
-                else if (oChild == null) // Other is depleted, print the remaining base, as deleted nodes.
-                {
-                    bCnt++;
-                    cNode = mergeTreeOld(bChild, oChild, diffs);
-                    cNode.type = MergeType.Delete;
-                }
-                else if (oChild.getLabel() != bChild.getLabel()) // Base and other is diffferent. This is an update, a deletion or insert.
-                {
-                    // Find the corresponding "other child" diff.
-                    var diff = diffs.Single(x => x.other == oChild);
-
-                    if (diff.bas == null)
-                    {// If Item1 is null, then this is an insertion
-                        cNode = mergeTreeOld(null, oChild, diffs);
-                        oCnt++;
-                        cNode.type = MergeType.Insert;
-                    }
-                    else
-                    {
-                        // Find the corresponding base child
-                        diff = diffs.Single(x => x.bas == bChild);
-
-                        if (diff.other == null)
-                        {// If Item2 is null, then this is a deletion
-                            cNode = mergeTreeOld(bChild, null, diffs);
-                            bCnt++;
-                            cNode.type = MergeType.Delete;
-                        }
-                        else // Last case: An Update
-                        {
-                            cNode = mergeTreeOld(bChild, oChild, diffs);
-                            bCnt++;
-                            oCnt++;
-                            cNode.type = MergeType.Update;
-                        }
-                    }
-
-                }
-                else
-                {
-                    oCnt++;
-                    bCnt++;
-                    cNode = mergeTreeOld(bChild, oChild, diffs);
-                }
-
-                if (cNode != null)
-                    children.Add(cNode);
+                this.value = value;
+                this.children = children;
             }
-
-            MergeTreeNode nnode;
-            if (otree == null)
-                nnode = new MergeTreeNode(btree, children);
-            else
-                nnode = new MergeTreeNode(otree, children);
-
-            return nnode;
         }
 
-
-        public static MergeTreeNode mergeTree(SyntaxNode btree, SyntaxNode otree, List<Matching> diffs)
+        public static MergeTreeNode mergeTree(Tree<T> btree, Tree<T> otree, List<Matching<T>> diffs, Func<T, string> getLabel)
         {
             var children = new List<MergeTreeNode>();
-            var bChildren = btree.getChildrenEnum();
-            var oChildren = otree.getChildrenEnum();
+            var bChildren = btree.getChildren();
+            var oChildren = otree.getChildren();
 
             var bCnt = 0;
             var oCnt = 0;
 
             while (oCnt < oChildren.Count || bCnt < bChildren.Count)
             {
-                SyntaxNode bChild = bCnt < bChildren.Count ? bChildren[bCnt] : null;
-                SyntaxNode oChild = oCnt < oChildren.Count ? oChildren[oCnt] : null;
+                Tree<T> bChild = bCnt < bChildren.Count ? bChildren[bCnt] : null;
+                Tree<T> oChild = oCnt < oChildren.Count ? oChildren[oCnt] : null;
 
                 MergeTreeNode cNode = null;
-                if (oChild.getLabel() != bChild.getLabel()) 
+                if (oChild == null || bChild == null || getLabel(oChild.value) != getLabel(bChild.value))
                 {
                     // Base and other is diffferent. This is an update, a deletion or insert.
 
@@ -147,19 +54,19 @@ namespace SyntaxDiff
 
                     if (diff.isDeletion())
                     {
-                        cNode = mergeTree(bChild, null, diffs);
+                        cNode = mergeTree(bChild, null, diffs, getLabel);
                         bCnt++;
                         cNode.type = MergeType.Delete;
                     }
                     else if (diff.isInsertion())
                     {
-                        cNode = mergeTree(null, oChild, diffs);
+                        cNode = mergeTree(null, oChild, diffs, getLabel);
                         oCnt++;
                         cNode.type = MergeType.Insert;
                     }
                     else
                     { // An update
-                        cNode = mergeTree(bChild, oChild, diffs);
+                        cNode = mergeTree(bChild, oChild, diffs, getLabel);
                         bCnt++;
                         oCnt++;
                         cNode.type = MergeType.Update;
@@ -169,7 +76,7 @@ namespace SyntaxDiff
                 {   // A copy!
                     oCnt++;
                     bCnt++;
-                    cNode = mergeTree(bChild, oChild, diffs);
+                    cNode = mergeTree(bChild, oChild, diffs, getLabel);
                 }
 
                 children.Add(cNode);
@@ -177,110 +84,28 @@ namespace SyntaxDiff
 
             MergeTreeNode nnode;
             if (otree == null)
-                nnode = new MergeTreeNode(btree, children);
+                nnode = new MergeTreeNode(btree.value, children);
             else
-                nnode = new MergeTreeNode(otree, children);
+                nnode = new MergeTreeNode(otree.value, children);
 
             return nnode;
         }
 
-        public class MergeArguments
-        {
-            public SyntaxNode btree;
-            public SyntaxNode ltree;
-            public SyntaxNode rtree;
-            public List<Matching> ldiffs;
-            public List<Matching> rdiffs;
-
-            public MergeArguments(SyntaxNode btree, SyntaxNode ltree, SyntaxNode rtree, List<Matching> ldiffs, List<Matching> rdiffs)
-            {
-                this.btree = btree;
-                this.ltree = ltree;
-                this.rtree = rtree;
-                this.ldiffs = ldiffs;
-                this.rdiffs = rdiffs;
-            }
-        }
-
-        public static MergeTreeNode merge3Tree(MergeArguments a)
-        {
-            var children = new List<MergeTreeNode>();
-            var bChildren = a.btree.getChildrenEnum();
-            var lChildren = a.ltree.getChildrenEnum();
-            var rChildren = a.rtree.getChildrenEnum();
-
-            var bCnt = 0;
-            var lCnt = 0;
-            var rCnt = 0;
-
-            while (rCnt < rChildren.Count || lCnt < lChildren.Count || bCnt < bChildren.Count)
-            {
-                SyntaxNode bChild = bCnt < bChildren.Count ? bChildren[bCnt] : null;
-                SyntaxNode lChild = lCnt < lChildren.Count ? lChildren[lCnt] : null;
-                SyntaxNode rChild = rCnt < rChildren.Count ? rChildren[rCnt] : null;
-
-                MergeTreeNode cNode = null;
-
-                var leftToBaseEquals = lChild.getLabel() == bChild.getLabel();
-                var rightToBaseEquals = lChild.getLabel() == bChild.getLabel();
-
-                if (leftToBaseEquals && rightToBaseEquals)
-                {
-                    bCnt++; rCnt++; lCnt++;
-                    children.Add(merge3Tree(new MergeArguments(bChild, lChild, rChild, a.ldiffs, a.rdiffs)));
-                }
-                else if (leftToBaseEquals && !rightToBaseEquals)
-                {
-                    var diff = getMatchingForNodePair(a.ldiffs, bChild, lChild);
-
-                    UseMatching(diff, a, children, ref bCnt, ref lCnt, ref rCnt);
-                }
-
-
-                if (cNode != null)
-                    children.Add(cNode);
-            }
-            /*
-            MergeTreeNode nnode;
-            if (otree == null)
-                nnode = new MergeTreeNode(btree, children);
-            else
-                nnode = new MergeTreeNode(otree, children);
-
-            return nnode;*/
-            return null;
-        }
-
-        private static void UseMatching(Matching m, MergeArguments ma, List<MergeTreeNode> children, ref int bCnt, ref int thisCnt, ref int otherCnt)
-        {
-            if (m.isDeletion())
-            {
-                bCnt++;
-                otherCnt++;
-            }
-            else if (m.isInsertion())
-            {
-                thisCnt++;
-                children.Add(merge3Tree(ma));
-            }
-        }
-
-
         // TODO: Performance trouble
-        private static Matching getMatchingForNodePair(List<Matching> diffs, SyntaxNode bChild, SyntaxNode oChild)
+        private static Matching<T> getMatchingForNodePair(List<Matching<T>> diffs, Tree<T> bChild, Tree<T> oChild)
         {
             if (oChild == null)
-                return new Matching(bChild, null);
+                return new Matching<T>(bChild.value, default(T));
             if (bChild == null)
-                return new Matching(null, oChild);
+                return new Matching<T>(default(T), oChild.value);
 
-            var matching = diffs.SingleOrDefault(x => x.other == oChild && x.bas == null); // Insertion
-            
-            if(matching == null)
-                matching = diffs.SingleOrDefault(x => x.bas == bChild && x.other == null); // Deletion
+            var matching = diffs.SingleOrDefault(x => oChild.value.Equals(x.other) && x.bas == null); // Insertion
 
             if (matching == null)
-                matching = diffs.SingleOrDefault(x => x.bas == bChild && x.other == oChild); // Update or Copy
+                matching = diffs.SingleOrDefault(x => bChild.value.Equals(x.bas) && x.other == null); // Deletion
+
+            if (matching == null)
+                matching = diffs.SingleOrDefault(x => bChild.value.Equals(x.bas) && oChild.value.Equals(x.other)); // Update or Copy
 
             if (matching == null)
                 throw new Exception("This is wrong!");
@@ -288,12 +113,10 @@ namespace SyntaxDiff
             return matching;
         }
 
-        public static List<Matching> GetDiff(SyntaxTree btree, SyntaxTree otree)
+        public static List<Matching<T>> GetDiff(Tree<T> btree, Tree<T> otree, Func<T, string> getLabel)
         {
-            Func<SyntaxNode, string> getLabel = x => x.getLabel();
-            Func<SyntaxNode, IEnumerable<SyntaxNode>> getChildren = x => x.ChildNodes();
-            return JavaMatching<SyntaxNode>.getMapping(btree.GetRoot(), otree.GetRoot(), getLabel, getChildren).Select(x => new Matching(x)).ToList();
+            Func<Tree<T>, IEnumerable<Tree<T>>> getChildren = x => x.children;
+            return JavaMatching<T>.getMapping(btree, otree, getLabel);
         }
     }
 }
- 

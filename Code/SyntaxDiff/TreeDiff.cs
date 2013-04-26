@@ -23,10 +23,12 @@ namespace SyntaxDiff
             public MergeType type;
             public List<MergeTreeNode> children;
             public T value;
-            public MergeTreeNode(T value, List<MergeTreeNode> children)
+            public T compliment;
+            public MergeTreeNode(T value, T compliment, List<MergeTreeNode> children)
             {
                 this.value = value;
                 this.children = children;
+                this.compliment = compliment;
             }
         }
 
@@ -81,12 +83,12 @@ namespace SyntaxDiff
 
                 children.Add(cNode);
             }
-
+            var oNode = otree != null ? otree.value : default(T);
             MergeTreeNode nnode;
             if (otree == null)
-                nnode = new MergeTreeNode(btree.value, children);
+                nnode = new MergeTreeNode(btree.value, oNode, children);
             else
-                nnode = new MergeTreeNode(otree.value, children);
+                nnode = new MergeTreeNode(otree.value, oNode, children);
 
             return nnode;
         }
@@ -108,7 +110,7 @@ namespace SyntaxDiff
                 matching = diffs.SingleOrDefault(x => bChild.value.Equals(x.bas) && oChild.value.Equals(x.other)); // Update or Copy
 
             if (matching == null)
-                throw new Exception("This is wrong!");
+                return new Matching<T>(default(T), default(T));
 
             return matching;
         }

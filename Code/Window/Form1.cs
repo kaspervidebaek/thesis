@@ -42,8 +42,9 @@ namespace WindowApp
 
                 children.Add(vchild);
             }
-
-            return new TreeNode(getLabel(node), children.ToArray());
+            var n = new TreeNode(getLabel(node), children.ToArray());
+            n.Tag = node.value;
+            return n;
         }
 
         public void addTreeToView<T>(TreeView view, Tree<T> btree, Tree<T> otree, int pos, Func<T, string> getLabel, Func<TreeDiff<T>.MergeTreeNode, string> getLabelMt)
@@ -106,9 +107,11 @@ namespace WindowApp
             addTreeToView(leftTree, b, l, 0, getLabel, getLabelMt);
             addTreeToView(rightTree, b, r, 0, getLabel, getLabelMt);
 #else
-            var b = new Tree<string>("A", new Tree<string>("B", "X"), new Tree<string>("B", "X"), new Tree<string>("C", "Y"));
-            var l = new Tree<string>("A", new Tree<string>("C", "Y"), new Tree<string>("B", "X"));
-            var r = new Tree<string>("A", new Tree<string>("B", "X"));
+            var subsubstree = new Tree<string>("Y", "Z", "Z");
+            var subtree = new Tree<string>("B", subsubstree);
+            var b = new Tree<string>("A", new Tree<string>("C", subsubstree), subtree, subtree);
+            var l = new Tree<string>("A", subtree, new Tree<string>("C", subsubstree));
+            //var r = new Tree<string>("A", new Tree<string>("B", "X"));
 
             Func<string, string> getLabel = x => x;
             Func<TreeDiff<string>.MergeTreeNode, string> getLabelMt = x => getLabel(x.value);
@@ -116,9 +119,15 @@ namespace WindowApp
 
             addTreeToView(baseTree, b, b, 0, getLabel, getLabelMt);
             addTreeToView(leftTree, b, l, 0, getLabel, getLabelMt);
-            addTreeToView(rightTree, b, r, 0, getLabel, getLabelMt);
+            //addTreeToView(rightTree, b, r, 0, getLabel, getLabelMt);
 #endif
 
+        }
+
+        private void leftTree_AfterSelect(object sender, TreeViewEventArgs e)
+        {
+            // Determine by checking the Text property.
+            MessageBox.Show(((SyntaxNode)e.Node.Tag).ToString());
         }
     }
 }

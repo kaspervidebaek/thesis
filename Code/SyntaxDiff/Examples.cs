@@ -98,10 +98,7 @@ namespace SyntaxDiff
                 }");
 
 
-        public static SyntaxTree SmallBaseTree = SyntaxTree.ParseText(@"using System;
-                using System2.Linq;
-                namespace HelloWorld
-                {
+        public static SyntaxTree SmallBaseTree = SyntaxTree.ParseText(@"
                     class Program
                     {
                         static void Conflicts()
@@ -111,25 +108,19 @@ namespace SyntaxDiff
                             Console.WriteLine(""Hello, base!"");
                         }
                     }
-                }");
+                ");
 
-        public static SyntaxTree SmallLeftTree = SyntaxTree.ParseText(@"using System;
-                namespace HelloWorld2
-                {
+        public static SyntaxTree SmallLeftTree = SyntaxTree.ParseText(@"
                     class Program
                     {
                         static void Conflicts()
                         {
                             Console.WriteLine(""Hello, base!"");
                             var x = 2;
-                            Console.WriteLine(""Hello, base!"");
                         }
                     }
-                }");
-        public static SyntaxTree SmallRightTree = SyntaxTree.ParseText(@"using System;
-                using System.Linq;
-                namespace HelloWorld
-                {
+                ");
+        public static SyntaxTree SmallRightTree = SyntaxTree.ParseText(@"
                     class Program
                     {
                         static void Conflicts(string args)
@@ -137,7 +128,7 @@ namespace SyntaxDiff
                             Console.WriteLine(""Hello, new right World!"");
                         }
                     }
-                }");
+                ");
 
     }
 }

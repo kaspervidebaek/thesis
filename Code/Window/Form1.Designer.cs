@@ -45,6 +45,7 @@
             this.leftTree.Name = "leftTree";
             this.leftTree.Size = new System.Drawing.Size(421, 371);
             this.leftTree.TabIndex = 0;
+            this.leftTree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.leftTree_AfterSelect);
             // 
             // rightTree
             // 

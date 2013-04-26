@@ -10,6 +10,19 @@ using Microsoft.FSharp.Collections;
 
 namespace SyntaxDiff
 {
+    public class Matching : Matching<SyntaxNode>
+    {
+        public Matching(SyntaxNode bas, SyntaxNode other)
+            : base(bas, other)
+        {
+        }
+
+        public Matching(Matching<SyntaxNode> n)
+            : base(n.bas, n.other)
+        {
+        }
+    }
+
     public enum MergeType
     {
         None, Delete, Insert, Update
@@ -253,7 +266,7 @@ namespace SyntaxDiff
         }
 
 
-
+        // TODO: Performance trouble
         private static Matching getMatchingForNodePair(List<Matching> diffs, SyntaxNode bChild, SyntaxNode oChild)
         {
             if (oChild == null)
@@ -277,7 +290,10 @@ namespace SyntaxDiff
 
         public static List<Matching> GetDiff(SyntaxTree btree, SyntaxTree otree)
         {
-            return JavaMatching.GetDiff(btree, otree);
+            Func<SyntaxNode, string> getLabel = x => x.getLabel();
+            Func<SyntaxNode, IEnumerable<SyntaxNode>> getChildren = x => x.ChildNodes();
+            return JavaMatching<SyntaxNode>.getMapping(btree.GetRoot(), otree.GetRoot(), getLabel, getChildren).Select(x => new Matching(x)).ToList();
         }
     }
 }
+ 

@@ -68,17 +68,17 @@ namespace SyntaxDiff
         {
             // TODO: If there are conflicts - use syntax tree merge.
 
-            Action<List<String>, Chunk<String>> a = (output, chunk) => {
-                output.Add("// Conflict. Base: ---------");
-                output.AddRange(chunk.O);
-                output.Add("/* A: ----------------------");
-                output.AddRange(chunk.A);
-                output.Add("-- B: ----------------------");
-                output.AddRange(chunk.B);
-                output.Add("*/");
+            Func<List<string>, Chunk<string>, bool> conflictHandler = (output, chunk) =>
+            {
+                var mergedTree = TreeMerge.Merge(A, O, B);
+                output.Clear();
+                output.AddRange(LinesFromSyntax(mergedTree));
+
+                return true;
             };
-            
-            var merged = Diff3.Diff3<String>.Merge(LinesFromSyntax(A), LinesFromSyntax(O), LinesFromSyntax(B), (x, y) => x != null && y != null && x.Trim() == y.Trim(), a);
+            Func<string, string, bool> equality = (x, y) => x != null && y != null && x.ToString().Trim() == y.ToString().Trim();
+
+            var merged = Diff3.Diff3<string>.Merge(LinesFromSyntax(A), LinesFromSyntax(O), LinesFromSyntax(B), equality, conflictHandler);
             return merged.Select(x => x.ToString()).ToList();
         }
 

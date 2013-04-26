@@ -97,5 +97,45 @@ namespace SyntaxDiff
                     }
                 }");
 
+
+        public static SyntaxTree SmallBaseTree = SyntaxTree.ParseText(@"using System;
+                using System2.Linq;
+                namespace HelloWorld
+                {
+                    class Program
+                    {
+                        static void Conflicts()
+                        {
+                            Console.WriteLine(""Hello, base!"");
+                            Console.WriteLine(""Hello, base2!"");
+                        }
+                    }
+                }");
+
+        public static SyntaxTree SmallLeftTree = SyntaxTree.ParseText(@"using System;
+                namespace HelloWorld2
+                {
+                    class Program
+                    {
+                        static void Conflicts()
+                        {
+                            Console.WriteLine(""Hello, base!"");
+                            Console.WriteLine(""Hello, left!"");
+                        }
+                    }
+                }");
+        public static SyntaxTree SmallRightTree = SyntaxTree.ParseText(@"using System;
+                using System.Linq;
+                namespace HelloWorld
+                {
+                    class Program
+                    {
+                        static void Conflicts(string args)
+                        {
+                            Console.WriteLine(""Hello, new right World!"");
+                        }
+                    }
+                }");
+
     }
 }

@@ -8,7 +8,7 @@ namespace SyntaxDiff.Diff3
 {
     public class Tests
     {
-        private static void HandleConflict(List<String> mergedfile, Chunk<String> chunck)
+        private static bool HandleConflict(List<String> mergedfile, Chunk<String> chunck)
         {
             mergedfile.Add(">>> A");
             foreach (var line in chunck.A)
@@ -20,6 +20,8 @@ namespace SyntaxDiff.Diff3
             foreach (var line in chunck.B)
                 mergedfile.Add(line);
             mergedfile.Add("<<<");
+
+            return false;
         }
         public static void Test()
         {
@@ -73,7 +75,7 @@ namespace SyntaxDiff.Diff3
     public class Diff3<T>
     {
 
-        public static List<T> Merge(List<T> A, List<T> O, List<T> B, Func<T, T, bool> comparer, Action<List<T>, Chunk<T>> HandleConflict)
+        public static List<T> Merge(List<T> A, List<T> O, List<T> B, Func<T, T, bool> comparer, Func<List<T>, Chunk<T>, bool> HandleConflict)
         {
 
             var Ma = NeedlemanWunsch<T>.Allignment(A, O, comparer);
@@ -103,7 +105,7 @@ namespace SyntaxDiff.Diff3
                 else { // This is an update.
                     var AO = Chunk<T>.ChunkEqual(chunck.A, chunck.O, comparer);
                     var BO = Chunk<T>.ChunkEqual(chunck.B, chunck.O, comparer);
-                    //var AB = Chunk<T>.ChunkEqual(B, O, comparer);
+                    
                     if (AO && !BO)  // Updated B
                         foreach (var line in chunck.B)
                             mergedfile.Add(line);
@@ -112,7 +114,7 @@ namespace SyntaxDiff.Diff3
                             mergedfile.Add(line);
                     else
                     {
-                        if (Chunk<T>.ChunkEqual(chunck.A, chunck.B, comparer)) // Added exactly the same in both files. Just add one of them.
+                        if (Chunk<T>.ChunkEqual(chunck.A, chunck.B, comparer)) // Both branches added the exact same thing. Just add one of them.
                         {
                             foreach (var line in chunck.A)
                                 mergedfile.Add(line);
@@ -120,7 +122,8 @@ namespace SyntaxDiff.Diff3
                         else
                         {
                             // Conflict
-                            HandleConflict(mergedfile, chunck);
+                            if(HandleConflict(mergedfile, chunck))
+                                break;
                         }
                     }
                 }

@@ -76,9 +76,9 @@ namespace WindowApp
         {
             InitializeComponent();
 
-            var baseSyntax = Examples.baseTree;
-            var leftSyntax = Examples.leftTree;
-            var rightSyntax = Examples.rightTree;
+            var baseSyntax = Examples.SmallBaseTree;
+            var leftSyntax = Examples.SmallLeftTree;
+            var rightSyntax = Examples.SmallRightTree;
 
 
             var x = cntNode(Examples.smartAlgorithmTree.GetRoot());

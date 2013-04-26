@@ -8,11 +8,11 @@ using System.Threading.Tasks;
 namespace SyntaxDiff
 {
 
-    public class Matching
+    public class Matching<T>
     {
-        public SyntaxNode bas;
-        public SyntaxNode other;
-        public Matching(SyntaxNode bas, SyntaxNode other)
+        public T bas;
+        public T other;
+        public Matching(T bas, T other)
         {
             this.bas = bas;
             this.other = other;
@@ -30,6 +30,20 @@ namespace SyntaxDiff
             if (bas == null)
                 return true;
             return false;
+        }
+
+        public override string ToString()
+        {
+            if (bas is SyntaxNode)
+            {
+                var ba = bas as SyntaxNode;
+                var ot = other as SyntaxNode;
+                var b = ba == null ? "" : ba.GetText().ToString().Trim();
+                var o = ot == null ? "" : ot.GetText().ToString().Trim();
+
+                return b + "->" + o;
+            }
+            return base.ToString();
         }
     }
 

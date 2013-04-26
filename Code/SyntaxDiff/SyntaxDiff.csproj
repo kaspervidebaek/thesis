@@ -68,6 +68,7 @@
     <Compile Include="SetMatching.cs" />
     <Compile Include="SmartDiff.cs" />
     <Compile Include="TreeDiff.cs" />
+    <Compile Include="TreeMerge.cs" />
     <Content Include="CodeSnippets\SmartAlgorithm.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

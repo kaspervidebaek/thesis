@@ -11,8 +11,8 @@ namespace ConsoleApp
 
         static void Main(string[] args)
         {
-            var smartDiff = new Tests.SmartDiffTests();
-            smartDiff.TestExampleTree();
+/*            var smartDiff = new Tests.SmartDiffTests();
+            smartDiff.TestExampleTree();*/
 
             Console.ReadLine();
         }

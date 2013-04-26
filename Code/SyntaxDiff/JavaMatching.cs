@@ -9,32 +9,29 @@ using util;
 
 namespace SyntaxDiff
 {
-    class JavaMatching
+    public class JavaMatching<T>
     {
+
+
         static int treeId = 0;
-        private static LblTree JSyntaxNodeConvert(SyntaxNode node)
+        private static LblTree JSyntaxNodeConvert(T node, Func<T, string> getLabel, Func<T, IEnumerable<T>> getChildren)
         {
             //var cnode = new Diffing.Tree(NodetToLabel(node), node, ListModule.OfSeq(childNodes));
-            var cnode = new LblTree(node.getLabel(), treeId++);
+            var cnode = new LblTree(getLabel(node), treeId++);
             cnode.setUserObject(node);
 
-            foreach (var child in node.ChildNodes())
+            foreach (var child in getChildren(node))
             {
-                cnode.add(JSyntaxNodeConvert(child));
+                cnode.add(JSyntaxNodeConvert(child, getLabel, getChildren));
             }
 
             return cnode;
         }
 
-        private static LblTree JSyntaxTreeConvert(SyntaxTree tree)
+        public static List<Matching<T>> getMapping(T bas, T mod, Func<T, string> getLabel, Func<T, IEnumerable<T>> getChildren)
         {
-            return JSyntaxNodeConvert(tree.GetRoot());
-        }
-
-        public static List<Matching> GetDiff(SyntaxTree bas, SyntaxTree mod)
-        {
-            var t1 = JSyntaxTreeConvert(bas);
-            var t2 = JSyntaxTreeConvert(mod);
+            var t1 = JSyntaxNodeConvert(bas, getLabel, getChildren);
+            var t2 = JSyntaxNodeConvert(mod, getLabel, getChildren);
 
             RTED_InfoTree_Opt rted = new RTED_InfoTree_Opt(1, 1, 1);
             double dist = rted.nonNormalizedTreeDist(t1, t2);
@@ -44,10 +41,10 @@ namespace SyntaxDiff
             var mapping = rted.computeEditMapping().toArray().ToList().ConvertAll(x =>
             {
                 var m = (int[])x;
-                SyntaxNode element1 = m[0] != 0 ? (SyntaxNode)t1E[m[0] - 1].getUserObject() : null;
-                SyntaxNode element2 = m[1] != 0 ? (SyntaxNode)t2E[m[1] - 1].getUserObject() : null;
+                T element1 = m[0] != 0 ? (T)t1E[m[0] - 1].getUserObject() : default(T);
+                T element2 = m[1] != 0 ? (T)t2E[m[1] - 1].getUserObject() : default(T);
 
-                return new Matching(element1, element2);
+                return new Matching<T>(element1, element2);
             }
             );
 

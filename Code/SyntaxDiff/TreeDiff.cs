@@ -24,27 +24,29 @@ namespace SyntaxDiff
             public List<MergeTreeNode> children;
             public T value;
             public T compliment;
-            public MergeTreeNode(T value, T compliment, List<MergeTreeNode> children)
+            public int pos;
+            public MergeTreeNode(T value, T compliment, List<MergeTreeNode> children, int pos)
             {
+                this.pos = pos;
                 this.value = value;
                 this.children = children;
                 this.compliment = compliment;
             }
         }
 
-        public static MergeTreeNode mergeTree(Tree<T> btree, Tree<T> otree, List<Matching<T>> diffs, Func<T, string> getLabel)
+        public static MergeTreeNode mergeTree(Tree<T> btree, Tree<T> otree, List<Matching<T>> diffs, Func<T, string> getLabel, ref int i)
         {
             var children = new List<MergeTreeNode>();
             var bChildren = btree.getChildren();
             var oChildren = otree.getChildren();
 
-            var bCnt = 0;
-            var oCnt = 0;
+            var bCnt = bChildren.Count-1;
+            var oCnt = oChildren.Count-1;
 
-            while (oCnt < oChildren.Count || bCnt < bChildren.Count)
+            while (oCnt >= 0 || bCnt >= 0)
             {
-                Tree<T> bChild = bCnt < bChildren.Count ? bChildren[bCnt] : null;
-                Tree<T> oChild = oCnt < oChildren.Count ? oChildren[oCnt] : null;
+                Tree<T> bChild = bCnt >= 0 ? bChildren[bCnt] : null;
+                Tree<T> oChild = oCnt >= 0 ? oChildren[oCnt] : null;
 
                 MergeTreeNode cNode = null;
                 if (oChild == null || bChild == null || getLabel(oChild.value) != getLabel(bChild.value))
@@ -56,40 +58,43 @@ namespace SyntaxDiff
 
                     if (diff.isDeletion())
                     {
-                        cNode = mergeTree(bChild, null, diffs, getLabel);
-                        bCnt++;
+                        cNode = mergeTree(bChild, null, diffs, getLabel, ref i);
+                        bCnt--;
                         cNode.type = MergeType.Delete;
                     }
                     else if (diff.isInsertion())
                     {
-                        cNode = mergeTree(null, oChild, diffs, getLabel);
-                        oCnt++;
+                        cNode = mergeTree(null, oChild, diffs, getLabel, ref i);
+                        oCnt--;
                         cNode.type = MergeType.Insert;
                     }
                     else
                     { // An update
-                        cNode = mergeTree(bChild, oChild, diffs, getLabel);
-                        bCnt++;
-                        oCnt++;
+                        cNode = mergeTree(bChild, oChild, diffs, getLabel, ref i);
+                        bCnt--;
+                        oCnt--;
                         cNode.type = MergeType.Update;
                     }
                 }
                 else
                 {   // A copy!
-                    oCnt++;
-                    bCnt++;
-                    cNode = mergeTree(bChild, oChild, diffs, getLabel);
+                    oCnt--;
+                    bCnt--;
+                    cNode = mergeTree(bChild, oChild, diffs, getLabel, ref i);
                 }
 
                 children.Add(cNode);
             }
+            children.Reverse();
+
             var oNode = otree != null ? otree.value : default(T);
+            var bNode = btree != null ? btree.value : default(T);
             MergeTreeNode nnode;
             if (otree == null)
-                nnode = new MergeTreeNode(btree.value, oNode, children);
+                nnode = new MergeTreeNode(btree.value, oNode, children, i);
             else
-                nnode = new MergeTreeNode(otree.value, oNode, children);
-
+                nnode = new MergeTreeNode(otree.value, bNode, children, i);
+            i++;
             return nnode;
         }
 
@@ -101,6 +106,9 @@ namespace SyntaxDiff
             if (bChild == null)
                 return new Matching<T>(default(T), oChild.value);
 
+            var m1 = diffs.Where(x => oChild.value.Equals(x.other)).ToList();
+            var m2 = diffs.Where(x => bChild.value.Equals(x.bas)).ToList();
+
             var matching = diffs.SingleOrDefault(x => oChild.value.Equals(x.other) && x.bas == null); // Insertion
 
             if (matching == null)
@@ -111,6 +119,7 @@ namespace SyntaxDiff
 
             if (matching == null)
                 return new Matching<T>(default(T), default(T));
+               // throw new Exception("Reordering exception");
 
             return matching;
         }

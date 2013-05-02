@@ -13,7 +13,7 @@ namespace SyntaxDiff
 
     public enum MergeType
     {
-        None, Delete, Insert, Update
+        None, Delete, Insert, Update, WTF
     }
 
     public class TreeDiff<T>
@@ -34,19 +34,84 @@ namespace SyntaxDiff
             }
         }
 
+        // TODO: Performance trouble
+        private static Matching<T> getMatchin(List<Matching<T>> diffs, Tree<T> bChild, Tree<T> oChild)
+        {
+            var matching = diffs.Where(node =>
+                (Object.ReferenceEquals(bChild.value, node.bas) && oChild == null) ||
+                (Object.ReferenceEquals(oChild.value, node.other) && bChild == null) ||
+                (Object.ReferenceEquals(bChild.value, node.bas) && Object.ReferenceEquals(oChild.value, node.other))).ToList();
+
+
+            return matching.First();
+        }
+
+        public static Tree<Matching<T>> getMatchingTree(Tree<T> btree, Tree<T> otree, Func<T, string> getLabel)
+        {
+            int i = 0;
+            var diff = JavaMatching<T>.getMapping(btree, otree, getLabel);
+            return getMatchingTreeInner(btree, otree, diff, getLabel);
+        }
+
+        public static Tree<Matching<T>> getMatchingTreeInner(Tree<T> btree, Tree<T> otree, List<Matching<T>> diffs, Func<T, string> getLabel)
+        {
+
+            var children = new List<Tree<Matching<T>>>();
+
+            var bChildren = btree.getChildren();
+            var oChildren = otree.getChildren();
+
+            var bCnt = 0;
+            var oCnt = 0;
+
+            while (oCnt < oChildren.Count || bCnt < bChildren.Count)
+            {
+                Tree<T> bChild = bCnt < bChildren.Count ? bChildren[bCnt] : null;
+                Tree<T> oChild = oCnt < oChildren.Count ? oChildren[oCnt] : null;
+
+                var diff = getMatchin(diffs, bChild, oChild);
+
+                children.Add(getMatchingTreeInner(bChild, oChild, diffs, getLabel));
+
+                if (diff.bas == null && diff.other != null) // Insertion
+                {
+                    oCnt++;
+                }
+                else if (diff.other == null && diff.bas != null) // Deletion
+                {
+                    bCnt++;
+                }
+                else
+                {
+                    oCnt++;
+                    bCnt++;
+                }
+            }
+
+            var d = getMatchin(diffs, btree, otree);
+
+            var matchTree = new Tree<Matching<T>>(d, children.ToArray());
+
+            return matchTree;
+
+
+
+
+        }
+
         public static MergeTreeNode mergeTree(Tree<T> btree, Tree<T> otree, List<Matching<T>> diffs, Func<T, string> getLabel, ref int i)
         {
             var children = new List<MergeTreeNode>();
             var bChildren = btree.getChildren();
             var oChildren = otree.getChildren();
 
-            var bCnt = bChildren.Count-1;
-            var oCnt = oChildren.Count-1;
+            var bCnt = 0;
+            var oCnt = 0;
 
-            while (oCnt >= 0 || bCnt >= 0)
+            while (oCnt < oChildren.Count || bCnt < bChildren.Count)
             {
-                Tree<T> bChild = bCnt >= 0 ? bChildren[bCnt] : null;
-                Tree<T> oChild = oCnt >= 0 ? oChildren[oCnt] : null;
+                Tree<T> bChild = bCnt < bChildren.Count ? bChildren[bCnt] : null;
+                Tree<T> oChild = oCnt < oChildren.Count ? oChildren[oCnt] : null;
 
                 MergeTreeNode cNode = null;
                 if (oChild == null || bChild == null || getLabel(oChild.value) != getLabel(bChild.value))
@@ -56,36 +121,43 @@ namespace SyntaxDiff
                     // Find the corresponding diff.
                     var diff = getMatchingForNodePair(diffs, bChild, oChild);
 
-                    if (diff.isDeletion())
+                    if (diff == null )
+                    {
+                        cNode = new MergeTreeNode(default(T), default(T), new List<MergeTreeNode>(), 0);
+                        bCnt++;
+                        oCnt++;
+                        cNode.type = MergeType.WTF;
+                    }
+                    else if (diff.isDeletion())
                     {
                         cNode = mergeTree(bChild, null, diffs, getLabel, ref i);
-                        bCnt--;
+                        bCnt++;
                         cNode.type = MergeType.Delete;
                     }
                     else if (diff.isInsertion())
                     {
                         cNode = mergeTree(null, oChild, diffs, getLabel, ref i);
-                        oCnt--;
+                        oCnt++;
                         cNode.type = MergeType.Insert;
                     }
                     else
                     { // An update
                         cNode = mergeTree(bChild, oChild, diffs, getLabel, ref i);
-                        bCnt--;
-                        oCnt--;
+                        bCnt++;
+                        oCnt++;
                         cNode.type = MergeType.Update;
                     }
                 }
                 else
                 {   // A copy!
-                    oCnt--;
-                    bCnt--;
+                    oCnt++;
+                    bCnt++;
                     cNode = mergeTree(bChild, oChild, diffs, getLabel, ref i);
                 }
 
                 children.Add(cNode);
             }
-            children.Reverse();
+            //children.Reverse();
 
             var oNode = otree != null ? otree.value : default(T);
             var bNode = btree != null ? btree.value : default(T);
@@ -94,7 +166,9 @@ namespace SyntaxDiff
                 nnode = new MergeTreeNode(btree.value, oNode, children, i);
             else
                 nnode = new MergeTreeNode(otree.value, bNode, children, i);
+
             i++;
+
             return nnode;
         }
 
@@ -118,8 +192,8 @@ namespace SyntaxDiff
                 matching = diffs.SingleOrDefault(x => bChild.value.Equals(x.bas) && oChild.value.Equals(x.other)); // Update or Copy
 
             if (matching == null)
-                return new Matching<T>(default(T), default(T));
-               // throw new Exception("Reordering exception");
+                return null;
+                //throw new Exception("Reordering exception");
 
             return matching;
         }

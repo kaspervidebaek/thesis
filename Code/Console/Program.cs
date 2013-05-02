@@ -13,22 +13,32 @@ namespace ConsoleApp
 
         static void Main(string[] args)
         {
+            //Console.ReadLine();
+            var x = new Tests.SmartDiffTests();
+            x.TestTreeMatching();
+            //Console.ReadLine();
+            return;
+
 #if false
             var bas = new Tree<string>("A", new Tree<string>("B", "X"), new Tree<string>("C", "Y"));
             var other = new Tree<string>("A", new Tree<string>("I", "X"), new Tree<string>("K", "Y"));
 #elif false
             var bas = new Tree<string>("A", new Tree<string>("B"), new Tree<string>("C"));
             var other = new Tree<string>("A", new Tree<string>("C"), new Tree<string>("B"));
-#elif true
+#elif false
             var bas = new Tree<string>("A", new Tree<string>("B", "X"), new Tree<string>("B", "X"), new Tree<string>("C", "Y"));
             var other = new Tree<string>("A", new Tree<string>("C", "Y"), new Tree<string>("B", "X"));
-#else
+#elif false
             var bas = new Tree<string>("A", new Tree<string>("B", "X"), new Tree<string>("C", "Y"));
             var other = new Tree<string>("A", new Tree<string>("C", "Y"), new Tree<string>("B", "X"));
 #endif
+            /*
+            var b = new Tree<int?>(4, new Tree<int?>(3), new Tree<int?>(7), new Tree<int?>(2, 1, 0));
+            var l = new Tree<int?>(4, new Tree<int?>(3), new Tree<int?>(10, 1, 0), 9);
 
-            Func<Tree<string>, string> getLabel = x => x.value;
-
+            Func<int?, string> getLabel = x => x.ToString();
+            JavaMatching<int?>.getMappingTree(b, l, getLabel);
+            */
             //var mapping = SyntaxDiff.JavaMatching<string>.getMapping(bas, other, getLabel);
 
             //mapping.ForEach(Console.WriteLine);

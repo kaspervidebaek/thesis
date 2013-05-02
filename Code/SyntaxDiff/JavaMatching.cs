@@ -38,7 +38,8 @@ namespace SyntaxDiff
             var t1E = java.util.Collections.list(t1.postorderEnumeration()).toArray().ToList().ConvertAll(x => (util.LblTree)x);
             var t2E = java.util.Collections.list(t2.postorderEnumeration()).toArray().ToList().ConvertAll(x => (util.LblTree)x);
 
-            var mapping = rted.computeEditMapping().toArray().ToList().ConvertAll(x =>
+            var map = rted.computeEditMapping().toArray().ToList();
+            var mapping = map.ConvertAll(x =>
                 {
                     var m = (int[])x;
                     T element1 = m[0] != 0 ? (T)t1E[m[0] - 1].getUserObject() : default(T);
@@ -48,7 +49,59 @@ namespace SyntaxDiff
                 }
             );
 
+
             return mapping;
+        }
+
+        class TreeWithMatching
+        {
+           public T tree;
+           public Matching<T> matching;
+           public override string ToString()
+           {
+
+               return "(" + tree.ToString() +  "," + matching.ToString() + ")";
+           }
+        }
+
+        public static Tree<Matching<T>> getMappingTree(Tree<T> bas, Tree<T> mod, Func<T, string> getLabel)
+        {
+            var basTreeConverted = bas.Convert(x => new TreeWithMatching { tree = x });
+            var modTreeConverted = mod.Convert(x => new TreeWithMatching { tree = x });
+
+            var basIt = basTreeConverted.PostOrderEnumeration();
+            var modIt = modTreeConverted.PostOrderEnumeration();
+
+            var mapping = JavaMatching<T>.getMapping(bas, mod, getLabel);
+
+            var bCnt = 0;
+            var oCnt = 0;
+
+            foreach (var map in mapping)
+            {
+
+                if (map.other == null)
+                {
+                    modIt[oCnt].matching = map;
+                    oCnt++;
+                }
+                else if (map.bas == null)
+                {
+                    basIt[bCnt].matching = map;
+                    bCnt++;
+                }
+                else
+                {
+                    basIt[bCnt].matching = map;
+                    modIt[oCnt].matching = map;
+                    oCnt++;
+                    bCnt++;
+                }
+            }
+
+
+
+            return null;
         }
 
     }

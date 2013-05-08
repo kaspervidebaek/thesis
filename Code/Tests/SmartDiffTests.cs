@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Roslyn.Compilers.CSharp;
 using System.Linq;
 using SyntaxDiff;
+using System.Diagnostics;
 
 namespace Tests
 {
@@ -16,22 +17,31 @@ namespace Tests
         }
 
         [TestMethod]
+        [TestCategory("Tree")]
+
         public void TestTreeMatching()
         {
-            var left = SyntaxDiff.Examples.flowAlgorithm.GetRoot();
-            var bas = SyntaxDiff.Examples.flowAlgorithm.GetRoot();
+            var left = SyntaxDiff.Examples.leftTree.GetRoot();
+            var bas = SyntaxDiff.Examples.leftTree.GetRoot();
 
             var treeL = convert(left);
             var treeB = convert(bas);
+            Console.WriteLine("Left size: " + treeL.Size());
+            Console.WriteLine("Base size: " + treeB.Size());
 
+            var t = new Stopwatch();
+            t.Start();
             var merge = JavaMatching<SyntaxNode>.getMapping(treeB, treeL, x => x.getLabel());
+            t.Stop();
+            Console.WriteLine("Time: " + t.Elapsed.ToString());
 
-            merge.ForEach(Console.WriteLine);
+            //merge.ForEach(Console.WriteLine);
 
 
         }
 
         [TestMethod]
+        [TestCategory("Tree")]
         public void TestExampleTree()
         {
             var left = SyntaxDiff.Examples.leftTree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>().First();

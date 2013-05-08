@@ -65,6 +65,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Reorder.cs" />
     <Compile Include="SetMatching.cs" />
     <Compile Include="SmartDiff.cs" />
     <Compile Include="Tree.cs" />

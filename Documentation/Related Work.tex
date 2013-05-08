@@ -104,17 +104,16 @@ Tree matching will still have a cubic running time on the amount of nodes, howev
 This leaves us with three questions that are open for discussions.
 
 \subsubsection{Three-way cost matching}
-Bipartite matching with costs can be solved in cubic time, using flow-graphs. Our overall approach for matching the functions sets $(l_1, l_2, ..., l_{size(l)})$, $(b_1, b_2, ..., b_{size(b)})$ and $(r_1, r_2, ..., r_{size(r)})$ will be to do a bipartite matching between the pairs $(b, l)$ and $(b, r)$.
+Matching the members $(l_1, l_2, ..., l_{size(l)})$, $(b_1, b_2, ..., b_{size(b)})$ and $(r_1, r_2, ..., r_{size(r)})$ will be done by making a bipartite matching between the pairs $(b, l)$ and $(b, r)$, and afterwards matching the matching on the base items.
 
-There will be no guarantee that the different function sets are equal in size, or even that a similarity function will produce an edge between two nodes. 
+Finding a perfect bipartite matching with minimum costs can be solved in cubic time by \citet{bipartitecost}. This works if one is given equal size sets, and given the assumption that a perfect matching exists.
 
-Therefore we need to modify bipartite cost matching a little. Given the function that takes two equal size sets (xs, ys) and returns a matching of all the elements.
+There will be no guarantee that the different function sets are equal in size, or even that a similarity function will produce an edge between two nodes. This means there will be no guarantee for a possible perfect matching in the input. 
 
-\todo[inline]{Write about aux. nodes}
+Therefore we will redefine the algorithm such that it only runs as long as a path exists between source and sink in the residual graph. All remaining items not in the matching will generate matching of either $(x, \epsilon)$ or $(\epsilon, y)$ in the output.
 
-The end condition will be modified to when there exists no path between source and sink. All remaining items not in the matching will generate matching of either $(x, \epsilon)$ or $(\epsilon, y)$ and that entire matching will be returned.
+Given the left to base and right to base matching, we will do another unordered matching on the base-items.
 
-Given these two matchings, we will do another unordered matching between the outputted matching, where will match on the $b$-items being equal.
 \todo[inline]{We could probably just sort them after $b$-items, and then do an ordered matching.}
 
 An over approximation of the running time here will be  $3*max(x, y, z)^3$.

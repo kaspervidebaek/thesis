@@ -3,6 +3,7 @@ using SyntaxDiff;
 using System.Linq;
 using System.Collections.Generic;
 using Roslyn.Compilers.CSharp;
+using System.Diagnostics;
 
 namespace ConsoleApp
 {
@@ -13,10 +14,9 @@ namespace ConsoleApp
 
         static void Main(string[] args)
         {
-            //Console.ReadLine();
             var x = new Tests.SmartDiffTests();
-            x.TestTreeMatching();
-            //Console.ReadLine();
+            x.TestExampleTree();
+            Console.ReadLine();
             return;
 
 #if false

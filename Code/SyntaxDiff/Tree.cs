@@ -62,6 +62,11 @@ namespace SyntaxDiff
             return rv;
         }
 
+        public int Size()
+        {
+            return 1 + children.Select(x => x.Size()).Sum();
+        }
+
         /*
         public static implicit operator Tree<T>(T i)
         {

@@ -10,16 +10,6 @@ using QuickGraph.Graphviz;
 
 namespace SyntaxDiff
 {
-
-    public class GMTests {
-        public static void Test() {
-
-
-
-
-        }
-    }
-
     public class GraphMatching<X, Y>
     {
         public static int cnt = 0;

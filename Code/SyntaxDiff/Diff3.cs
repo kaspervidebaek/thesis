@@ -72,7 +72,7 @@ namespace SyntaxDiff.Diff3
     }
 
     
-    public class Diff3<T>
+    public class Diff3<T> where T: class
     {
 
         public static List<T> Merge(List<T> A, List<T> O, List<T> B, Func<T, T, bool> comparer, Func<List<T>, Chunk<T>, bool> HandleConflict)
@@ -130,8 +130,6 @@ namespace SyntaxDiff.Diff3
             }
             return mergedfile;
         }
-
-
 
         private static List<Chunk<T>> getChunks(List<SyntaxDiff.SmartDiff.Diff<T>> totalMatch, Func<T, T, bool> comparer)
         {

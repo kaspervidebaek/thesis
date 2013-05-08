@@ -11,6 +11,7 @@ namespace Tests
     {
     
         [TestMethod]
+        [TestCategory("GraphMatching")]
         public void TestTotalMatch()
         {
             var xs = new List<int?>(new int?[] { 1, 2, 7 });
@@ -28,6 +29,7 @@ namespace Tests
         }
 
         [TestMethod]
+        [TestCategory("GraphMatching")]
         public void TestMissingYs()
         {
             var xs = new List<int?>(new int?[] { 1, 2, 3 });
@@ -45,6 +47,8 @@ namespace Tests
         }
 
         [TestMethod]
+        [TestCategory("GraphMatching")]
+
         public void TestMissingXs()
         {
             var xs = new List<int?>(new int?[] { 1, 2 });
@@ -61,6 +65,8 @@ namespace Tests
         }
 
         [TestMethod]
+        [TestCategory("GraphMatching")]
+
         public void TestNoLinks()
         {
             var xs = new List<int?>(new int?[] { 10, 11 });
@@ -72,6 +78,8 @@ namespace Tests
 
         }
         [TestMethod]
+        [TestCategory("GraphMatching")]
+
         public void TestNullMatch()
         {
             var xs = new List<string>(new string[] { "1", "2", "3" }); // Use string to force out nullpointer exceptions
@@ -91,6 +99,8 @@ namespace Tests
         }
 
         [TestMethod]
+        [TestCategory("GraphMatching")]
+
         public void TestMinMatching()
         {
             var xs = new List<int>(new int[] { 1, 2, 7 });

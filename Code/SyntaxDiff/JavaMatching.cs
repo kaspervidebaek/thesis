@@ -34,7 +34,10 @@ namespace SyntaxDiff
             var t2 = JSyntaxNodeConvert(mod, getLabel);
 
             RTED_InfoTree_Opt rted = new RTED_InfoTree_Opt(1, 1, 1);
+
             double dist = rted.nonNormalizedTreeDist(t1, t2);
+
+
             var t1E = java.util.Collections.list(t1.postorderEnumeration()).toArray().ToList().ConvertAll(x => (util.LblTree)x);
             var t2E = java.util.Collections.list(t2.postorderEnumeration()).toArray().ToList().ConvertAll(x => (util.LblTree)x);
 

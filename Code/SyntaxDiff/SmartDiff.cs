@@ -11,7 +11,7 @@ namespace SyntaxDiff
 {
     public class SmartDiff
     {
-        public class Diff<T>
+        public class Diff<T> where T : class
         {
             public T A;
             public T O;
@@ -26,7 +26,10 @@ namespace SyntaxDiff
 
             public override string ToString()
             {
-                return "A:" + A + " O:" + O + " B:" + B;
+                var a = A == default(T) ? "-" : A.ToString();
+                var o = O == default(T) ? "-" : O.ToString();
+                var b = B == default(T) ? "-" : B.ToString();
+                return "A:{" + a + "} O:{" + o + "} B:{" + b + "}";
             }
         }
 
@@ -67,7 +70,7 @@ namespace SyntaxDiff
         private static List<string> SequenceMerge(SyntaxNode A, SyntaxNode O, SyntaxNode B)
         {
             // TODO: If there are conflicts - use syntax tree merge.
-
+#if false
             Func<List<string>, Chunk<string>, bool> conflictHandler = (output, chunk) =>
             {
                 var mergedTree = TreeMerge.Merge(A, O, B);
@@ -76,11 +79,26 @@ namespace SyntaxDiff
 
                 return true;
             };
+#else
+            Func<List<String>, Chunk<String>, bool> conflictHandler = (output, chunk) =>
+            {
+                output.Add("// Conflict. Base: ---------");
+                output.AddRange(chunk.O);
+                output.Add("/* A: ----------------------");
+                output.AddRange(chunk.A);
+                output.Add("-- B: ----------------------");
+                output.AddRange(chunk.B);
+                output.Add("*/");
+                return false;
+            };
+#endif
+
             Func<string, string, bool> equality = (x, y) => x != null && y != null && x.ToString().Trim() == y.ToString().Trim();
 
             var merged = Diff3.Diff3<string>.Merge(LinesFromSyntax(A), LinesFromSyntax(O), LinesFromSyntax(B), equality, conflictHandler);
             return merged.Select(x => x.ToString()).ToList();
         }
+
 
         private static List<string> SetMerge(SyntaxNode A, SyntaxNode O, SyntaxNode B)
         {
@@ -88,9 +106,7 @@ namespace SyntaxDiff
 
             if (A is ClassDeclarationSyntax && O is ClassDeclarationSyntax && B is ClassDeclarationSyntax)
             {
-                var aR = A as ClassDeclarationSyntax;
-                var oR = O as ClassDeclarationSyntax;
-                var bR = B as ClassDeclarationSyntax;
+                var Or = O as ClassDeclarationSyntax;
 
                 var Ac = A.ChildNodes().Select(x => (MemberDeclarationSyntax)x).ToList();
                 var Oc = O.ChildNodes().Select(x => (MemberDeclarationSyntax)x).ToList();
@@ -119,8 +135,10 @@ namespace SyntaxDiff
                                                     return null;
                                                 }).Select(u => new Diff<MemberDeclarationSyntax>(u.Item1, u.Item2)).ToList() ;
 
-                var updateMember = new Dictionary<MemberDeclarationSyntax, MemberDeclarationSyntax>();
-                var addMembers = new List<MemberDeclarationSyntax>();
+                /*var updateMember = new Dictionary<MemberDeclarationSyntax, MemberDeclarationSyntax>();
+                var addMembers = new List<MemberDeclarationSyntax>();*/
+                var members = new List<Tuple< Diff<MemberDeclarationSyntax>, MemberDeclarationSyntax>>();
+
 
                 foreach (var m in totalMatch)
                 {
@@ -133,27 +151,30 @@ namespace SyntaxDiff
 
                         var child = (MemberDeclarationSyntax)tree.GetRoot().ChildNodes().First();
 
-                        updateMember.Add(m.O, child);
+                        members.Add(Tuple.Create(m, child));
                     }
                     else if (m.A == null && m.O == null && m.B != null) // Function only exists in B - Inserted
                     {
-                        addMembers.Add(m.B);
+                        members.Add(Tuple.Create(m, m.B));
                     }
                     else if (m.A != null && m.O == null && m.B == null) // Function only exists in A - Inserted
                     {
-                        addMembers.Add(m.A);
+                        members.Add(Tuple.Create(m, m.A));
                     }
                     else
                         throw new NotImplementedException();
                 }
 
-                var merged = oR.ReplaceNodes(updateMember.Keys.AsEnumerable(), (n1, n2) =>
-                {
-                    return updateMember[n1];
-                }).AddMembers(addMembers.ToArray());
+                var newAc = Ac.Select(a => members.First(x => x.Item1.A == a).Item2).ToList(); // TODO: Performance
+                var newOc = Oc.Select(o => members.First(x => x.Item1.O == o).Item2).ToList();
+                var newBc = Bc.Select(b => members.First(x => x.Item1.B == b).Item2).ToList();
 
+                var reordered = Reorder<MemberDeclarationSyntax>.OrderLists(newAc, newOc, newBc);
+                var memberList = new SyntaxList<MemberDeclarationSyntax>().Add(reordered.ToArray());
 
-                return LinesFromSyntax(merged);
+                var rv = Syntax.ClassDeclaration(Or.AttributeLists, Or.Modifiers, Or.Identifier, Or.TypeParameterList, Or.BaseList, Or.ConstraintClauses, memberList);
+
+                return LinesFromSyntax(rv);
             }
 
             throw new NotImplementedException();

@@ -172,6 +172,7 @@ namespace SyntaxDiff
                 var reordered = Reorder<MemberDeclarationSyntax>.OrderLists(newAc, newOc, newBc);
                 var memberList = new SyntaxList<MemberDeclarationSyntax>().Add(reordered.ToArray());
 
+                // TODO: Merge all other class identifeirs too.
                 var rv = Syntax.ClassDeclaration(Or.AttributeLists, Or.Modifiers, Or.Identifier, Or.TypeParameterList, Or.BaseList, Or.ConstraintClauses, memberList);
 
                 return LinesFromSyntax(rv);

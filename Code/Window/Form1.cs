@@ -20,11 +20,6 @@ namespace WindowApp
         }
 
 
-        public static Tree<SyntaxNode> convert(SyntaxNode n)
-        {
-            var children = n.ChildNodes().Select(x => convert(x)).ToArray();
-            return new Tree<SyntaxNode>(n, children);
-        }
 
         public static TreeNode buildTree<T>(Tree<Matching<T>> node, Func<T, string> getLabel)
         {
@@ -53,7 +48,8 @@ namespace WindowApp
 
                 children.Add(vchild);
             }
-            var n = new TreeNode(getLabel(node.value.bas), children.ToArray());
+            var val = node.value.bas != null ? node.value.bas : node.value.other;
+            var n = new TreeNode(getLabel(val), children.ToArray());
             n.Tag = node;
             return n;
         }
@@ -124,9 +120,9 @@ namespace WindowApp
 
             Func<SyntaxNode, string> getLabel = x => x.getLabel();
 
-            var b = convert(baseSyntax.GetRoot());
-            var l = convert(leftSyntax.GetRoot());
-            var r = convert(rightSyntax.GetRoot());
+            var b = baseSyntax.GetRoot().ConvertToTree();
+            var l = leftSyntax.GetRoot().ConvertToTree();
+            var r = rightSyntax.GetRoot().ConvertToTree();
 
             //            addTreeToView(baseTree, b, b, 0, getLabel, getLabelMt);
             addTreeToView(leftTree, b, l, 0, getLabel);

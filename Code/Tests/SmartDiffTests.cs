@@ -51,8 +51,22 @@ namespace Tests
             var merge = SyntaxDiff.SmartDiff.Merge(left, bas, right);
 
             merge.ForEach(Console.WriteLine);
+        }
 
+        [TestMethod]
+        [TestCategory("Tree")]
+        public void TestExampleTreeMerge()
+        {
+            var left = SyntaxDiff.Examples.leftTree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>().First().ConvertToTree();
+            var bas = SyntaxDiff.Examples.baseTree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>().First().ConvertToTree();
+            var right = SyntaxDiff.Examples.rightTree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>().First().ConvertToTree();
 
+            Func<SyntaxNode, SyntaxNode, bool> equals = (x, y) => x.getLabel() == y.getLabel();
+
+            
+            var merge = Tree<SyntaxNode>.TreeWayMatch(left, bas, right, equals);
+
+            //merge.ForEach(Console.WriteLine);
         }
     }
 }

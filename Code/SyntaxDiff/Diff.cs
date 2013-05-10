@@ -19,6 +19,13 @@ namespace SyntaxDiff
             B = Item2 == null ? default(T) : Item2.Item1;
         }
 
+        public Diff(Matching<T> Item1, Matching<T> Item2)
+        {
+            A = Item1 == null ? default(T) : Item1.other;
+            O = Item1 == null ? Item2.bas : Item1.bas;
+            B = Item2 == null ? default(T) : Item2.other;
+        }
+
         public override string ToString()
         {
             var a = A.Equals(default(T)) ? "-" : A.ToString();

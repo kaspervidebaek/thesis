@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Roslyn.Compilers.CSharp;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -79,13 +80,15 @@ namespace SyntaxDiff
             }
         }
 
-        public static Tree<Diff<T>> TreeWayMatch( Tree<T> A, Tree<T> O, Tree<T> B, Func<T, string> getLabelT)
+        public static Tree<Diff<T>> TreeWayMatch(Tree<T> A, Tree<T> O, Tree<T> B, Func<T, T, bool> equals)
         {
-            /*var ao = Match(O, A, getLabelT);
-            var ob = Match(O, B, getLabelT);
+            var ao = Match(O, A, equals);
+            var ob = Match(O, B, equals);
 
-            var match = Tree<Matching<T>>.Match(ao, ob, 
-            */
+            var match = Tree<Matching<T>>.Match(ao, ob, (x, y) => x.bas != null && y.bas != null && Object.ReferenceEquals(x.bas, y.bas)).Convert(x => new Diff<T>(x.bas, x.other));
+
+            var itt = match.PostOrderEnumeration();
+
             return null;
         }
 
@@ -97,8 +100,9 @@ namespace SyntaxDiff
             var basIt = basTreeConverted.PostOrderEnumeration();
             var modIt = modTreeConverted.PostOrderEnumeration();
 
-            Func<TreeWithMatching, TreeWithMatching, bool> e = (x, y) => {
-               return equals(x.tree, y.tree);
+            Func<TreeWithMatching, TreeWithMatching, bool> e = (x, y) =>
+            {
+                return equals(x.tree, y.tree);
             };
 
             var matches = NeedlemanWunsch<TreeWithMatching>.Allignment(basIt, modIt, e);
@@ -186,6 +190,14 @@ namespace SyntaxDiff
 
     public static class TreeExtensions
     {
+
+        public static Tree<SyntaxNode> ConvertToTree(this SyntaxNode n)
+        {
+            var children = n.ChildNodes().Select(x => x.ConvertToTree()).ToArray();
+            return new Tree<SyntaxNode>(n, children);
+        }
+
+
         public static List<Tree<T>> getChildren<T>(this Tree<T> c)
         {
             if (c != null)

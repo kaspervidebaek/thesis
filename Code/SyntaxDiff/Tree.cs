@@ -80,16 +80,49 @@ namespace SyntaxDiff
             }
         }
 
+
+        public static Tree<T> Merge(Tree<T> A, Tree<T> O, Tree<T> B, Func<T, T, bool> equals)
+        {
+            var diff = Tree<T>.TreeWayMatch(A, O, B, equals);
+
+
+            return MergeDiff(diff) ;
+        }
+
+
+
+        public static Tree<T> MergeDiff(Tree<Diff<T>> diffs)
+        {
+            var children = new List<Tree<T>>();
+            foreach (var diff in diffs.children)
+            {
+                var merge = MergeDiff(diff);
+                if (merge != null)
+                    children.Add(merge);
+            }
+
+            if (diffs.value.O == null)
+            {
+                if (diffs.value.A != null)
+                    return new Tree<T>(diffs.value.A, children.ToArray());
+                if (diffs.value.B != null)
+                    return new Tree<T>(diffs.value.B, children.ToArray());
+            }
+            else if(diffs.value.A != null && diffs.value.B != null )
+            {
+                return new Tree<T>(diffs.value.O, children.ToArray());
+            }
+
+            return null;
+        }
         public static Tree<Diff<T>> TreeWayMatch(Tree<T> A, Tree<T> O, Tree<T> B, Func<T, T, bool> equals)
         {
             var ao = Match(O, A, equals);
             var ob = Match(O, B, equals);
 
-            var match = Tree<Matching<T>>.Match(ao, ob, (x, y) => x.bas != null && y.bas != null && Object.ReferenceEquals(x.bas, y.bas)).Convert(x => new Diff<T>(x.bas, x.other));
+            var match = Tree<Matching<T>>.Match(ao, ob, (x, y) => x.bas != null && y.bas != null && equals(x.bas, y.bas)).Convert(x => new Diff<T>(x.bas, x.other)); // TODO: Examine why we nede to write equals here instead of Object.referenceequals
 
-            var itt = match.PostOrderEnumeration();
-
-            return null;
+            return match;
         }
 
         public static Tree<Matching<T>> Match(Tree<T> bas, Tree<T> mod, Func<T, T, bool> equals)

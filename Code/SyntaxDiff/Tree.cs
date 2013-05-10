@@ -79,7 +79,17 @@ namespace SyntaxDiff
             }
         }
 
-        public static Tree<Matching<T>> Match(Tree<T> bas, Tree<T> mod, Func<T, string> getLabelT)
+        public static Tree<Diff<T>> TreeWayMatch( Tree<T> A, Tree<T> O, Tree<T> B, Func<T, string> getLabelT)
+        {
+            /*var ao = Match(O, A, getLabelT);
+            var ob = Match(O, B, getLabelT);
+
+            var match = Tree<Matching<T>>.Match(ao, ob, 
+            */
+            return null;
+        }
+
+        public static Tree<Matching<T>> Match(Tree<T> bas, Tree<T> mod, Func<T, T, bool> equals)
         {
             var basTreeConverted = bas.Convert(x => new TreeWithMatching { tree = x });
             var modTreeConverted = mod.Convert(x => new TreeWithMatching { tree = x });
@@ -87,9 +97,11 @@ namespace SyntaxDiff
             var basIt = basTreeConverted.PostOrderEnumeration();
             var modIt = modTreeConverted.PostOrderEnumeration();
 
-            Func<TreeWithMatching, string> getLabel = x => getLabelT(x.tree);
+            Func<TreeWithMatching, TreeWithMatching, bool> e = (x, y) => {
+               return equals(x.tree, y.tree);
+            };
 
-            var matches = Diff3.NeedlemanWunsch<TreeWithMatching>.Allignment(basIt, modIt, (x, y) => getLabel(x) == getLabel(y));
+            var matches = NeedlemanWunsch<TreeWithMatching>.Allignment(basIt, modIt, e);
 
             foreach (var match in matches)
             {

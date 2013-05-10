@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using SyntaxDiff.Diff3;
 
 namespace SyntaxDiff
 {
@@ -22,7 +21,7 @@ namespace SyntaxDiff
             var bo = NeedlemanWunsch<T>.Allignment(B, O, (x, y) => Object.ReferenceEquals(x, y));
             
             var matches = NeedlemanWunsch<Tuple<T, T>>.Allignment(ao, bo, (x, y) => x.Item2 != null && y.Item2 != null && object.ReferenceEquals(x.Item2, y.Item2))
-                .Select(x => new SmartDiff.Diff<T>(x.Item1, x.Item2));
+                .Select(x => new Diff<T>(x.Item1, x.Item2));
 
             var alreadyAdded = new Dictionary<T, int>();
 

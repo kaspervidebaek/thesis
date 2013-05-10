@@ -79,7 +79,10 @@ namespace WindowApp
         {
             
             List<Matching<T>> diffs = null;
-            var mTree = Tree<T>.Match(btree, otree, getLabel);
+            Func<T, T, bool> equals = (x, y) => getLabel(x) == getLabel(y);
+            
+
+            var mTree = Tree<T>.Match(btree, otree, equals);
             var tree = buildTree<T>(mTree, getLabel);
 
             view.Nodes.Add(tree);

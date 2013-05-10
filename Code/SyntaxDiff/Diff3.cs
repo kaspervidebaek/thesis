@@ -4,44 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SyntaxDiff.Diff3
+namespace SyntaxDiff
 {
-    public class Tests
-    {
-        private static bool HandleConflict(List<String> mergedfile, Chunk<String> chunck)
-        {
-            mergedfile.Add(">>> A");
-            foreach (var line in chunck.A)
-                mergedfile.Add(line);
-            mergedfile.Add(">>> O");
-            foreach (var line in chunck.O)
-                mergedfile.Add(line);
-            mergedfile.Add(">>> B");
-            foreach (var line in chunck.B)
-                mergedfile.Add(line);
-            mergedfile.Add("<<<");
-
-            return false;
-        }
-        public static void Test()
-        {
-#if true
-            var fileA = new List<String>(new string[] { "1", "4", "5", "2", "3", "6" });
-            var fileO = new List<String>(new string[] { "1", "2", "3", "4", "5", "6" });
-            var fileB = new List<String>(new string[] { "1", "2", "4", "5", "3", "6" });
-#else
-            var fileA = new List<String>(new string[] { "1", "3", "5" });
-            var fileO = new List<String>(new string[] { "1", "2", "5"});
-            var fileB = new List<String>(new string[] { "1", "5" });
-#endif
-            var merge = Diff3<string>.Merge(fileA, fileO, fileB, (a, b) => a == b, HandleConflict);
-
-            foreach (var l in merge)
-            {
-                Console.WriteLine(l);
-            }
-        }
-    }
 
     public class Chunk<T>
     {
@@ -82,7 +46,7 @@ namespace SyntaxDiff.Diff3
             var Ma = NeedlemanWunsch<T>.Allignment(A, O, comparer);
             var Mb = NeedlemanWunsch<T>.Allignment(B, O, comparer);
 
-            var totalMatch = NeedlemanWunsch<Tuple<T, T>>.Allignment(Ma, Mb, (a, b) => comparer(a.Item2, b.Item2)).Select(x => new SyntaxDiff.SmartDiff.Diff<T>(x.Item1, x.Item2)).ToList();
+            var totalMatch = NeedlemanWunsch<Tuple<T, T>>.Allignment(Ma, Mb, (a, b) => comparer(a.Item2, b.Item2)).Select(x => new Diff<T>(x.Item1, x.Item2)).ToList();
             var chuncks = getChunks(totalMatch, comparer);
 
             var mergedfile = new List<T>();
@@ -132,7 +96,7 @@ namespace SyntaxDiff.Diff3
             return mergedfile;
         }
 
-        private static List<Chunk<T>> getChunks(List<SyntaxDiff.SmartDiff.Diff<T>> totalMatch, Func<T, T, bool> comparer)
+        private static List<Chunk<T>> getChunks(List<Diff<T>> totalMatch, Func<T, T, bool> comparer)
         {
             var chuncks = new List<Chunk<T>>();
             Chunk<T> chunk = new Chunk<T>(false);

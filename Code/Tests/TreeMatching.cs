@@ -68,9 +68,9 @@ namespace Tests
                         new Tree<string>("VariableD",
                             new Tree<string>("equals", new Tree<string>("2"))));
 
-            Func<string, string> getLabel = x => x;
+            Func<string, string, bool> equals = (x, y) => x == y;
 
-            var mTree = Tree<string>.Match(b, l, getLabel);
+            var mTree = Tree<string>.Match(b, l, equals);
 
         }
     }

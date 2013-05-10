@@ -15,7 +15,7 @@ namespace Tests
             var children = n.ChildNodes().Select(x => convert(x)).ToArray();
             return new Tree<SyntaxNode>(n, children);
         }
-
+        /*
         [TestMethod]
         [TestCategory("Tree")]
 
@@ -38,7 +38,7 @@ namespace Tests
             //merge.ForEach(Console.WriteLine);
 
 
-        }
+        }*/
 
         [TestMethod]
         [TestCategory("Tree")]

@@ -14,6 +14,12 @@ namespace WindowApp
 {
     public partial class Form1 : Form
     {
+        public enum MergeType
+        {
+            None, Delete, Insert, Update, WTF
+        }
+
+
         public static Tree<SyntaxNode> convert(SyntaxNode n)
         {
             var children = n.ChildNodes().Select(x => convert(x)).ToArray();
@@ -71,9 +77,9 @@ namespace WindowApp
 
         public void addTreeToView<T>(TreeView view, Tree<T> btree, Tree<T> otree, int pos, Func<T, string> getLabel)
         {
-
+            
             List<Matching<T>> diffs = null;
-            var mTree = JavaMatching<T>.getMappingTree (btree, otree, getLabel);
+            var mTree = Tree<T>.Match(btree, otree, getLabel);
             var tree = buildTree<T>(mTree, getLabel);
 
             view.Nodes.Add(tree);
@@ -119,9 +125,9 @@ namespace WindowApp
             var l = convert(leftSyntax.GetRoot());
             var r = convert(rightSyntax.GetRoot());
 
-//            addTreeToView(baseTree, b, b, 0, getLabel, getLabelMt);
+            //            addTreeToView(baseTree, b, b, 0, getLabel, getLabelMt);
             addTreeToView(leftTree, b, l, 0, getLabel);
-  //          addTreeToView(rightTree, b, r, 0, getLabel, getLabelMt);
+            //          addTreeToView(rightTree, b, r, 0, getLabel, getLabelMt);
             addTreeToView(baseTree, b, b, 0, getLabel);
             addTreeToView(rightTree, l, l, 0, getLabel);
 #else

@@ -69,15 +69,12 @@
     <Compile Include="SetMatching.cs" />
     <Compile Include="SmartDiff.cs" />
     <Compile Include="Tree.cs" />
-    <Compile Include="TreeDiff.cs" />
-    <Compile Include="TreeMerge.cs" />
     <Content Include="CodeSnippets\SmartAlgorithm.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="CodeSnippets\FlowAlgorithm.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Compile Include="CodeTreeNode.cs" />
     <Compile Include="Diff3.cs" />
     <Compile Include="NeedlemannAlignment.cs" />
     <Compile Include="SyntaxNodeExtensions.cs" />
@@ -91,7 +88,6 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Compile Include="Examples.cs" />
-    <Compile Include="JavaMatching.cs" />
     <Compile Include="Matching.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

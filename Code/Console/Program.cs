@@ -48,7 +48,7 @@ namespace ConsoleApp
 
 
 
-            Console.ReadLine();
+//            Console.ReadLine();
         }
     }
 }

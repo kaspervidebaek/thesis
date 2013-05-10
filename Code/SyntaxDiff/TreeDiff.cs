@@ -42,7 +42,6 @@ namespace SyntaxDiff
                 (Object.ReferenceEquals(oChild.value, node.other) && bChild == null) ||
                 (Object.ReferenceEquals(bChild.value, node.bas) && Object.ReferenceEquals(oChild.value, node.other))).ToList();
 
-
             return matching.First();
         }
 

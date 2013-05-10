@@ -104,6 +104,7 @@ Tree matching will still have a cubic running time on the amount of nodes, howev
 This leaves us with three questions that are open for discussions.
 
 \subsubsection{Three-way cost matching}
+\todo{Why do we use the reduction to flow algoirhtm, and not hungarian method?}
 Matching the members $(l_1, l_2, ..., l_{size(l)})$, $(b_1, b_2, ..., b_{size(b)})$ and $(r_1, r_2, ..., r_{size(r)})$ will be done by making a bipartite matching between the pairs $(b, l)$ and $(b, r)$, and afterwards matching the matching on the base items.
 
 Finding a perfect bipartite matching with minimum costs can be solved in cubic time by \citet{bipartitecost}. This works if one is given equal size sets, and given the assumption that a perfect matching exists.

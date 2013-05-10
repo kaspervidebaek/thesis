@@ -56,18 +56,18 @@ namespace SyntaxDiff
             return mapping;
         }
 
-        class TreeWithMatching
+        public class TreeWithMatching
         {
-           public T tree;
-           public Matching<T> matching;
-           public override string ToString()
-           {
-
-               return "(" + tree.ToString() +  "," + matching.ToString() + ")";
-           }
+            public T tree;
+            public Matching<T> matching;
+            public override string ToString()
+            {
+                return "(" + tree.ToString() + ")";
+                return "(" + tree.ToString() + "," + matching.ToString() + ")";
+            }
         }
 
-        public static Tree<Matching<T>> getMappingTree(Tree<T> bas, Tree<T> mod, Func<T, string> getLabel)
+        public static Tree<Matching<T>> getMappingTree(Tree<T> bas, Tree<T> mod, Func<T, string> getLabelT)
         {
             var basTreeConverted = bas.Convert(x => new TreeWithMatching { tree = x });
             var modTreeConverted = mod.Convert(x => new TreeWithMatching { tree = x });
@@ -75,36 +75,91 @@ namespace SyntaxDiff
             var basIt = basTreeConverted.PostOrderEnumeration();
             var modIt = modTreeConverted.PostOrderEnumeration();
 
-            var mapping = JavaMatching<T>.getMapping(bas, mod, getLabel);
+            Func<TreeWithMatching, string> getLabel = x => getLabelT(x.tree);
 
-            var bCnt = 0;
-            var oCnt = 0;
+            var mapping = JavaMatching<TreeWithMatching>.getMapping(basTreeConverted, modTreeConverted, getLabel);
 
             foreach (var map in mapping)
             {
+                var b = map.bas == null ? default(T) : map.bas.tree;
+                var o = map.other == null ? default(T) : map.other.tree;
+                var matching = new Matching<T>(b, o);
+                if(map.bas != null)
+                    map.bas.matching = matching;
+                if (map.other != null)
+                    map.other.matching = matching;
+            }
 
-                if (map.other == null)
+            var result = BuildMappingTree(basTreeConverted, modTreeConverted);
+
+            return result;
+        }
+
+
+
+        public static Tree<Matching<T>> BuildMappingTree(Tree<TreeWithMatching> bas, Tree<TreeWithMatching> other)
+        {
+            var bCnt = 0;
+            var oCnt = 0;
+
+            var bChildren = bas.getChildren();
+            var oChildren = other.getChildren();
+
+            var resultChildren = new List<Tree<Matching<T>>>();
+
+
+            while (bCnt < bChildren.Count || oCnt < oChildren.Count)
+            {
+                var bChild = bCnt < bChildren.Count ? bChildren[bCnt] : null;
+                var oChild = oCnt < oChildren.Count ? oChildren[oCnt] : null;
+
+                var bChildV = bChild != null ? bChild.value : null;
+                var oChildV = oChild != null ? oChild.value : null;
+
+                var bChildM = bChildV != null ? bChildV.matching : null;
+                var oChildM = oChildV != null ? oChildV.matching : null;
+
+                if (oChild == null) // Deletion at end of sequence
                 {
-                    modIt[oCnt].matching = map;
+                    resultChildren.Add(bChild.Convert(x => x.matching));
+                    bCnt++;
+                }
+                else if (bChild == null) // Insertion at end of sequence
+                {
+                    resultChildren.Add(oChild.Convert(x => x.matching));
                     oCnt++;
                 }
-                else if (map.bas == null)
+                else if (bChildM == oChildM)
                 {
-                    basIt[bCnt].matching = map;
-                    bCnt++;
+                    resultChildren.Add(BuildMappingTree(bChild, oChild));
+                    bCnt++; 
+                    oCnt++;
                 }
                 else
                 {
-                    basIt[bCnt].matching = map;
-                    modIt[oCnt].matching = map;
-                    oCnt++;
-                    bCnt++;
+                    if (bChildM != null && bChildM.other == null) // Deletion
+                    {
+                        
+                        resultChildren.Add(bChild.Convert(x => x.matching));
+                        bCnt++;
+                    }
+                    else if (oChildM != null && oChildM.bas == null) // Insertion
+                    {
+                        resultChildren.Add(oChild.Convert(x => x.matching));
+                        oCnt++;
+                    }
+                    else
+                        throw new Exception("Should not happen");
+
                 }
             }
 
+            var mapping = bas == null || bas.value == null || bas.value.matching == null ? other.value.matching : bas.value.matching;
 
+            // Take care of 10->2 here.
+            var result = new Tree<Matching<T>>(mapping, resultChildren.ToArray());
 
-            return null;
+            return result;
         }
 
     }

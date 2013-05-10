@@ -73,7 +73,7 @@ namespace WindowApp
         {
 
             List<Matching<T>> diffs = null;
-            var mTree = TreeDiff<T>.getMatchingTree(btree, otree, getLabel);
+            var mTree = JavaMatching<T>.getMappingTree (btree, otree, getLabel);
             var tree = buildTree<T>(mTree, getLabel);
 
             view.Nodes.Add(tree);
@@ -104,7 +104,7 @@ namespace WindowApp
         {
             InitializeComponent();
 
-#if false
+#if true
             var baseSyntax = Examples.SmallBaseTree;
             var leftSyntax = Examples.SmallLeftTree;
             var rightSyntax = Examples.SmallRightTree;
@@ -114,17 +114,16 @@ namespace WindowApp
             //var y = cntNode(Examples.flowAlgorithm.GetRoot());
 
             Func<SyntaxNode, string> getLabel = x => x.getLabel();
-            Func<TreeDiff<SyntaxNode>.MergeTreeNode, string> getLabelMt = x => getLabel(x.value);
 
             var b = convert(baseSyntax.GetRoot());
             var l = convert(leftSyntax.GetRoot());
             var r = convert(rightSyntax.GetRoot());
 
 //            addTreeToView(baseTree, b, b, 0, getLabel, getLabelMt);
-            addTreeToView(leftTree, b, l, 0, getLabel, getLabelMt);
+            addTreeToView(leftTree, b, l, 0, getLabel);
   //          addTreeToView(rightTree, b, r, 0, getLabel, getLabelMt);
-            addTreeToView(baseTree, b, b, 0, getLabel, getLabelMt);
-            addTreeToView(rightTree, l, l, 0, getLabel, getLabelMt);
+            addTreeToView(baseTree, b, b, 0, getLabel);
+            addTreeToView(rightTree, l, l, 0, getLabel);
 #else
             var b = new Tree<String>("Class",
                     new Tree<string>("Function",
@@ -176,13 +175,7 @@ namespace WindowApp
                                 )));
             Func<string, string> getLabel = x => x;
             Func<TreeDiff<string>.MergeTreeNode, string> getLabelMt = x => getLabel(x.value);
-            /*var r = new Tree<string>("A", new Tree<string>("B", "X"));
 
-            var b = new Tree<int?>(4, 3, 7, new Tree<int?>(2, 1, 0));
-            var l = new Tree<int?>(4, 3, new Tree<int?>(10, 1, 0), 9);
-
-            Func<int?, string> getLabel = x => x.ToString();
-            Func<TreeDiff<int?>.MergeTreeNode, string > getLabelMt = x => getLabel(x.value);*/
 
             addTreeToView(baseTree, b, b, 0, getLabel);
             addTreeToView(leftTree, b, l, 0, getLabel);

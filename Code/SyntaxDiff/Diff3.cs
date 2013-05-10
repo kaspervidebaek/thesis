@@ -57,6 +57,7 @@ namespace SyntaxDiff.Diff3
             O = new List<T>();
             B = new List<T>();
         }
+
         public static bool ChunkEqual(List<T> x, List<T> y, Func<T, T, bool> comparer) { //TODO: This can be done in chunck generation
             if(x.Count == y.Count) {
                 for (int i = 0; i < x.Count;i++ )

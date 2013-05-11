@@ -77,6 +77,7 @@ I will implement a merging algorithm that is generally syntax based, but which a
 First syntax trees are generated. These are parsed recursively until class members are encountered. Class members will be matched unordered from a heuristic cost function, and when this matchings is finished the body of the members will be merged textually. If this produces a conflict, we will instead try a tree-merge of the triple of functions.  Lastly we will have to reassemble the tree, in a ordering that is expected by the user. 
 
 An overall description for the proposed merge:
+
 \begin{enumerate}
 	\item Create syntax trees of each file.
 	\item Do an unordered match of classes and class-members.
@@ -86,13 +87,12 @@ An overall description for the proposed merge:
 		\item If the conflict is two updates on the same line, try to do a syntax tree merging. If the conflict persists, merge the entire function and include a rename detection.
 		\item If the conflict is the deletion of a block in one branch, and the insertion of the other - put this specific line aside for move detection.
 	\end{enumerate}
-	
 	\item Run through lines set aside for move detection, and see if it is possible to find a (heuristicly) corresponding insert. Do a merge, or a syntactic merge if this fails.
 	\item If conflicts cannot be resolved, present these to the user.
 \end{enumerate}
 
 \subsection{Running time}
-This approach will most definitely be slower than running a line based merging algorithm, however it will hopefully be faster than the current structured merging approaches, and thereby more usable in a version control scenario.
+This approach will most definitely be slower than running a line based merging algorithm, however it will hopefully fast enough to be usable in a version control scenario.
 
 Doing a textual merge on class-member will yield results that are comparable to current merging approaches, so the added running time of this algorithm will be from two factors: Doing a three-way cost matching on class members, and the added tree matching whenever a conflict is encountered.
 
@@ -134,7 +134,7 @@ For identifiers equal strings will of course have to be the lowest cost. Besides
 \todo[inline]{Needs to elaborate alot}
 
 \subsubsection{Ordering of outputted class members}
-The end result of the tree matching algorithm will be a set of merged class members. This set needs to be serialized into a concrete file consisting of actual syntax. A problem arisen from that, is what order to output class members in.
+The end result of the matching algorithm will be a set of merged class members. 
 
 Conflicts might exists if two users have moved the same function into different places in the left and right branches, but that is the only case where user intervention should be needed. However there are quite a few cases of reordering operations, where the answer of where to actual position a function in the output is simply undefined. 
 

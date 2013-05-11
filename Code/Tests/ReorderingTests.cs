@@ -211,5 +211,47 @@ namespace Tests
             Assert.IsTrue(Enumerable.SequenceEqual(newOrder, result));
             Assert.IsTrue(conflicts[0].Item1 == 0 && conflicts[0].Item2 == 5);*/
         }
+
+        [TestMethod]
+        [TestCategory("Reordering")]
+        public void TestReorderingTwice()
+        {
+            var a = "A";
+            var b = "B";
+            var c = "C";
+            var d = "D";
+
+
+            var A = new List<string> { a, b, d, c };
+            var O = new List<string> { a, b, c, d };
+            var B = new List<string> { b, a, c, d };
+
+            var newOrder = SyntaxDiff.Reorder<String>.OrderLists(A, O, B);
+            
+            var result = new List<string> { b, a,d, c};
+
+            Assert.IsTrue(Enumerable.SequenceEqual(newOrder, result));
+        }
+
+        [TestMethod]
+        [TestCategory("Reordering")]
+        public void TestReorderingTwice2()
+        {
+            var a = "A";
+            var b = "B";
+            var c = "C";
+            var d = "D";
+
+
+            var A = new List<string> { a, b, d, c };
+            var O = new List<string> { a, b, c, d };
+            var B = new List<string> { a, c, d, b };
+
+            var newOrder = SyntaxDiff.Reorder<String>.OrderLists(A, O, B);
+
+            var result = new List<string> { a, d, c, b };
+
+            Assert.IsTrue(Enumerable.SequenceEqual(newOrder, result));
+        }
     }
 }

@@ -1,6 +1,5 @@
 ﻿using Roslyn.Compilers;
 using Roslyn.Compilers.CSharp;
-using SyntaxDiff.Diff3;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,28 +10,6 @@ namespace SyntaxDiff
 {
     public class SmartDiff
     {
-        public class Diff<T> where T : class
-        {
-            public T A;
-            public T O;
-            public T B;
-
-            public Diff(Tuple<T, T> Item1, Tuple<T, T> Item2)
-            {
-                A = Item1 == null ? default(T) : Item1.Item1;
-                O = Item1 == null ? Item2.Item2 : Item1.Item2;
-                B = Item2 == null ? default(T) : Item2.Item1;
-            }
-
-            public override string ToString()
-            {
-                var a = A == default(T) ? "-" : A.ToString();
-                var o = O == default(T) ? "-" : O.ToString();
-                var b = B == default(T) ? "-" : B.ToString();
-                return "A:{" + a + "} O:{" + o + "} B:{" + b + "}";
-            }
-        }
-
         public static List<String> Merge(SyntaxNode A, SyntaxNode O, SyntaxNode B)
         {
             if (!(A.getChildType() == O.getChildType() && O.getChildType() == B.getChildType()))
@@ -40,12 +17,8 @@ namespace SyntaxDiff
 
             if (O.getChildType() == CodeTreeType.Set)
             {
-
-#if true
                 return SetMerge (A, O, B);
-#else
-                return OrderedMerge(A, O, B);
-#endif
+
             }
             else if (O.getChildType() == CodeTreeType.Sequence)
             {
@@ -95,15 +68,13 @@ namespace SyntaxDiff
 
             Func<string, string, bool> equality = (x, y) => x != null && y != null && x.ToString().Trim() == y.ToString().Trim();
 
-            var merged = Diff3.Diff3<string>.Merge(LinesFromSyntax(A), LinesFromSyntax(O), LinesFromSyntax(B), equality, conflictHandler);
+            var merged = Diff3<string>.Merge(LinesFromSyntax(A), LinesFromSyntax(O), LinesFromSyntax(B), equality, conflictHandler);
             return merged.Select(x => x.ToString()).ToList();
         }
 
 
         private static List<string> SetMerge(SyntaxNode A, SyntaxNode O, SyntaxNode B)
         {
-            // TODO: Order of merging
-
             if (A is ClassDeclarationSyntax && O is ClassDeclarationSyntax && B is ClassDeclarationSyntax)
             {
                 var Or = O as ClassDeclarationSyntax;
@@ -135,8 +106,6 @@ namespace SyntaxDiff
                                                     return null;
                                                 }).Select(u => new Diff<MemberDeclarationSyntax>(u.Item1, u.Item2)).ToList() ;
 
-                /*var updateMember = new Dictionary<MemberDeclarationSyntax, MemberDeclarationSyntax>();
-                var addMembers = new List<MemberDeclarationSyntax>();*/
                 var members = new List<Tuple< Diff<MemberDeclarationSyntax>, MemberDeclarationSyntax>>();
 
 

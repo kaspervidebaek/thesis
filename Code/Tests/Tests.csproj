@@ -58,10 +58,12 @@
     <Compile Include="AllCombs\CombinatorialBase.cs" />
     <Compile Include="AllCombs\Permutations.cs" />
     <Compile Include="AllCombs\Variations.cs" />
+    <Compile Include="DiffTests.cs" />
     <Compile Include="GraphMatchingTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ReorderingTests.cs" />
     <Compile Include="SmartDiffTests.cs" />
+    <Compile Include="TreeMatching.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SyntaxDiff\SyntaxDiff.csproj">

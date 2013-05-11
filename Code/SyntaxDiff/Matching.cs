@@ -18,20 +18,6 @@ namespace SyntaxDiff
             this.other = other;
         }
 
-        public bool isDeletion()
-        {
-            if (other == null)
-                return true;
-            return false;
-
-        }
-        public bool isInsertion()
-        {
-            if (bas == null)
-                return true;
-            return false;
-        }
-
         public override string ToString()
         {
             var b = bas == null ? "" : bas.ToString().Trim();

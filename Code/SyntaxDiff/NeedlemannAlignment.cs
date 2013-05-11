@@ -1,8 +1,7 @@
 ﻿using System;
-using SyntaxDiff.Diff3;
 using System.Collections.Generic;
 
-namespace SyntaxDiff.Diff3
+namespace SyntaxDiff
 {
     public class NeedlemanWunsch<T> 
     {

@@ -69,7 +69,7 @@ namespace SyntaxDiff
         }
 
 
-        public class TreeWithMatching
+        public class ObjectWithMatching
         {
             public T tree;
             public Matching<T> matching;
@@ -83,7 +83,7 @@ namespace SyntaxDiff
 
         public static Tree<T> Merge(Tree<T> A, Tree<T> O, Tree<T> B, Func<T, T, bool> equals)
         {
-            var diff = Tree<T>.TreeWayMatch(A, O, B, equals);
+            var diff = Tree<T>.ThreeWayMatch(A, O, B, equals);
 
 
             return MergeDiff(diff) ;
@@ -115,47 +115,59 @@ namespace SyntaxDiff
 
             return null;
         }
-        public static Tree<Diff<T>> TreeWayMatch(Tree<T> A, Tree<T> O, Tree<T> B, Func<T, T, bool> equals)
+        public static Tree<Diff<T>> ThreeWayMatch(Tree<T> A, Tree<T> O, Tree<T> B, Func<T, T, bool> equals)
         {
             var ao = Match(O, A, equals);
             var ob = Match(O, B, equals);
 
-            var match = Tree<Matching<T>>.Match(ao, ob, (x, y) => x.bas != null && y.bas != null && equals(x.bas, y.bas)).Convert(x => new Diff<T>(x.bas, x.other)); // TODO: Examine why we nede to write equals here instead of Object.referenceequals
+            var match = Tree<Matching<T>>.Match(ao, ob, (x, y) => x.bas != null && y.bas != null && equals(x.bas, y.bas)); // TODO: Examine why we nede to write equals here instead of Object.referenceequals;
 
-            return match;
+            return match.Convert(x => new Diff<T>(x.bas, x.other)); 
         }
 
         public static Tree<Matching<T>> Match(Tree<T> bas, Tree<T> mod, Func<T, T, bool> equals)
         {
-            var basTreeConverted = bas.Convert(x => new TreeWithMatching { tree = x });
-            var modTreeConverted = mod.Convert(x => new TreeWithMatching { tree = x });
+            var basTreeConverted = bas.Convert(x => new ObjectWithMatching { tree = x });
+            var modTreeConverted = mod.Convert(x => new ObjectWithMatching { tree = x });
+            
+            var matching = new Matching<T>(bas.value, mod.value);
+            basTreeConverted.value.matching = matching;
+            modTreeConverted.value.matching = matching;
 
-            var basIt = basTreeConverted.PostOrderEnumeration();
-            var modIt = modTreeConverted.PostOrderEnumeration();
 
-            Func<TreeWithMatching, TreeWithMatching, bool> e = (x, y) =>
-            {
-                return equals(x.tree, y.tree);
-            };
-
-            var matches = NeedlemanWunsch<TreeWithMatching>.Allignment(basIt, modIt, e);
-
-            foreach (var match in matches)
-            {
-                var b = match.Item1 == null ? default(T) : match.Item1.tree;
-                var o = match.Item2 == null ? default(T) : match.Item2.tree;
-                var matching = new Matching<T>(b, o);
-                if (match.Item1 != null)
-                    match.Item1.matching = matching;
-                if (match.Item2 != null)
-                    match.Item2.matching = matching;
-            }
+            MatchInner(basTreeConverted, modTreeConverted, equals);
 
             return BuildMappingTree(basTreeConverted, modTreeConverted);
         }
 
+        public static void MatchInner(Tree<ObjectWithMatching> bas, Tree<ObjectWithMatching> mod, Func<T, T, bool> equals)
+        {
 
-        private static Tree<Matching<T>> BuildMappingTree(Tree<TreeWithMatching> bas, Tree<TreeWithMatching> other)
+            Func<Tree<ObjectWithMatching>, Tree<ObjectWithMatching>, bool> e = (x, y) =>
+            {
+                return equals(x.value.tree, y.value.tree);
+            };
+
+            var bChildren = bas == null ? new List<Tree<ObjectWithMatching>>() : bas.children;
+            var oChildren = mod == null ? new List<Tree<ObjectWithMatching>>() : mod.children;
+
+            var matches = NeedlemanWunsch<Tree<ObjectWithMatching>>.Allignment(bChildren, oChildren, e);
+
+            foreach (var match in matches)
+            {
+                MatchInner(match.Item1, match.Item2, equals);
+
+                var b = match.Item1 == null ? default(T) : match.Item1.value.tree;
+                var o = match.Item2 == null ? default(T) : match.Item2.value.tree;
+                var matching = new Matching<T>(b, o);
+                if (match.Item1 != null)
+                    match.Item1.value.matching = matching;
+                if (match.Item2 != null)
+                    match.Item2.value.matching = matching;
+            }
+        }
+
+        private static Tree<Matching<T>> BuildMappingTree(Tree<ObjectWithMatching> bas, Tree<ObjectWithMatching> other)
         {
             var bCnt = 0;
             var oCnt = 0;

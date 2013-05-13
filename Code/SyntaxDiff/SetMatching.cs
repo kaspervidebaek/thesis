@@ -518,8 +518,5 @@ namespace SyntaxDiff
 
             return p_;
         }
-
-
-
     }
 }

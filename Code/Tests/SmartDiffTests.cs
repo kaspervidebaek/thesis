@@ -60,7 +60,7 @@ namespace Tests
             Func<SyntaxNode, SyntaxNode, bool> equals = (x, y) => x.getLabel() == y.getLabel();
 
             
-            var merge = Tree<SyntaxNode>.TreeWayMatch(left, bas, right, equals);
+            var merge = Tree<SyntaxNode>.ThreeWayMatch(left, bas, right, equals);
 
             //merge.ForEach(Console.WriteLine);
         }
@@ -89,7 +89,7 @@ namespace Tests
         [TestCategory("Tree")]
         public void TestMatch()
         {
-            var match = Tree<int?>.TreeWayMatch(left, bas, right, intEquals);
+            var match = Tree<int?>.ThreeWayMatch(left, bas, right, intEquals);
             var v = match.PostOrderEnumeration().Select(x => x.A != null ? x.A : (x.B != null ? x.B : x.O)).ToList();
             var result = new List<int?> { 9, 6, 9, 9, 2, 5, 4, 10, 3, 2, 1 };
             Assert.IsTrue(Enumerable.SequenceEqual(v, result));

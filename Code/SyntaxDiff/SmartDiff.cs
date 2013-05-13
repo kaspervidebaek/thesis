@@ -186,7 +186,7 @@ namespace SyntaxDiff
                 }
                 return LinesFromSyntax(merged);
             }
-            return null;
+            throw new Exception("Not implemented!");
         }
 
     }

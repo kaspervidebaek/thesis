@@ -130,5 +130,25 @@ namespace SyntaxDiff
                     }
                 ");
 
+        public static SyntaxTree ConflictingBaseTree = SyntaxTree.ParseText(@"
+                        static void Conflicts(string args)
+                        {
+                            Console.WriteLine(""Hello, base!"");
+                        }
+                ");
+
+        public static SyntaxTree ConflictingLeftTree = SyntaxTree.ParseText(@"
+                        static void Conflicts(string args)
+                        {
+                            Console.Write(""Hello, base!"");
+                        }
+                ");
+        public static SyntaxTree ConflictingRightTree = SyntaxTree.ParseText(@"
+                        static void Conflicts(string args)
+                        {
+                            Console.WriteLine(""Hello, new right World!"");
+                        }
+                ");
+
     }
 }

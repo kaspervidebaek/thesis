@@ -85,7 +85,6 @@ namespace SyntaxDiff
         {
             var diff = Tree<T>.ThreeWayMatch(A, O, B, equals);
 
-
             return MergeDiff(diff) ;
         }
 
@@ -102,7 +101,7 @@ namespace SyntaxDiff
             }
 
             if (diffs.value.O == null)
-            {
+            { // TODO: Conflicts missing.
                 if (diffs.value.A != null)
                     return new Tree<T>(diffs.value.A, children.ToArray());
                 if (diffs.value.B != null)

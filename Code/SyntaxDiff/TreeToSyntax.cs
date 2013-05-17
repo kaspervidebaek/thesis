@@ -9,7 +9,7 @@ namespace SyntaxDiff
 {
     public static class TreeToSyntax
     {
-        /*
+
         public static bool checkAndCast<Y>(SyntaxNode n, out SyntaxNode on, Func<Y, SyntaxNode> convert) where Y : SyntaxNode
         {
             if (n is Y)
@@ -41,18 +41,38 @@ namespace SyntaxDiff
             }
 
             var oldNode = tree.value;
-            SyntaxNode newNode;
+            SyntaxNode newNode = null;
 
-                 if(checkAndCast<MethodDeclarationSyntax>       (oldNode, out newNode, x => convert(x, newChildren)));
-            else if(checkAndCast<BlockSyntax>                   (oldNode, out newNode, x => convert(x, newChildren)));
+            if (checkAndCast<MethodDeclarationSyntax>(oldNode, out newNode, x => convert(x, newChildren))) ;
+            else if (checkAndCast<PredefinedTypeSyntax>(oldNode, out newNode, x => convert(x, newChildren))) ;
+            else if (checkAndCast<ParameterListSyntax>(oldNode, out newNode, x => convert(x, newChildren))) ;
+            /*else if(checkAndCast<BlockSyntax>                   (oldNode, out newNode, x => convert(x, newChildren)));
             else if(checkAndCast<ExpressionStatementSyntax>     (oldNode, out newNode, x => convert(x, newChildren)));
+            return ;*/
+            else throw new NotImplementedException();
             return newNode;
         }
 
 
+        public static PredefinedTypeSyntax convert(PredefinedTypeSyntax n, List<SyntaxNode> children)
+        {
+            var z = Syntax.PredefinedType(n.Keyword);
+            return z;
+        }
+
+        public static ParameterSyntax convert(ParameterSyntax n, List<SyntaxNode> children)
+        {
+            return null;
+        }
+        public static ParameterListSyntax convert(ParameterListSyntax n, List<SyntaxNode> children)
+        {
+            
+            return null;
+        }
         public static MethodDeclarationSyntax convert(MethodDeclarationSyntax n, List<SyntaxNode> children)
         {
-            var attributeLists = AssignList<AttributeListSyntax>(children);
+
+            /*var attributeLists = AssignList<AttributeListSyntax>(children);
             SyntaxTokenList modifiers SyntaxT;
             TypeSyntax returnType;
             ExplicitInterfaceSpecifierSyntax explicitInterfaceSpecifier;
@@ -64,7 +84,8 @@ namespace SyntaxDiff
             SyntaxToken semicolonToken;
 
             var node = Syntax.MethodDeclaration(attributeLists, modifiers, returnType, explicitInterfaceSpecifier, identifier, typeParameterList, parameterList, constraintClauses, body, semicolonToken);
-            return node;
-        }*/
+            return node;*/
+            return null;
+        }
     }
 }

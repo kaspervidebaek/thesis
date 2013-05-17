@@ -12,12 +12,12 @@ namespace Tests
     public class SmartDiffTests
     {
         [TestMethod]
-        [TestCategory("Tree")]
+        [TestCategory("SmartDiff")]
         public void TestExampleTree()
         {
-            var left = SyntaxDiff.Examples.leftTree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>().First();
-            var bas = SyntaxDiff.Examples.baseTree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>().First();
-            var right = SyntaxDiff.Examples.rightTree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>().First();
+            var left = SyntaxDiff.Examples.ConflictingLeftTree.GetRoot();
+            var bas = SyntaxDiff.Examples.ConflictingBaseTree.GetRoot();
+            var right = SyntaxDiff.Examples.ConflictingRightTree.GetRoot();
 
             var merge = SyntaxDiff.SmartDiff.Merge(left, bas, right);
 
@@ -25,7 +25,7 @@ namespace Tests
         }
 
         [TestMethod]
-        [TestCategory("Tree")]
+        [TestCategory("Not Testing Anything")]
         public void TestExampleTreeMerge()
         {
             var left = SyntaxDiff.Examples.leftTree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>().First().ConvertToTree();

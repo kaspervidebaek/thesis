@@ -42,6 +42,7 @@ namespace SyntaxDiff
             s += t.getSyntaxString<LiteralExpressionSyntax>(x => x.Token.ToString());
             s += t.getSyntaxString<ArrayTypeSyntax>(x => x.ElementType.ToString());
             s += t.getSyntaxString<PredefinedTypeSyntax>(x => x.ToString());
+            s += t.getSyntaxString<ParameterSyntax>(x => x.Identifier.ToString());
 
             return s;
         }
@@ -52,17 +53,5 @@ namespace SyntaxDiff
             return childEnum;
         }
 
-
-        public static CodeTreeType getChildType(this SyntaxNode sn)
-        {
-            if (sn is CompilationUnitSyntax)
-                return CodeTreeType.Set;
-            else if (sn is NamespaceDeclarationSyntax)
-                return CodeTreeType.Set;
-            else if (sn is ClassDeclarationSyntax)
-                return CodeTreeType.Set;
-
-            return CodeTreeType.Sequence;
-        }
     }
 }

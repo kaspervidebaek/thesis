@@ -76,7 +76,7 @@ namespace SyntaxDiff
             public override string ToString()
             {
                 return "(" + tree.ToString() + ")";
-                return "(" + tree.ToString() + "," + matching.ToString() + ")";
+                //return "(" + tree.ToString() + "," + matching.ToString() + ")";
             }
         }
 

@@ -17,7 +17,7 @@ namespace SyntaxDiff
 
             if (O.getChildType() == CodeTreeType.Set)
             {
-                return SetMerge (A, O, B);
+                return SetMerge(A, O, B);
 
             }
             else if (O.getChildType() == CodeTreeType.Sequence)
@@ -43,12 +43,19 @@ namespace SyntaxDiff
         private static List<string> SequenceMerge(SyntaxNode A, SyntaxNode O, SyntaxNode B)
         {
             // TODO: If there are conflicts - use syntax tree merge.
-#if false
+#if true
             Func<List<string>, Chunk<string>, bool> conflictHandler = (output, chunk) =>
             {
-                var mergedTree = TreeMerge.Merge(A, O, B);
+                var aC = A.ConvertToTree();
+                var oC = O.ConvertToTree();
+                var bC = B.ConvertToTree();
+
+                var mergedTree = Tree<SyntaxNode>.Merge(aC, oC, bC, (x, y) => x.getLabel() != y.getLabel());
+
+
+
                 output.Clear();
-                output.AddRange(LinesFromSyntax(mergedTree));
+                //output.AddRange(LinesFromSyntax(mergedTree));
 
                 return true;
             };
@@ -104,9 +111,9 @@ namespace SyntaxDiff
                                                     if (x.Item2 == y.Item2 && y.Item2 != null)
                                                         return 1;
                                                     return null;
-                                                }).Select(u => new Diff<MemberDeclarationSyntax>(u.Item1, u.Item2)).ToList() ;
+                                                }).Select(u => new Diff<MemberDeclarationSyntax>(u.Item1, u.Item2)).ToList();
 
-                var members = new List<Tuple< Diff<MemberDeclarationSyntax>, MemberDeclarationSyntax>>();
+                var members = new List<Tuple<Diff<MemberDeclarationSyntax>, MemberDeclarationSyntax>>();
 
 
                 foreach (var m in totalMatch)
@@ -188,6 +195,6 @@ namespace SyntaxDiff
             }
             throw new Exception("Not implemented!");
         }
-
+        
     }
 }

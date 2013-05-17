@@ -11,31 +11,6 @@ namespace Tests
     [TestClass]
     public class SmartDiffTests
     {
-        /*
-        [TestMethod]
-        [TestCategory("Tree")]
-
-        public void TestTreeMatching()
-        {
-            var left = SyntaxDiff.Examples.leftTree.GetRoot();
-            var bas = SyntaxDiff.Examples.leftTree.GetRoot();
-
-            var treeL = convert(left);
-            var treeB = convert(bas);
-            Console.WriteLine("Left size: " + treeL.Size());
-            Console.WriteLine("Base size: " + treeB.Size());
-
-            var t = new Stopwatch();
-            t.Start();
-            var merge = JavaMatching<SyntaxNode>.getMapping(treeB, treeL, x => x.getLabel());
-            t.Stop();
-            Console.WriteLine("Time: " + t.Elapsed.ToString());
-
-            //merge.ForEach(Console.WriteLine);
-
-
-        }
-
         [TestMethod]
         [TestCategory("Tree")]
         public void TestExampleTree()
@@ -48,7 +23,7 @@ namespace Tests
 
             merge.ForEach(Console.WriteLine);
         }
-        */
+
         [TestMethod]
         [TestCategory("Tree")]
         public void TestExampleTreeMerge()

@@ -14,8 +14,8 @@ namespace ConsoleApp
 
         static void Main(string[] args)
         {
-            var x = new Tests.TreeMatching();
-            x.TestTreeMatching();
+            var x = new Tests.SmartDiffTests();
+            x.TestExampleTree();
             Console.ReadLine();
             return;
 

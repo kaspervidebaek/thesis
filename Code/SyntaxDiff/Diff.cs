@@ -25,13 +25,23 @@ namespace SyntaxDiff
             O = Item1 == null ? Item2.bas : Item1.bas;
             B = Item2 == null ? default(T) : Item2.other;
         }
-
+        private Diff(T a, T o, T b)
+        {
+            A = a;
+            O = o;
+            B = b;
+        }
         public override string ToString()
         {
             var a = A.Equals(default(T)) ? "-" : A.ToString();
             var o = O.Equals(default(T)) ? "-" : O.ToString();
             var b = B.Equals(default(T)) ? "-" : B.ToString();
             return "A:{" + a + "} O:{" + o + "} B:{" + b + "}";
+        }
+
+        public Diff<Y> cast<Y>() where Y : T
+        {
+            return new Diff<Y>((Y)A, (Y)O, (Y)B);
         }
     }
 }

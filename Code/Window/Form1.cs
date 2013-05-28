@@ -87,8 +87,6 @@ namespace WindowApp
 
         public void addTreeToView<T>(TreeView view, Tree<T> btree, Tree<T> otree, Func<T, string> getLabel)
         {
-            
-            List<Matching<T>> diffs = null;
             Func<T, T, bool> equals = (x, y) => getLabel(x) == getLabel(y);
             
 
@@ -124,12 +122,15 @@ namespace WindowApp
         {
             InitializeComponent();
 
+            var i = new SyntaxDiff.SyntaxNodeSmartDiff();
+
+
             var baseSyntax = Examples.ConflictingBaseTree;
             var leftSyntax = Examples.ConflictingLeftTree;
             var rightSyntax = Examples.ConflictingRightTree;
 
 
-            Func<SyntaxNode, string> getLabel = x => x.getLabel();
+            Func<SyntaxNode, string> getLabel = x => i.getLabel(x);
 
             var b = baseSyntax.GetRoot().ConvertToTree();
             var l = leftSyntax.GetRoot().ConvertToTree();
@@ -139,7 +140,7 @@ namespace WindowApp
             addTreeToView(baseTree, b, b, getLabel);
             addTreeToView(rightTree, b, r, getLabel);
 
-            var mergedTree = Tree<SyntaxNode>.ThreeWayMatch(l, b, r, (x, y) => x.getLabel() == y.getLabel());
+            var mergedTree = Tree<SyntaxNode>.ThreeWayMatch(l, b, r, (x, y) => i.getLabel(x) == i.getLabel(y));
 
             addDiffTreeToView(bottomTree, mergedTree, getLabel);
 

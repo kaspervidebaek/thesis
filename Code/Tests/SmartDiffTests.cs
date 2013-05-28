@@ -19,7 +19,9 @@ namespace Tests
             var bas = SyntaxDiff.Examples.ConflictingBaseTree.GetRoot();
             var right = SyntaxDiff.Examples.ConflictingRightTree.GetRoot();
 
-            var merge = SyntaxDiff.SmartDiff.Merge(left, bas, right);
+            var diff = new SyntaxDiff.SmartDiff(new SyntaxNodeSmartDiff());
+
+            var merge = diff.Merge(left, bas, right);
 
             merge.ForEach(Console.WriteLine);
         }
@@ -32,7 +34,9 @@ namespace Tests
             var bas = SyntaxDiff.Examples.baseTree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>().First().ConvertToTree();
             var right = SyntaxDiff.Examples.rightTree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>().First().ConvertToTree();
 
-            Func<SyntaxNode, SyntaxNode, bool> equals = (x, y) => x.getLabel() == y.getLabel();
+            var i = new SyntaxNodeSmartDiff();
+
+            Func<SyntaxNode, SyntaxNode, bool> equals = (x, y) => i.getLabel(x) == i.getLabel(y);
 
             
             var merge = Tree<SyntaxNode>.ThreeWayMatch(left, bas, right, equals);

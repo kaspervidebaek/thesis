@@ -8,37 +8,24 @@ using System.Threading.Tasks;
 
 namespace SyntaxDiff
 {
-    public static class SmartDiffSyntaxTreeExtensions
-    {
-        public static CodeTreeType getChildType(this SyntaxNode sn)
-        {
-            if (sn is CompilationUnitSyntax)
-                return CodeTreeType.Set;
-            else if (sn is NamespaceDeclarationSyntax)
-                return CodeTreeType.Set;
-            else if (sn is ClassDeclarationSyntax)
-                return CodeTreeType.Set;
-            return CodeTreeType.Sequence;
-        }
-    }
-
     public class SmartDiff
     {
-
-
-
-        public static List<String> Merge(SyntaxNode A, SyntaxNode O, SyntaxNode B)
+        public SmartDiff(ISmartDiffInterface<SyntaxNode> i)
         {
-            if (!(A.getChildType() == O.getChildType() && O.getChildType() == B.getChildType()))
+            this.i = i;
+        }
+        private ISmartDiffInterface<SyntaxNode> i;
+
+        public List<String> Merge(SyntaxNode A, SyntaxNode O, SyntaxNode B)
+        {
+            if (!(i.getChildType(A) == i.getChildType(O) && i.getChildType(O) == i.getChildType(B)))
                 throw new Exception("This is bad!");
 
-
-
-            if (O.getChildType() == CodeTreeType.Set)
+            if (i.getChildType(O) == CodeTreeType.Set)
             {
                 return SetMerge(A, O, B);
             }
-            else if (O.getChildType() == CodeTreeType.Sequence)
+            else if (i.getChildType(O) == CodeTreeType.Sequence)
             {
                 return SequenceMerge(A, O, B);
             }
@@ -46,19 +33,19 @@ namespace SyntaxDiff
             return null;
         }
 
-        private static SyntaxNode SyntaxNodeMerge(SyntaxNode A, SyntaxNode O, SyntaxNode B)
+        private SyntaxNode SyntaxNodeMerge(SyntaxNode A, SyntaxNode O, SyntaxNode B)
         {
             throw new NotImplementedException();
         }
 
-        private static List<string> LinesFromSyntax(SyntaxNode m)
+        private List<string> LinesFromSyntax(SyntaxNode m)
         {
             if (m == null)
                 return new List<string>();
             return m.GetText().Lines.Select(x => x.ToString()).ToList();
         }
 
-        private static List<string> SequenceMerge(SyntaxNode A, SyntaxNode O, SyntaxNode B)
+        private List<string> SequenceMerge(SyntaxNode A, SyntaxNode O, SyntaxNode B)
         {
             // TODO: If there are conflicts - use syntax tree merge.
 #if true
@@ -68,12 +55,12 @@ namespace SyntaxDiff
                 var oC = O.ConvertToTree();
                 var bC = B.ConvertToTree();
 
-                var mergedTree = Tree<SyntaxNode>.Merge(aC, oC, bC, (x, y) => x.getLabel() == y.getLabel());
+                var matching = Tree<SyntaxNode>.ThreeWayMatch(aC, oC, bC, (x, y) => i.getLabel(x) == i.getLabel(y));
 
                 output.Clear();
-                output.AddRange(LinesFromSyntax(TreeToSyntax.convertNode(mergedTree)));
+                output.AddRange(LinesFromSyntax(i.ConvertBack(matching)));
 
-                return true;
+                return true; // We should terminate. This will do the entire merging.
             };
 #else
             Func<List<String>, Chunk<String>, bool> conflictHandler = (output, chunk) =>
@@ -95,7 +82,7 @@ namespace SyntaxDiff
             return merged.Select(x => x.ToString()).ToList();
         }
 
-        private static List<string> SimilarityMerge<T, CT>(T A, T O, T B, Func<CT, CT, int?> cost, Func<List<CT>, SyntaxNode> recreate)
+        private List<string> SimilarityMerge<T, CT>(T A, T O, T B, Func<CT, CT, int?> cost, Func<List<CT>, SyntaxNode> recreate)
             where T : SyntaxNode
             where CT : SyntaxNode
         {
@@ -155,7 +142,7 @@ namespace SyntaxDiff
         }
 
 
-        private static List<string> SetMerge(SyntaxNode A, SyntaxNode O, SyntaxNode B)
+        private List<string> SetMerge(SyntaxNode A, SyntaxNode O, SyntaxNode B)
         {
             if (A is ClassDeclarationSyntax && O is ClassDeclarationSyntax && B is ClassDeclarationSyntax)
             {
@@ -202,7 +189,7 @@ namespace SyntaxDiff
             throw new NotImplementedException();
         }
 
-        public static List<string> OrderedMerge(SyntaxNode A, SyntaxNode O, SyntaxNode B)
+        public List<string> OrderedMerge(SyntaxNode A, SyntaxNode O, SyntaxNode B)
         {
             if (A is ClassDeclarationSyntax && O is ClassDeclarationSyntax && B is ClassDeclarationSyntax)
             {

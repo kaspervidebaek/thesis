@@ -66,9 +66,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Diff.cs" />
+    <Compile Include="ISmartDiffInterface.cs" />
     <Compile Include="Reorder.cs" />
     <Compile Include="SetMatching.cs" />
     <Compile Include="SmartDiff.cs" />
+    <Compile Include="SyntaxNodeSmartDiff.cs" />
     <Compile Include="Tree.cs" />
     <Compile Include="TreeToSyntax.cs" />
     <Content Include="CodeSnippets\SmartAlgorithm.cs">

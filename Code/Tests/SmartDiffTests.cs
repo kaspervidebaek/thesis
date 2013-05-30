@@ -12,14 +12,14 @@ namespace Tests
     public class SmartDiffTests
     {
         [TestMethod]
-        [TestCategory("SmartDiff")]
+        [TestCategory("Not Testing Anything")]
         public void TestExampleTree()
         {
             var left = SyntaxDiff.Examples.ConflictingLeftTree.GetRoot();
             var bas = SyntaxDiff.Examples.ConflictingBaseTree.GetRoot();
             var right = SyntaxDiff.Examples.ConflictingRightTree.GetRoot();
 
-            var diff = new SyntaxDiff.SmartDiff(new SyntaxNodeSmartDiff());
+            var diff = new SyntaxDiff.SmartDiff<SyntaxNode>(new SyntaxNodeSmartDiff());
 
             var merge = diff.Merge(left, bas, right);
 
@@ -30,17 +30,15 @@ namespace Tests
         [TestCategory("Not Testing Anything")]
         public void TestExampleTreeMerge()
         {
-            var left = SyntaxDiff.Examples.leftTree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>().First().ConvertToTree();
-            var bas = SyntaxDiff.Examples.baseTree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>().First().ConvertToTree();
-            var right = SyntaxDiff.Examples.rightTree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>().First().ConvertToTree();
+            var left = SyntaxDiff.Examples.leftTree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>().First();
+            var bas = SyntaxDiff.Examples.baseTree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>().First();
+            var right = SyntaxDiff.Examples.rightTree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>().First();
 
-            var i = new SyntaxNodeSmartDiff();
+            var diff = new SyntaxDiff.SmartDiff<SyntaxNode>(new SyntaxNodeSmartDiff());
 
-            Func<SyntaxNode, SyntaxNode, bool> equals = (x, y) => i.getLabel(x) == i.getLabel(y);
+            var merge = diff.Merge(left, bas, right);
 
-            
-            var merge = Tree<SyntaxNode>.ThreeWayMatch(left, bas, right, equals);
-
+            merge.ForEach(Console.WriteLine);
             //merge.ForEach(Console.WriteLine);
         }
 
@@ -81,7 +79,6 @@ namespace Tests
             var merge = Tree<int?>.Merge(left, bas, right, equals);
             var itt = result.PostOrderEnumeration();
             Assert.IsTrue(Enumerable.SequenceEqual(itt, merge.PostOrderEnumeration()));
-
         }
     }
 }

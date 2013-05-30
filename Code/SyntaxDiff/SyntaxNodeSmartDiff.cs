@@ -13,6 +13,30 @@ namespace SyntaxDiff
         {
         }
 
+        public SyntaxNode CreateCompilationUnitSyntax(SyntaxNode O, List<SyntaxNode> newmembers)
+        {
+            var Or = (CompilationUnitSyntax)O;
+            var memberList = new SyntaxList<MemberDeclarationSyntax>().Add(newmembers.Select(x => (MemberDeclarationSyntax)x).ToArray());
+            return Syntax.CompilationUnit(Or.Externs, Or.Usings, Or.AttributeLists, memberList);
+        }
+
+        public SyntaxNode CreateClass(SyntaxNode O, List<SyntaxNode> newmembers)
+        {
+            var memberList = new SyntaxList<MemberDeclarationSyntax>().Add(newmembers.Select(x => (MemberDeclarationSyntax)x).ToArray());
+            var Or = (ClassDeclarationSyntax)O;
+            return Syntax.ClassDeclaration(Or.AttributeLists, Or.Modifiers, Or.Identifier, Or.TypeParameterList, Or.BaseList, Or.ConstraintClauses, memberList);
+        }
+        public int? MemberCost(SyntaxNode x, SyntaxNode y)
+        {
+
+            // TODO: Implement heristic to also indicate closeness in body, in parameter list and identifiers.
+            var xI = ((MemberDeclarationSyntax)x).getMemberDeclerationIdentifier();
+            var yI = ((MemberDeclarationSyntax)y).getMemberDeclerationIdentifier();
+            if (xI == yI)
+                return 1;
+            return null;
+        }
+
         public CodeTreeType getChildType(SyntaxNode sn)
         {
             if (sn is CompilationUnitSyntax)
@@ -24,6 +48,39 @@ namespace SyntaxDiff
             return CodeTreeType.Sequence;
         }
 
+        public SyntaxNode SyntaxFromLines(List<string> lines)
+        {
+            return SyntaxTree.ParseText(String.Join("\n", lines)).GetRoot().ChildNodes().First();
+        }
+
+        public List<string> LinesFromSyntax(SyntaxNode m)
+        {
+            if (m == null)
+                return new List<string>();
+            return m.GetText().Lines.Select(x => x.ToString()).ToList();
+        }
+
+        public List<SyntaxNode> Children(SyntaxNode n)
+        {
+            return n.ChildNodes().ToList();
+        }
+
+        public Tree<SyntaxNode> ConvertToTree(SyntaxNode n)
+        {
+            var children = n.ChildNodes().Select(x => ConvertToTree(x)).ToArray();
+            return new Tree<SyntaxNode>(n, children);
+        }
+
+        public string getSyntaxString<T>(SyntaxNode node, Func<T, string> f) where T : SyntaxNode
+        {
+            if (node is T)
+            {
+                var c = node as T;
+                return "[" + f(c) + "]";
+            }
+            return "";
+        }
+
         public string getLabel(SyntaxNode t)
         {
             if (t == null)
@@ -31,12 +88,12 @@ namespace SyntaxDiff
 
             string s = t.GetType().ToString().Substring(24);
 
-            s += t.getSyntaxString<IdentifierNameSyntax>(x => x.Identifier.ToString());
-            s += t.getSyntaxString<ClassDeclarationSyntax>(x => x.Identifier.ToString());
-            s += t.getSyntaxString<LiteralExpressionSyntax>(x => x.Token.ToString());
-            s += t.getSyntaxString<ArrayTypeSyntax>(x => x.ElementType.ToString());
-            s += t.getSyntaxString<PredefinedTypeSyntax>(x => x.ToString());
-            s += t.getSyntaxString<ParameterSyntax>(x => x.Identifier.ToString());
+            s += getSyntaxString<IdentifierNameSyntax>(t, x => x.Identifier.ToString());
+            s += getSyntaxString<ClassDeclarationSyntax>(t, x => x.Identifier.ToString());
+            s += getSyntaxString<LiteralExpressionSyntax>(t, x => x.Token.ToString());
+            s += getSyntaxString<ArrayTypeSyntax>(t, x => x.ElementType.ToString());
+            s += getSyntaxString<PredefinedTypeSyntax>(t, x => x.ToString());
+            s += getSyntaxString<ParameterSyntax>(t, x => x.Identifier.ToString());
 
             return s;
         }
@@ -48,7 +105,7 @@ namespace SyntaxDiff
             foreach (var child in tree.children)
             {
                 var convertback = ConvertBack(child);
-                if(convertback != null)
+                if (convertback != null)
                     newChildren.Add(convertback);
             }
 
@@ -67,6 +124,7 @@ namespace SyntaxDiff
                 checkAndCast<InvocationExpressionSyntax>(oldNode, out newNode, newChildren, (x, y) => merge(x, y), (x, y) => insert(x, y)) ||
                 checkAndCast<ExpressionStatementSyntax>(oldNode, out newNode, newChildren, (x, y) => merge(x, y), (x, y) => insert(x, y)) ||
                 checkAndCast<BlockSyntax>(oldNode, out newNode, newChildren, (x, y) => merge(x, y), (x, y) => insert(x, y)) ||
+                //                checkAndCast<IfStatementSyntax>(oldNode, out newNode, newChildren, (x, y) => merge(x, y), (x, y) => insert(x, y)) ||
                 checkAndCast<IdentifierNameSyntax>(oldNode, out newNode, newChildren, (x, y) => merge(x, y), (x, y) => insert(x, y));
 
             if (!result)
@@ -131,7 +189,7 @@ namespace SyntaxDiff
         {
             return Syntax.Parameter(n.Identifier); // TODO
         }
-        
+
         public static ParameterListSyntax merge(Diff<ParameterListSyntax> n, List<SyntaxNode> children)
         {
             return insert(n.O, children);
@@ -164,7 +222,7 @@ namespace SyntaxDiff
 
         public static LiteralExpressionSyntax merge(Diff<LiteralExpressionSyntax> n, List<SyntaxNode> children)
         {
-            return null;
+            throw new NotImplementedException();
         }
         public static LiteralExpressionSyntax insert(LiteralExpressionSyntax n, List<SyntaxNode> children)
         {
@@ -177,7 +235,7 @@ namespace SyntaxDiff
         }
         public static ArgumentSyntax insert(ArgumentSyntax n, List<SyntaxNode> children)
         {
-            return Syntax.Argument((ExpressionSyntax)children [0]);
+            return Syntax.Argument((ExpressionSyntax)children[0]);
         }
 
         public static ArgumentListSyntax merge(Diff<ArgumentListSyntax> n, List<SyntaxNode> children)
@@ -186,7 +244,7 @@ namespace SyntaxDiff
         }
         public static ArgumentListSyntax insert(ArgumentListSyntax n, List<SyntaxNode> children)
         {
-            var c = Syntax.SeparatedList(children.Select(x => (ArgumentSyntax)x), Enumerable.Repeat(Syntax.Token(SyntaxKind.CommaToken), children.Count-1));
+            var c = Syntax.SeparatedList(children.Select(x => (ArgumentSyntax)x), Enumerable.Repeat(Syntax.Token(SyntaxKind.CommaToken), children.Count - 1));
             return Syntax.ArgumentList(c);
         }
 
@@ -219,17 +277,11 @@ namespace SyntaxDiff
             return Syntax.Block(c);
         }
 
-        public static SyntaxList<AttributeListSyntax> merge(SyntaxList<AttributeListSyntax> A, SyntaxList<AttributeListSyntax> O, SyntaxList<AttributeListSyntax> B)
-        {
-            var attributesLists = new SyntaxList<AttributeListSyntax>();
 
-            return attributesLists; // TODO
-        }
-        
 
         public static MethodDeclarationSyntax merge(Diff<MethodDeclarationSyntax> n, List<SyntaxNode> children)
         {
-            return insert(n.O, children);
+            return insert(n.O, children); // TODO: MAJOR
         }
         public static MethodDeclarationSyntax insert(MethodDeclarationSyntax n, List<SyntaxNode> children)
         {
@@ -242,7 +294,7 @@ namespace SyntaxDiff
                 n.TypeParameterList,
                 (ParameterListSyntax)children[1],
                 n.ConstraintClauses,
-                (BlockSyntax)children[2]) ;
+                (BlockSyntax)children[2]);
         }
     }
 }

@@ -19,8 +19,6 @@ namespace WindowApp
             None, Delete, Insert, Update, WTF
         }
 
-
-
         public static TreeNode buildDiffTree<T>(Tree<Diff<T>> node, Func<T, string> getLabel)
         {
             var children = new List<TreeNode>();
@@ -132,9 +130,9 @@ namespace WindowApp
 
             Func<SyntaxNode, string> getLabel = x => i.getLabel(x);
 
-            var b = baseSyntax.GetRoot().ConvertToTree();
-            var l = leftSyntax.GetRoot().ConvertToTree();
-            var r = rightSyntax.GetRoot().ConvertToTree();
+            var b = i.ConvertToTree(baseSyntax.GetRoot());
+            var l = i.ConvertToTree(leftSyntax.GetRoot());
+            var r = i.ConvertToTree(rightSyntax.GetRoot());
 
             addTreeToView(leftTree, b, l, getLabel);
             addTreeToView(baseTree, b, b, getLabel);
@@ -143,8 +141,6 @@ namespace WindowApp
             var mergedTree = Tree<SyntaxNode>.ThreeWayMatch(l, b, r, (x, y) => i.getLabel(x) == i.getLabel(y));
 
             addDiffTreeToView(bottomTree, mergedTree, getLabel);
-
-
         }
 
         private void leftTree_AfterSelect(object sender, TreeViewEventArgs e)

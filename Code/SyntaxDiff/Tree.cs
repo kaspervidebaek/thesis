@@ -234,14 +234,6 @@ namespace SyntaxDiff
 
     public static class TreeExtensions
     {
-
-        public static Tree<SyntaxNode> ConvertToTree(this SyntaxNode n)
-        {
-            var children = n.ChildNodes().Select(x => x.ConvertToTree()).ToArray();
-            return new Tree<SyntaxNode>(n, children);
-        }
-
-
         public static List<Tree<T>> getChildren<T>(this Tree<T> c)
         {
             if (c != null)

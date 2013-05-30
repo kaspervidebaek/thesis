@@ -20,15 +20,6 @@ namespace SyntaxDiff
             throw new NotImplementedException();
         }
 
-        public static string getSyntaxString<T>(this SyntaxNode node, Func<T, string> f) where T : SyntaxNode
-        {
-            if (node is T)
-            {
-                var c = node as T;
-                return "[" + f(c) + "]";
-            }
-            return "";
-        }
 
         public static List<SyntaxNode> getChildrenEnum(this SyntaxNode n)
         {

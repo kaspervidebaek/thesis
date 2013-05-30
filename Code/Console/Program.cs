@@ -7,11 +7,8 @@ using System.Diagnostics;
 
 namespace ConsoleApp
 {
-
-
     class Program
     {
-
         static void Main(string[] args)
         {
             var x = new Tests.SmartDiffTests();

@@ -27,15 +27,13 @@ namespace SyntaxDiff
         public Tree(T v, params Object[] children)
         {
             value = v;
-            this.children = children.Select(x =>
-            {
+            this.children = children.Select(x => {
                 if (x is T)
                     return new Tree<T>((T)x);
                 else if (x is Tree<T>)
                     return (Tree<T>)x;
                 throw new Exception();
-            }
-                ).ToList();
+            }).ToList();
         }
 
 
@@ -122,6 +120,42 @@ namespace SyntaxDiff
             var match = Tree<Matching<T>>.Match(ao, ob, (x, y) => x.bas != null && y.bas != null && equals(x.bas, y.bas)); // TODO: Examine why we nede to write equals here instead of Object.referenceequals;
 
             return match.Convert(x => new Diff<T>(x.bas, x.other)); 
+        }
+
+        public static Tree<Chunk<T>> ChunkMatch(Tree<T> A, Tree<T> O, Tree<T> B, Func<T, T, bool> equals)
+        {
+            bool x;
+            var match = ThreeWayMatch(A, O, B, equals);
+            var m = ChunkInner(match, equals, out x);
+            return m;
+        }
+
+        public static Tree<Chunk<T>> ChunkInner(Tree<Diff<T>> matching, Func<T, T, bool> equals, out bool stable)
+        {
+            bool allStable = true;
+            var children = new List<Tree<Chunk<T>>>();
+            Tree<Chunk<T>> child = null;
+            bool stableChunk = false;
+
+            foreach (var match in matching.children)
+            {
+                bool childstable;
+                 child = ChunkInner(match, equals, out childstable);
+
+                allStable = allStable && childstable;
+
+                if (!stableChunk && childstable || stableChunk && !childstable)
+                {
+                    stableChunk = !stableChunk;
+                    children.Add(child);
+                }
+            }
+            if (child != null && !children.Contains(child)) // TODO: Improve runtime
+                children.Add(child);
+
+            stable = equals(matching.value.A, matching.value.O) && equals(matching.value.O, matching.value.B) && allStable;
+            return new Tree<Chunk<T>>(new Chunk<T>(stable, matching.value), children.ToArray());
+
         }
 
         public static Tree<Matching<T>> Match(Tree<T> bas, Tree<T> mod, Func<T, T, bool> equals)

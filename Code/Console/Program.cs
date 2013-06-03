@@ -12,7 +12,7 @@ namespace ConsoleApp
         static void Main(string[] args)
         {
             var x = new Tests.SmartDiffTests();
-            x.TestExampleTree();
+            x.TestExampleTreeMerge();
             Console.ReadLine();
             return;
 

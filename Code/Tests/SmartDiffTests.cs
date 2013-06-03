@@ -62,6 +62,7 @@ namespace Tests
                 new Tree<int?>(4, 5, new Tree<int?>(2, 9, 9)),
                 9);
                     Func<int?, int?, bool> equals = (x, y) => x == y;
+
         [TestMethod]
         [TestCategory("Tree")]
         public void TestMatch()
@@ -71,6 +72,18 @@ namespace Tests
             var result = new List<int?> { 9, 6, 9, 9, 2, 5, 4, 10, 3, 2, 1 };
             Assert.IsTrue(Enumerable.SequenceEqual(v, result));
         }
+
+
+        [TestMethod]
+        [TestCategory("Tree")]
+        public void TestChunkMatch()
+        {
+            var match = Tree<int?>.ChunkMatch(left, bas, right, intEquals);
+            //var v = match.PostOrderEnumeration().Select(x => x.A != null ? x.A : (x.B != null ? x.B : x.O)).ToList();
+            //var result = new List<int?> { 9, 6, 9, 9, 2, 5, 4, 10, 3, 2, 1 };
+            //Assert.IsTrue(Enumerable.SequenceEqual(v, result));
+        }
+
 
         [TestMethod]
         [TestCategory("Tree")]

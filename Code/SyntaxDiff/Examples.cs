@@ -84,7 +84,8 @@ namespace SyntaxDiff
                         }
                         static void ShouldConflict(string args)
                         {
-                            Console.WriteLine(""Hello, right!"");
+                            if(true)
+                                Console.WriteLine(""Hello, right!"");
                         }
                         static void EndsAsLeft()
                         {

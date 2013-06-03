@@ -65,6 +65,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Chunk.cs" />
     <Compile Include="Diff.cs" />
     <Compile Include="ISmartDiffInterface.cs" />
     <Compile Include="Reorder.cs" />

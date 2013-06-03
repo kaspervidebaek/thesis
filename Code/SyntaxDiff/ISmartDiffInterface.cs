@@ -6,9 +6,22 @@ using System.Threading.Tasks;
 
 namespace SyntaxDiff
 {
+    public enum CodeNodeType
+    {
+        Unordered, Ordered
+    }
+
+    public class UnorderedMergeType<T>
+    {
+        public Type type;
+        public Func<T, T, int?> cost;
+        public Func<T, List<T>, T> recreate;
+    }
     public interface ISmartDiffInterface<T>
     {
-        CodeTreeType getChildType(T sn);
+        List<UnorderedMergeType<T>> unorderedmerges { get; set; }
+
+        CodeNodeType getChildType(T sn);
         string getLabel(T n);
         T ConvertBack(Tree<Diff<T>> t);
 
@@ -17,9 +30,5 @@ namespace SyntaxDiff
 
         T SyntaxFromLines(List<string> l);
         List<T> Children(T n);
-
-        T CreateClass(T n, List<T> l);
-        T CreateCompilationUnitSyntax(T n, List<T> l);
-        int? MemberCost(T n, T n2);
     }
 }

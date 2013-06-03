@@ -123,7 +123,6 @@ namespace SyntaxDiff
             {
                 return Source.GetHashCode() + Target.GetHashCode();
             }
-
         }
 
         public class BipartiteGraph : AdjacencyGraph<Node, Edge>

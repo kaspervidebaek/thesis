@@ -11,7 +11,12 @@ namespace SyntaxDiff
     {
         public SyntaxNodeSmartDiff()
         {
+            unorderedmerges = new List<UnorderedMergeType<SyntaxNode>> {
+                new UnorderedMergeType<SyntaxNode> { type = typeof(ClassDeclarationSyntax), recreate = this.CreateClass, cost = this.MemberCost },
+                new UnorderedMergeType<SyntaxNode> { type = typeof(CompilationUnitSyntax), recreate = this.CreateCompilationUnitSyntax, cost = this.MemberCost }
+            };
         }
+        public List<UnorderedMergeType<SyntaxNode>> unorderedmerges { get; set; }
 
         public SyntaxNode CreateCompilationUnitSyntax(SyntaxNode O, List<SyntaxNode> newmembers)
         {
@@ -28,24 +33,23 @@ namespace SyntaxDiff
         }
         public int? MemberCost(SyntaxNode x, SyntaxNode y)
         {
-
             // TODO: Implement heristic to also indicate closeness in body, in parameter list and identifiers.
-            var xI = ((MemberDeclarationSyntax)x).getMemberDeclerationIdentifier();
-            var yI = ((MemberDeclarationSyntax)y).getMemberDeclerationIdentifier();
+            var xI = ((MethodDeclarationSyntax)x).Identifier.ToString();
+            var yI = ((MethodDeclarationSyntax)y).Identifier.ToString();
             if (xI == yI)
                 return 1;
             return null;
         }
 
-        public CodeTreeType getChildType(SyntaxNode sn)
+        public CodeNodeType getChildType(SyntaxNode sn)
         {
             if (sn is CompilationUnitSyntax)
-                return CodeTreeType.Set;
+                return CodeNodeType.Unordered;
             else if (sn is NamespaceDeclarationSyntax)
-                return CodeTreeType.Set;
+                return CodeNodeType.Unordered;
             else if (sn is ClassDeclarationSyntax)
-                return CodeTreeType.Set;
-            return CodeTreeType.Sequence;
+                return CodeNodeType.Unordered;
+            return CodeNodeType.Ordered;
         }
 
         public SyntaxNode SyntaxFromLines(List<string> lines)
@@ -124,7 +128,7 @@ namespace SyntaxDiff
                 checkAndCast<InvocationExpressionSyntax>(oldNode, out newNode, newChildren, (x, y) => merge(x, y), (x, y) => insert(x, y)) ||
                 checkAndCast<ExpressionStatementSyntax>(oldNode, out newNode, newChildren, (x, y) => merge(x, y), (x, y) => insert(x, y)) ||
                 checkAndCast<BlockSyntax>(oldNode, out newNode, newChildren, (x, y) => merge(x, y), (x, y) => insert(x, y)) ||
-                //                checkAndCast<IfStatementSyntax>(oldNode, out newNode, newChildren, (x, y) => merge(x, y), (x, y) => insert(x, y)) ||
+                checkAndCast<IfStatementSyntax>(oldNode, out newNode, newChildren, (x, y) => merge(x, y), (x, y) => insert(x, y)) ||
                 checkAndCast<IdentifierNameSyntax>(oldNode, out newNode, newChildren, (x, y) => merge(x, y), (x, y) => insert(x, y));
 
             if (!result)
@@ -155,9 +159,10 @@ namespace SyntaxDiff
                     on = convert(n.cast<Y>(), newchildren);
                     return true;
                 }
-
+                
                 on = null;
                 return true; // If we reach this part is a delete, and we can simply return "processed"
+                            // TODO: No, we cannot. We need to know if there were changes in the rest of the tree.
             }
             on = null;
             return false; // We did not process this node
@@ -277,7 +282,14 @@ namespace SyntaxDiff
             return Syntax.Block(c);
         }
 
-
+        public static IfStatementSyntax merge(Diff<IfStatementSyntax> n, List<SyntaxNode> children)
+        {
+            return insert(n.O, children) ; 
+        }
+        public static IfStatementSyntax insert(IfStatementSyntax n, List<SyntaxNode> children)
+        {
+            return Syntax.IfStatement((ExpressionSyntax)children[0], (StatementSyntax)children[1]);
+        }
 
         public static MethodDeclarationSyntax merge(Diff<MethodDeclarationSyntax> n, List<SyntaxNode> children)
         {
@@ -291,6 +303,7 @@ namespace SyntaxDiff
                 (TypeSyntax)children[0],
                 n.ExplicitInterfaceSpecifier,
                 n.Identifier,
+
                 n.TypeParameterList,
                 (ParameterListSyntax)children[1],
                 n.ConstraintClauses,

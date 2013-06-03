@@ -21,16 +21,16 @@ namespace SyntaxDiff
             if (!(i.getChildType(A) == i.getChildType(O) && i.getChildType(O) == i.getChildType(B)))
                 throw new Exception("This is bad!");
 
-            if (i.getChildType(O) == CodeTreeType.Set)
+            if (i.getChildType(O) == CodeNodeType.Unordered)
             {
                 return SetMerge(A, O, B);
             }
-            else if (i.getChildType(O) == CodeTreeType.Sequence)
+            else if (i.getChildType(O) == CodeNodeType.Ordered)
             {
                 return SequenceMerge(A, O, B);
             }
 
-            return null;
+            throw new NotImplementedException();
         }
 
 
@@ -71,77 +71,64 @@ namespace SyntaxDiff
             return merged.Select(x => x.ToString()).ToList();
         }
 
-        private List<string> SimilarityMerge<PT, CT>(PT A, PT O, PT B, Func<CT, CT, int?> cost, Func<PT, List<CT>, PT> recreate)
-            where PT : class, T
-            where CT : class, T
-        {
-            var Ac = i.Children(A).Select(x => (CT)x).ToList();
-            var Oc = i.Children(O).Select(x => (CT)x).ToList();
-            var Bc = i.Children(B).Select(x => (CT)x).ToList();
-
-            var Ma = GraphMatching<CT, CT>.Match(Ac, Oc, cost);
-            var Mb = GraphMatching<CT, CT>.Match(Bc, Oc, cost);
-
-            var totalMatch = GraphMatching<
-                                        Tuple<CT, CT>,
-                                        Tuple<CT, CT>
-                                        >.Match(Ma, Mb,
-                                            (x, y) =>
-                                            {
-                                                if (x.Item2 == y.Item2 && y.Item2 != null)
-                                                    return 1;
-                                                return null;
-                                            }).Select(u => new Diff<CT>(u.Item1, u.Item2)).ToList();
-
-            var members = new List<Tuple<Diff<CT>, CT>>();
-
-
-            foreach (var m in totalMatch)
-            {
-                if (m.A != null && m.B != null && m.O != null) // Function exists in all revisions
-                {
-                    var merge = Merge(m.A, m.O, m.B);
-                    var tree = i.SyntaxFromLines(merge);
-
-                    var child = (CT)tree;
-
-                    members.Add(Tuple.Create(m, child));
-                }
-                else if (m.A == null && m.O == null && m.B != null) // Function only exists in B - Inserted
-                {
-                    members.Add(Tuple.Create(m, m.B));
-                }
-                else if (m.A != null && m.O == null && m.B == null) // Function only exists in A - Inserted
-                {
-                    members.Add(Tuple.Create(m, m.A));
-                } 
-                else
-                    throw new NotImplementedException();
-            }
-
-            var newAc = Ac.Select(a => members.First(x => x.Item1.A == a).Item2).ToList(); // TODO: Performance
-            var newOc = Oc.Select(o => members.First(x => x.Item1.O == o).Item2).ToList();
-            var newBc = Bc.Select(b => members.First(x => x.Item1.B == b).Item2).ToList();
-
-            var reordered = Reorder<CT>.OrderLists(newAc, newOc, newBc);
-
-            // TODO: Merge all other class identifeirs too.
-
-            return i.LinesFromSyntax(recreate((PT)O, reordered));
-        }
-
-
         private List<string> SetMerge(T A, T O, T B)
         {
-            if (A is ClassDeclarationSyntax && O is ClassDeclarationSyntax && B is ClassDeclarationSyntax)
-            {
-                return SimilarityMerge<T, T>(A, O, B, i.MemberCost, i.CreateClass);
-            }
-            else if (A is CompilationUnitSyntax && O is CompilationUnitSyntax && B is CompilationUnitSyntax)
-            {
-                return SimilarityMerge<T, T>(A, O, B, i.MemberCost, i.CreateCompilationUnitSyntax);
-            }
 
+            foreach (var merge in i.unorderedmerges)
+            {
+                if (A.GetType() == merge.type && O.GetType() == merge.type && B.GetType() == merge.type)
+                {
+                    var Ac = i.Children(A);
+                    var Oc = i.Children(O);
+                    var Bc = i.Children(B);
+
+                    var Ma = GraphMatching<T, T>.Match(Ac, Oc, merge.cost);
+                    var Mb = GraphMatching<T, T>.Match(Bc, Oc, merge.cost);
+
+                    var totalMatch = GraphMatching<
+                                                Tuple<T, T>,
+                                                Tuple<T, T>
+                                                >.Match(Ma, Mb,
+                                                    (x, y) =>
+                                                    {
+                                                        if (x.Item2 == y.Item2 && y.Item2 != null)
+                                                            return 1;
+                                                        return null;
+                                                    }).Select(u => new Diff<T>(u.Item1, u.Item2)).ToList();
+
+                    var members = new List<Tuple<Diff<T>, T>>();
+
+
+                    foreach (var m in totalMatch)
+                    {
+                        if (m.A != null && m.B != null && m.O != null) // Function exists in all revisions
+                        {
+                            var tree = i.SyntaxFromLines(Merge(m.A, m.O, m.B));
+                            members.Add(Tuple.Create(m, tree));
+                        }
+                        else if (m.A == null && m.O == null && m.B != null) // Function only exists in B - Inserted
+                        {
+                            members.Add(Tuple.Create(m, m.B));
+                        }
+                        else if (m.A != null && m.O == null && m.B == null) // Function only exists in A - Inserted
+                        {
+                            members.Add(Tuple.Create(m, m.A));
+                        }
+                        else
+                            throw new NotImplementedException();
+                    }
+
+                    var newAc = Ac.Select(a => members.First(x => x.Item1.A == a).Item2).ToList(); // TODO: Performance
+                    var newOc = Oc.Select(o => members.First(x => x.Item1.O == o).Item2).ToList();
+                    var newBc = Bc.Select(b => members.First(x => x.Item1.B == b).Item2).ToList();
+
+                    var reordered = Reorder<T>.OrderLists(newAc, newOc, newBc);
+
+                    // TODO: Merge all other class identifeirs too.
+
+                    return i.LinesFromSyntax(merge.recreate((T)O, reordered));
+                }
+            }
 
             throw new NotImplementedException();
         }

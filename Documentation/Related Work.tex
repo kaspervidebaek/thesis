@@ -20,7 +20,6 @@ Several topics are related to the work that will be done in this thesis. In this
 
 
 \subsection{Automatic merging}
-
 Merging in version controls is the process of producing a single file, given two files that have evolved in different directions from a common ancestor. Merging source code is an inherent part of software development, and has gone through some development and automation since the first version control systems. Merging algorithms generally work by matching content between the two branches and the common ancestor. Given these matchings it is possible to merge the content into one common child. If this is not possible a conflict is detected and presented to the user.
 
 Merging tools of version control systems are mostly line based and oblivious to the structure of the content of the files contained. This can probably attributed to such an approach working relatively well with source code, XML and other files often found in repositories.
@@ -159,7 +158,11 @@ Observations:
 - If a node is deleted in either left or right, it should be deleted even if it has been reordered. (However conflict if the content has been modified)
 - If a deletion happens 
 
+
+\todo{Match default? Forrest or tree? Do we allways know that the root node matches?}
+
 \bibliographystyle{plainnat}
 \bibliography{libary}
 
 \end{document}
+

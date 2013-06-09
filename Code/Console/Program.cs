@@ -7,15 +7,12 @@ using System.Diagnostics;
 
 namespace ConsoleApp
 {
-
-
     class Program
     {
-
         static void Main(string[] args)
         {
-            var x = new Tests.TreeMatching();
-            x.TestTreeMatching();
+            var x = new Tests.SmartDiffTests();
+            x.TestExampleTreeMerge();
             Console.ReadLine();
             return;
 

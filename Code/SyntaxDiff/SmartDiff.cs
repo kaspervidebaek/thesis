@@ -8,49 +8,48 @@ using System.Threading.Tasks;
 
 namespace SyntaxDiff
 {
-    public class SmartDiff
+    public class SmartDiff<T> where T : class
     {
-        public static List<String> Merge(SyntaxNode A, SyntaxNode O, SyntaxNode B)
+        public SmartDiff(ISmartDiffInterface<T> i)
         {
-            if (!(A.getChildType() == O.getChildType() && O.getChildType() == B.getChildType()))
+            this.i = i;
+        }
+        private ISmartDiffInterface<T> i;
+
+        public List<String> Merge(T A, T O, T B)
+        {
+            if (!(i.getChildType(A) == i.getChildType(O) && i.getChildType(O) == i.getChildType(B)))
                 throw new Exception("This is bad!");
 
-            if (O.getChildType() == CodeTreeType.Set)
+            if (i.getChildType(O) == CodeNodeType.Unordered)
             {
-                return SetMerge (A, O, B);
-
+                return SetMerge(A, O, B);
             }
-            else if (O.getChildType() == CodeTreeType.Sequence)
+            else if (i.getChildType(O) == CodeNodeType.Ordered)
             {
                 return SequenceMerge(A, O, B);
             }
 
-            return null;
-        }
-
-        private static SyntaxNode SyntaxNodeMerge(SyntaxNode A, SyntaxNode O, SyntaxNode B)
-        {
             throw new NotImplementedException();
         }
 
-        private static List<string> LinesFromSyntax(SyntaxNode m)
-        {
-            if (m == null)
-                return new List<string>();
-            return m.GetText().Lines.Select(x => x.ToString()).ToList();
-        }
 
-        private static List<string> SequenceMerge(SyntaxNode A, SyntaxNode O, SyntaxNode B)
+        private List<string> SequenceMerge(T A, T O, T B)
         {
             // TODO: If there are conflicts - use syntax tree merge.
-#if false
+#if true
             Func<List<string>, Chunk<string>, bool> conflictHandler = (output, chunk) =>
             {
-                var mergedTree = TreeMerge.Merge(A, O, B);
-                output.Clear();
-                output.AddRange(LinesFromSyntax(mergedTree));
+                var aC = i.ConvertToTree(A);
+                var oC = i.ConvertToTree(O);
+                var bC = i.ConvertToTree(B);
 
-                return true;
+                var matching = Tree<T>.ThreeWayMatch(aC, oC, bC, (x, y) => i.getLabel(x) == i.getLabel(y));
+
+                output.Clear();
+                output.AddRange(i.LinesFromSyntax(i.ConvertBack(matching)));
+
+                return true; // We should terminate. This will do the entire merging.
             };
 #else
             Func<List<String>, Chunk<String>, bool> conflictHandler = (output, chunk) =>
@@ -68,126 +67,72 @@ namespace SyntaxDiff
 
             Func<string, string, bool> equality = (x, y) => x != null && y != null && x.ToString().Trim() == y.ToString().Trim();
 
-            var merged = Diff3<string>.Merge(LinesFromSyntax(A), LinesFromSyntax(O), LinesFromSyntax(B), equality, conflictHandler);
+            var merged = Diff3<string>.Merge(i.LinesFromSyntax(A), i.LinesFromSyntax(O), i.LinesFromSyntax(B), equality, conflictHandler);
             return merged.Select(x => x.ToString()).ToList();
         }
 
-
-        private static List<string> SetMerge(SyntaxNode A, SyntaxNode O, SyntaxNode B)
+        private List<string> SetMerge(T A, T O, T B)
         {
-            if (A is ClassDeclarationSyntax && O is ClassDeclarationSyntax && B is ClassDeclarationSyntax)
+
+            foreach (var merge in i.unorderedmerges)
             {
-                var Or = O as ClassDeclarationSyntax;
-
-                var Ac = A.ChildNodes().Select(x => (MemberDeclarationSyntax)x).ToList();
-                var Oc = O.ChildNodes().Select(x => (MemberDeclarationSyntax)x).ToList();
-                var Bc = B.ChildNodes().Select(x => (MemberDeclarationSyntax)x).ToList();
-
-                Func<MemberDeclarationSyntax, MemberDeclarationSyntax, int?> cost = (x, y) =>
-                { // TODO: Implement heristic to also indicate closeness in body, in parameter list and identifiers.
-                    var xI = x.getMemberDeclerationIdentifier();
-                    var yI = y.getMemberDeclerationIdentifier();
-                    if (xI == yI)
-                        return 1;
-                    return null;
-                };
-
-                var Ma = GraphMatching<MemberDeclarationSyntax, MemberDeclarationSyntax>.Match(Ac, Oc, cost);
-                var Mb = GraphMatching<MemberDeclarationSyntax, MemberDeclarationSyntax>.Match(Bc, Oc, cost);
-
-                var totalMatch = GraphMatching<
-                                            Tuple<MemberDeclarationSyntax, MemberDeclarationSyntax>,
-                                            Tuple<MemberDeclarationSyntax, MemberDeclarationSyntax>
-                                            >.Match(Ma, Mb,
-                                                (x, y) =>
-                                                {
-                                                    if (x.Item2 == y.Item2 && y.Item2 != null)
-                                                        return 1;
-                                                    return null;
-                                                }).Select(u => new Diff<MemberDeclarationSyntax>(u.Item1, u.Item2)).ToList() ;
-
-                var members = new List<Tuple< Diff<MemberDeclarationSyntax>, MemberDeclarationSyntax>>();
-
-
-                foreach (var m in totalMatch)
+                if (A.GetType() == merge.type && O.GetType() == merge.type && B.GetType() == merge.type)
                 {
-                    if (m.A != null && m.B != null && m.O != null) // Function exists in all revisions
-                    {
-                        var functionName = m.O.getMemberDeclerationIdentifier();
+                    var Ac = i.Children(A);
+                    var Oc = i.Children(O);
+                    var Bc = i.Children(B);
 
-                        var merge = Merge(m.A, m.O, m.B);
-                        var tree = SyntaxTree.ParseText(String.Join("\n", merge));
+                    var Ma = GraphMatching<T, T>.Match(Ac, Oc, merge.cost);
+                    var Mb = GraphMatching<T, T>.Match(Bc, Oc, merge.cost);
 
-                        var child = (MemberDeclarationSyntax)tree.GetRoot().ChildNodes().First();
+                    var totalMatch = GraphMatching<
+                                                Tuple<T, T>,
+                                                Tuple<T, T>
+                                                >.Match(Ma, Mb,
+                                                    (x, y) =>
+                                                    {
+                                                        if (x.Item2 == y.Item2 && y.Item2 != null)
+                                                            return 1;
+                                                        return null;
+                                                    }).Select(u => new Diff<T>(u.Item1, u.Item2)).ToList();
 
-                        members.Add(Tuple.Create(m, child));
-                    }
-                    else if (m.A == null && m.O == null && m.B != null) // Function only exists in B - Inserted
+                    var members = new List<Tuple<Diff<T>, T>>();
+
+
+                    foreach (var m in totalMatch)
                     {
-                        members.Add(Tuple.Create(m, m.B));
+                        if (m.A != null && m.B != null && m.O != null) // Function exists in all revisions
+                        {
+                            var tree = i.SyntaxFromLines(Merge(m.A, m.O, m.B));
+                            members.Add(Tuple.Create(m, tree));
+                        }
+                        else if (m.A == null && m.O == null && m.B != null) // Function only exists in B - Inserted
+                        {
+                            members.Add(Tuple.Create(m, m.B));
+                        }
+                        else if (m.A != null && m.O == null && m.B == null) // Function only exists in A - Inserted
+                        {
+                            members.Add(Tuple.Create(m, m.A));
+                        }
+                        else
+                            throw new NotImplementedException();
                     }
-                    else if (m.A != null && m.O == null && m.B == null) // Function only exists in A - Inserted
-                    {
-                        members.Add(Tuple.Create(m, m.A));
-                    }
-                    else
-                        throw new NotImplementedException();
+
+                    var newAc = Ac.Select(a => members.First(x => x.Item1.A == a).Item2).ToList(); // TODO: Performance
+                    var newOc = Oc.Select(o => members.First(x => x.Item1.O == o).Item2).ToList();
+                    var newBc = Bc.Select(b => members.First(x => x.Item1.B == b).Item2).ToList();
+
+                    var reordered = Reorder<T>.OrderLists(newAc, newOc, newBc);
+
+                    // TODO: Merge all other class identifeirs too.
+
+                    return i.LinesFromSyntax(merge.recreate((T)O, reordered));
                 }
-
-                var newAc = Ac.Select(a => members.First(x => x.Item1.A == a).Item2).ToList(); // TODO: Performance
-                var newOc = Oc.Select(o => members.First(x => x.Item1.O == o).Item2).ToList();
-                var newBc = Bc.Select(b => members.First(x => x.Item1.B == b).Item2).ToList();
-
-                var reordered = Reorder<MemberDeclarationSyntax>.OrderLists(newAc, newOc, newBc);
-                var memberList = new SyntaxList<MemberDeclarationSyntax>().Add(reordered.ToArray());
-
-                // TODO: Merge all other class identifeirs too.
-                var rv = Syntax.ClassDeclaration(Or.AttributeLists, Or.Modifiers, Or.Identifier, Or.TypeParameterList, Or.BaseList, Or.ConstraintClauses, memberList);
-
-                return LinesFromSyntax(rv);
             }
 
             throw new NotImplementedException();
         }
 
-        public static List<string> OrderedMerge(SyntaxNode A, SyntaxNode O, SyntaxNode B)
-        {
-            if (A is ClassDeclarationSyntax && O is ClassDeclarationSyntax && B is ClassDeclarationSyntax)
-            {
-
-                var Ac = A.ChildNodes().Select(x => (MemberDeclarationSyntax)x).ToList();
-                var Oc = O.ChildNodes().Select(x => (MemberDeclarationSyntax)x).ToList();
-                var Bc = B.ChildNodes().Select(x => (MemberDeclarationSyntax)x).ToList();
-                Func<MemberDeclarationSyntax, MemberDeclarationSyntax, bool> comparer = (x, y) => x != null && y != null && x.getMemberDeclerationIdentifier() == y.getMemberDeclerationIdentifier();
-
-                var Ma = NeedlemanWunsch<MemberDeclarationSyntax>.Allignment(Ac, Oc, comparer);
-                var Mb = NeedlemanWunsch<MemberDeclarationSyntax>.Allignment(Bc, Oc, comparer);
-
-                var totalMatch = NeedlemanWunsch<Tuple<MemberDeclarationSyntax, MemberDeclarationSyntax>>.Allignment(Ma, Mb, (a, b) => comparer(a.Item2, b.Item2))
-                    .Select(x => new Diff<MemberDeclarationSyntax>(x.Item1, x.Item2)).ToList();
-
-
-                var matchesWithBase = new List<Diff<MemberDeclarationSyntax>>();
-                var matchesWithoutBases = new List<Diff<MemberDeclarationSyntax>>();
-
-                var merged = O;
-                foreach (var m in totalMatch)
-                {
-                    if (m.A != null && m.B != null && m.O != null)
-                    {
-                        var functionName = m.O.getMemberDeclerationIdentifier();
-
-                        var merge = Merge(m.A, m.O, m.B);
-                        var tree = SyntaxTree.ParseText(String.Join("\n", merge));
-                        var child = (MemberDeclarationSyntax)tree.GetRoot().ChildNodes().First();
-
-                        merged = merged.ReplaceNode(m.O, child);
-                    }
-                }
-                return LinesFromSyntax(merged);
-            }
-            return null;
-        }
 
     }
 }

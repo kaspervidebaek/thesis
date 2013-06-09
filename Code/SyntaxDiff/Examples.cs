@@ -84,7 +84,8 @@ namespace SyntaxDiff
                         }
                         static void ShouldConflict(string args)
                         {
-                            Console.WriteLine(""Hello, right!"");
+                            if(true)
+                                Console.WriteLine(""Hello, right!"");
                         }
                         static void EndsAsLeft()
                         {
@@ -128,6 +129,26 @@ namespace SyntaxDiff
                             Console.WriteLine(""Hello, new right World!"");
                         }
                     }
+                ");
+
+        public static SyntaxTree ConflictingBaseTree = SyntaxTree.ParseText(@"
+                        static void Conflicts(string args)
+                        {
+                            Console.WriteLine(""Hello, base!"");
+                        }
+                ");
+
+        public static SyntaxTree ConflictingLeftTree = SyntaxTree.ParseText(@"
+                        static void Conflicts(string args)
+                        {
+                            Console.Write(""Hello, base!"");
+                        }
+                ");
+        public static SyntaxTree ConflictingRightTree = SyntaxTree.ParseText(@"
+                        static void Conflicts(string args)
+                        {
+                            Console.WriteLine(""Hello, new right World!"");
+                        }
                 ");
 
     }

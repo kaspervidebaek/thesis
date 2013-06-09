@@ -1,67 +1,71 @@
-sorted: match on nodes but use sorted algoirthm
-unsorted: match on nodes, use unsorted algorithm
-codelines: match on textual lines.
-tree: do an actual tree merge.
+costfunction(A, B) -> int?
+create(A, B) -> int?
+unorderedtypes() -> (type, costfunction, recreationfunction)
 
-Treenode
-- Label
-- TreatChrildrenAs(sorted, unsorted, codeLines, Tree)
-- Code
-- Children
+file merge(base, left, right)
+	if(nodes are unordered)
+		unorderedmatch(base, left, right)
+	else if(nodes are ordered)
+		orderedmatch(base, left, right);
 
-// TODO: What is result? Answer: Codetree!
+file unorderedmerge(base, left, right)
+	var bl = match B and Ls children given cost-function
+	var br = match B and Rs children given cost-function
+	var zip = match bl and br on same base object.
 
-func Merge(Tree base, Tree left, Tree right)
-	assert that base left and right's treat children as all equal.
-	if(t.TreatChilrenAs is Members) {
-		Match(base, left, right)
-	}
-	else if(t.treat as codelines) {
-		return linemerge();
-	}
+	var members = [];
 
-func LineMerge(base, left, right) {
-	var Ma = NeedlemanWunsch<String>.Allignment(A, O, cmp);
-	var Mb = NeedlemanWunsch<String>.Allignment(B, O, cmp);
+	foreach(match in zip)
+		if(match exists in all)
+			member.add(m, merge(base, left, right));
+		if(match was inserted in B)
+			member.add(m, m.B);
+		if(match was inserted in A)
+			member.add(m, m.A);
 	
-	var totalMatch = match the O item of Ma and Mo together.
-	
-	group all matches into chuncks of unstable amtching and stable matchings
-	
-	foreach (var chunck in chuncks)
-		if (chunck.stable)
-			add all chunck.O
-		else if(chunck.O and chunk.A is empty)
-			add all chunck.B
-		else if (chunck.O and chunk.B is empty)
-			add all chunck.A
-		else { // Conflict
-			add syntaxMerge(chunck.A, chunck.O, chunck.B)
-		}
-}
+	members = mergeorder(l, b, r, members);
 
-func match(Tree base, Tree left, Tree right)
-	var bl = Match(base, left);
-	var br = Match(base, right);
+	return recreate(b, l, r, members);
 
-	var matchings = zip(bl, br)
-	foreach(ln, bn, rn in matchings)
-		Merge(ln, bn, rn)
 
-func zipMatchings(bl, br)
-	order bl by base
-	order br by base
-	
-	rv = new list()
-	foreach(base, left, right in bl) {
-		rv.add((base, left, right))
-	}
-	
-	return rv
+file orderedmerge(base, left, right)
+	run diff3 algorithm on the source text of base, left, right
+	if a conflict happens, do a three-way matching-tree matching on the trees. instead.
+	use this three-way match to reconstruct a new tree.
 
-convertTreeNode(SyntxaTree)
-	match tree:
-		tree is compilationUnit: return unsorted
-		tree is namespacedecleration: return unsorted
-		tree is classdecleration: return unsorted
-		tree is functiondecleration: return codelines
+Theory
+- Automatic merging
+- Syntax Trees in version control
+- Tree differencing and merging
+
+Discussions
+- Supporting several different lagnguages
+- Tree merging. How is it applicable.
+
+Proposed Solution
+- Interface
+- Algorithmic overview
+		
+
+- Running times of the algorithm
+
+Implementation
+- 
+- Tree matching
+- 
+
+-- Implementation details
+--- Three way cost matching
+--- Node similarity measures
+--- Reordering outputted class members
+
+
+
+ 
+
+A node has:
+Properties (modifiers, type parameters, return type, parameters, und so weider)
+Nodes: Things that are absolutely dependent on this thing to exist.
+Identifiers: Ting der bruges til at Matche om to noder er ens. (Type, navn, måske properties)
+
+In lists, all the children are 

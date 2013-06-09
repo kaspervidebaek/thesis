@@ -27,15 +27,13 @@ namespace SyntaxDiff
         public Tree(T v, params Object[] children)
         {
             value = v;
-            this.children = children.Select(x =>
-            {
+            this.children = children.Select(x => {
                 if (x is T)
                     return new Tree<T>((T)x);
                 else if (x is Tree<T>)
                     return (Tree<T>)x;
                 throw new Exception();
-            }
-                ).ToList();
+            }).ToList();
         }
 
 
@@ -69,22 +67,21 @@ namespace SyntaxDiff
         }
 
 
-        public class TreeWithMatching
+        public class ObjectWithMatching
         {
             public T tree;
             public Matching<T> matching;
             public override string ToString()
             {
                 return "(" + tree.ToString() + ")";
-                return "(" + tree.ToString() + "," + matching.ToString() + ")";
+                //return "(" + tree.ToString() + "," + matching.ToString() + ")";
             }
         }
 
 
         public static Tree<T> Merge(Tree<T> A, Tree<T> O, Tree<T> B, Func<T, T, bool> equals)
         {
-            var diff = Tree<T>.TreeWayMatch(A, O, B, equals);
-
+            var diff = Tree<T>.ThreeWayMatch(A, O, B, equals);
 
             return MergeDiff(diff) ;
         }
@@ -102,7 +99,7 @@ namespace SyntaxDiff
             }
 
             if (diffs.value.O == null)
-            {
+            { // TODO: Conflicts missing.
                 if (diffs.value.A != null)
                     return new Tree<T>(diffs.value.A, children.ToArray());
                 if (diffs.value.B != null)
@@ -115,47 +112,95 @@ namespace SyntaxDiff
 
             return null;
         }
-        public static Tree<Diff<T>> TreeWayMatch(Tree<T> A, Tree<T> O, Tree<T> B, Func<T, T, bool> equals)
+        public static Tree<Diff<T>> ThreeWayMatch(Tree<T> A, Tree<T> O, Tree<T> B, Func<T, T, bool> equals)
         {
             var ao = Match(O, A, equals);
             var ob = Match(O, B, equals);
 
-            var match = Tree<Matching<T>>.Match(ao, ob, (x, y) => x.bas != null && y.bas != null && equals(x.bas, y.bas)).Convert(x => new Diff<T>(x.bas, x.other)); // TODO: Examine why we nede to write equals here instead of Object.referenceequals
+            var match = Tree<Matching<T>>.Match(ao, ob, (x, y) => x.bas != null && y.bas != null && equals(x.bas, y.bas)); // TODO: Examine why we nede to write equals here instead of Object.referenceequals;
 
-            return match;
+            return match.Convert(x => new Diff<T>(x.bas, x.other)); 
+        }
+
+        public static Tree<Chunk<T>> ChunkMatch(Tree<T> A, Tree<T> O, Tree<T> B, Func<T, T, bool> equals)
+        {
+            bool x;
+            var match = ThreeWayMatch(A, O, B, equals);
+            var m = ChunkInner(match, equals, out x);
+            return m;
+        }
+
+        public static Tree<Chunk<T>> ChunkInner(Tree<Diff<T>> matching, Func<T, T, bool> equals, out bool stable)
+        {
+            bool allStable = true;
+            var children = new List<Tree<Chunk<T>>>();
+            Tree<Chunk<T>> child = null;
+            bool stableChunk = false;
+
+            foreach (var match in matching.children)
+            {
+                bool childstable;
+                 child = ChunkInner(match, equals, out childstable);
+
+                allStable = allStable && childstable;
+
+                if (!stableChunk && childstable || stableChunk && !childstable)
+                {
+                    stableChunk = !stableChunk;
+                    children.Add(child);
+                }
+            }
+            if (child != null && !children.Contains(child)) // TODO: Improve runtime
+                children.Add(child);
+
+            stable = equals(matching.value.A, matching.value.O) && equals(matching.value.O, matching.value.B) && allStable;
+            return new Tree<Chunk<T>>(new Chunk<T>(stable, matching.value), children.ToArray());
+
         }
 
         public static Tree<Matching<T>> Match(Tree<T> bas, Tree<T> mod, Func<T, T, bool> equals)
         {
-            var basTreeConverted = bas.Convert(x => new TreeWithMatching { tree = x });
-            var modTreeConverted = mod.Convert(x => new TreeWithMatching { tree = x });
+            var basTreeConverted = bas.Convert(x => new ObjectWithMatching { tree = x });
+            var modTreeConverted = mod.Convert(x => new ObjectWithMatching { tree = x });
+            
+            var matching = new Matching<T>(bas.value, mod.value);
+            basTreeConverted.value.matching = matching;
+            modTreeConverted.value.matching = matching;
 
-            var basIt = basTreeConverted.PostOrderEnumeration();
-            var modIt = modTreeConverted.PostOrderEnumeration();
 
-            Func<TreeWithMatching, TreeWithMatching, bool> e = (x, y) =>
-            {
-                return equals(x.tree, y.tree);
-            };
-
-            var matches = NeedlemanWunsch<TreeWithMatching>.Allignment(basIt, modIt, e);
-
-            foreach (var match in matches)
-            {
-                var b = match.Item1 == null ? default(T) : match.Item1.tree;
-                var o = match.Item2 == null ? default(T) : match.Item2.tree;
-                var matching = new Matching<T>(b, o);
-                if (match.Item1 != null)
-                    match.Item1.matching = matching;
-                if (match.Item2 != null)
-                    match.Item2.matching = matching;
-            }
+            MatchInner(basTreeConverted, modTreeConverted, equals);
 
             return BuildMappingTree(basTreeConverted, modTreeConverted);
         }
 
+        public static void MatchInner(Tree<ObjectWithMatching> bas, Tree<ObjectWithMatching> mod, Func<T, T, bool> equals)
+        {
 
-        private static Tree<Matching<T>> BuildMappingTree(Tree<TreeWithMatching> bas, Tree<TreeWithMatching> other)
+            Func<Tree<ObjectWithMatching>, Tree<ObjectWithMatching>, bool> e = (x, y) =>
+            {
+                return equals(x.value.tree, y.value.tree);
+            };
+
+            var bChildren = bas == null ? new List<Tree<ObjectWithMatching>>() : bas.children;
+            var oChildren = mod == null ? new List<Tree<ObjectWithMatching>>() : mod.children;
+
+            var matches = NeedlemanWunsch<Tree<ObjectWithMatching>>.Allignment(bChildren, oChildren, e);
+
+            foreach (var match in matches)
+            {
+                MatchInner(match.Item1, match.Item2, equals);
+
+                var b = match.Item1 == null ? default(T) : match.Item1.value.tree;
+                var o = match.Item2 == null ? default(T) : match.Item2.value.tree;
+                var matching = new Matching<T>(b, o);
+                if (match.Item1 != null)
+                    match.Item1.value.matching = matching;
+                if (match.Item2 != null)
+                    match.Item2.value.matching = matching;
+            }
+        }
+
+        private static Tree<Matching<T>> BuildMappingTree(Tree<ObjectWithMatching> bas, Tree<ObjectWithMatching> other)
         {
             var bCnt = 0;
             var oCnt = 0;
@@ -223,14 +268,6 @@ namespace SyntaxDiff
 
     public static class TreeExtensions
     {
-
-        public static Tree<SyntaxNode> ConvertToTree(this SyntaxNode n)
-        {
-            var children = n.ChildNodes().Select(x => x.ConvertToTree()).ToArray();
-            return new Tree<SyntaxNode>(n, children);
-        }
-
-
         public static List<Tree<T>> getChildren<T>(this Tree<T> c)
         {
             if (c != null)

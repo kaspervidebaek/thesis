@@ -19,7 +19,19 @@ namespace WindowApp
             None, Delete, Insert, Update, WTF
         }
 
-
+        public static TreeNode buildDiffTree<T>(Tree<Diff<T>> node, Func<T, string> getLabel)
+        {
+            var children = new List<TreeNode>();
+            foreach (var child in node.children)
+            {
+                var vchild = buildDiffTree(child, getLabel);
+                var matching = child.value;
+                children.Add(vchild);
+            }
+            var n = new TreeNode(getLabel(node.value.A) + " <- " + getLabel(node.value.O) + "->" + getLabel(node.value.B), children.ToArray());
+            n.Tag = node;
+            return n;
+        }
 
         public static TreeNode buildTree<T>(Tree<Matching<T>> node, Func<T, string> getLabel)
         {
@@ -71,10 +83,8 @@ namespace WindowApp
             return MergeType.None;
         }
 
-        public void addTreeToView<T>(TreeView view, Tree<T> btree, Tree<T> otree, int pos, Func<T, string> getLabel)
+        public void addTreeToView<T>(TreeView view, Tree<T> btree, Tree<T> otree, Func<T, string> getLabel)
         {
-            
-            List<Matching<T>> diffs = null;
             Func<T, T, bool> equals = (x, y) => getLabel(x) == getLabel(y);
             
 
@@ -82,12 +92,6 @@ namespace WindowApp
             var tree = buildTree<T>(mTree, getLabel);
 
             view.Nodes.Add(tree);
-            view.Click += (x, y) =>
-            {
-                var e = (MouseEventArgs)y;
-                if (e.Button == System.Windows.Forms.MouseButtons.Right)
-                    MessageBox.Show(DiffToString(diffs, getLabel), "Alert", MessageBoxButtons.OK);
-            };
             view.ExpandAll();
         }
 
@@ -105,88 +109,38 @@ namespace WindowApp
             return n.ChildNodes().Sum(x => cntNode(x));
         }
 
+        public void addDiffTreeToView<T>(TreeView view, Tree<Diff<T>> mTree, Func<T, string> getLabel)
+        {
+            var tree = buildDiffTree<T>(mTree, getLabel);
+            view.Nodes.Add(tree);
+            view.ExpandAll();
+        }
+
         public Form1()
         {
             InitializeComponent();
 
-#if true
-            var baseSyntax = Examples.SmallBaseTree;
-            var leftSyntax = Examples.SmallLeftTree;
-            var rightSyntax = Examples.SmallRightTree;
+            var i = new SyntaxDiff.SyntaxNodeSmartDiff();
 
 
-            //var x = cntNode(Examples.smartAlgorithmTree.GetRoot());
-            //var y = cntNode(Examples.flowAlgorithm.GetRoot());
-
-            Func<SyntaxNode, string> getLabel = x => x.getLabel();
-
-            var b = baseSyntax.GetRoot().ConvertToTree();
-            var l = leftSyntax.GetRoot().ConvertToTree();
-            var r = rightSyntax.GetRoot().ConvertToTree();
-
-            //            addTreeToView(baseTree, b, b, 0, getLabel, getLabelMt);
-            addTreeToView(leftTree, b, l, 0, getLabel);
-            //          addTreeToView(rightTree, b, r, 0, getLabel, getLabelMt);
-            addTreeToView(baseTree, b, b, 0, getLabel);
-            addTreeToView(rightTree, l, l, 0, getLabel);
-#else
-            var b = new Tree<String>("Class",
-                    new Tree<string>("Function",
-                        new Tree<string>("Arguments"),
-                        new Tree<string>("Block",
-                            new Tree<string>("LocalDec",
-                                new Tree<string>("Variable",
-                                    new Tree<String>("Identifier"),
-                                    new Tree<string>("VariableD",
-                                        new Tree<string>("equals", new Tree<string>( "LiteralA"))))),
-                            new Tree<string>("Expression",
-                                new Tree<string>("Invocation",
-                                    new Tree<string>("MemberAccess",
-                                        new Tree<string>("Identifier1"),
-                                        new Tree<string>("Identifier2"))),
-                                new Tree<string>("ArgumentList",
-                                    new Tree<string>("Argument",
-                                        new Tree<string>("LiteralB")
-                                        ))),
-                            new Tree<string>("Expression",
-                                new Tree<string>("Invocation",
-                                    new Tree<string>("MemberAccess",
-                                        new Tree<string>("Identifier1"),
-                                        new Tree<string>("Identifier2"))),
-                                new Tree<string>("ArgumentList",
-                                    new Tree<string>("Argument",
-                                        new Tree<string>("LiteralB")
-                                        )))
-                                )));
-
-            var l = new Tree<String>("Class",
-                    new Tree<string>("Function",
-                        new Tree<string>("Arguments"),
-                        new Tree<string>("Block",
-                            new Tree<string>("Expression",
-                                new Tree<string>("Invocation",
-                                    new Tree<string>("MemberAccess",
-                                        new Tree<string>("Identifier1"),
-                                        new Tree<string>("Identifier2"))),
-                                new Tree<string>("ArgumentList",
-                                    new Tree<string>("Argument",
-                                        new Tree<string>("LiteralB")
-                                        ))),
-                            new Tree<string>("LocalDec",
-                                new Tree<string>("Variable",
-                                    new Tree<String>("Identifier"),
-                                    new Tree<string>("VariableD",
-                                        new Tree<string>("equals", new Tree<string>("LiteralA")))))
-                                )));
-            Func<string, string> getLabel = x => x;
-            Func<TreeDiff<string>.MergeTreeNode, string> getLabelMt = x => getLabel(x.value);
+            var baseSyntax = Examples.ConflictingBaseTree;
+            var leftSyntax = Examples.ConflictingLeftTree;
+            var rightSyntax = Examples.ConflictingRightTree;
 
 
-            addTreeToView(baseTree, b, b, 0, getLabel);
-            addTreeToView(leftTree, b, l, 0, getLabel);
-            addTreeToView(rightTree, l, l, 0, getLabel);
-#endif
+            Func<SyntaxNode, string> getLabel = x => i.getLabel(x);
 
+            var b = i.ConvertToTree(baseSyntax.GetRoot());
+            var l = i.ConvertToTree(leftSyntax.GetRoot());
+            var r = i.ConvertToTree(rightSyntax.GetRoot());
+
+            addTreeToView(leftTree, b, l, getLabel);
+            addTreeToView(baseTree, b, b, getLabel);
+            addTreeToView(rightTree, b, r, getLabel);
+
+            var mergedTree = Tree<SyntaxNode>.ThreeWayMatch(l, b, r, (x, y) => i.getLabel(x) == i.getLabel(y));
+
+            addDiffTreeToView(bottomTree, mergedTree, getLabel);
         }
 
         private void leftTree_AfterSelect(object sender, TreeViewEventArgs e)

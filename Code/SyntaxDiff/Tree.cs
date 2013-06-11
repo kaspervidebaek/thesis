@@ -27,7 +27,8 @@ namespace SyntaxDiff
         public Tree(T v, params Object[] children)
         {
             value = v;
-            this.children = children.Select(x => {
+            this.children = children.Select(x =>
+            {
                 if (x is T)
                     return new Tree<T>((T)x);
                 else if (x is Tree<T>)
@@ -83,7 +84,7 @@ namespace SyntaxDiff
         {
             var diff = Tree<T>.ThreeWayMatch(A, O, B, equals);
 
-            return MergeDiff(diff) ;
+            return MergeDiff(diff);
         }
 
 
@@ -105,7 +106,7 @@ namespace SyntaxDiff
                 if (diffs.value.B != null)
                     return new Tree<T>(diffs.value.B, children.ToArray());
             }
-            else if(diffs.value.A != null && diffs.value.B != null )
+            else if (diffs.value.A != null && diffs.value.B != null)
             {
                 return new Tree<T>(diffs.value.O, children.ToArray());
             }
@@ -119,50 +120,121 @@ namespace SyntaxDiff
 
             var match = Tree<Matching<T>>.Match(ao, ob, (x, y) => x.bas != null && y.bas != null && equals(x.bas, y.bas)); // TODO: Examine why we nede to write equals here instead of Object.referenceequals;
 
-            return match.Convert(x => new Diff<T>(x.bas, x.other)); 
+            return match.Convert(x => new Diff<T>(x.bas, x.other));
         }
 
-        public static Tree<Chunk<T>> ChunkMatch(Tree<T> A, Tree<T> O, Tree<T> B, Func<T, T, bool> equals)
+        public static Tree<T> Merge(Tree<T> A, Tree<T> O, Tree<T> B, Func<T, T, bool> equals)
         {
             bool x;
             var match = ThreeWayMatch(A, O, B, equals);
-            var m = ChunkInner(match, equals, out x);
-            return m;
+            var matchWithModifiedFlag = AddModifiedFlag(match, equals);
+            var filterDeletion = FilterDeletion(matchWithModifiedFlag, equals);
+
         }
 
-        public static Tree<Chunk<T>> ChunkInner(Tree<Diff<T>> matching, Func<T, T, bool> equals, out bool stable)
+        private static Tree<T> FilterDeletion(Tree<Tuple<bool, Diff<T>>> matchWithModifiedFlag, Func<T, T, bool> equals)
         {
-            bool allStable = true;
-            var children = new List<Tree<Chunk<T>>>();
-            Tree<Chunk<T>> child = null;
-            bool stableChunk = false;
-
-            foreach (var match in matching.children)
+            var newChildren = new List<Tree<T>>();
+            var chunks = getChunks(matchWithModifiedFlag, equals);
+            foreach (var chunck in chunks)
             {
-                bool childstable;
-                 child = ChunkInner(match, equals, out childstable);
-
-                allStable = allStable && childstable;
-
-                if (!stableChunk && childstable || stableChunk && !childstable)
+                if (chunck.stable)
                 {
-                    stableChunk = !stableChunk;
-                    children.Add(child);
+                    foreach (var line in chunck.O)
+                        newChildren.Add(line);
+                    continue;
+                }
+
+
+                if (chunck.O.Count == 0 && chunck.A.Count == 0) // Added B
+                    foreach (var line in chunck.B)
+                        newChildren.Add(line);
+                else if (chunck.O.Count == 0 && chunck.B.Count == 0) // Added A
+                    foreach (var line in chunck.A)
+                        newChildren.Add(line);
+                else
+                { // This is an update.
+                    var AO = Chunk<T>.ChunkEqual(chunck.A, chunck.O, equals);
+                    var BO = Chunk<T>.ChunkEqual(chunck.B, chunck.O, equals);
+
+                    if (AO && !BO)  // Updated B
+                        foreach (var line in chunck.B)
+                            mergedfile.Add(line);
+                    else if (BO && !AO)  // Updated A
+                        foreach (var line in chunck.A)
+                            mergedfile.Add(line);
+                    else
+                    {
+                        if (Chunk<T>.ChunkEqual(chunck.A, chunck.B, comparer)) // Both branches added the exact same thing. Just add one of them.
+                        {
+                            foreach (var line in chunck.A)
+                                mergedfile.Add(line);
+                        }
+                        else
+                        {
+                            // Conflict
+                            if (HandleConflict(mergedfile, chunck))
+                                break;
+                        }
+                    }
                 }
             }
-            if (child != null && !children.Contains(child)) // TODO: Improve runtime
-                children.Add(child);
-
-            stable = equals(matching.value.A, matching.value.O) && equals(matching.value.O, matching.value.B) && allStable;
-            return new Tree<Chunk<T>>(new Chunk<T>(stable, matching.value), children.ToArray());
 
         }
+        
+        public static List<Chunk<T>> getChunks(Tree<Tuple<bool, Diff<T>>> t, Func<T, T, bool> comparer)
+        {
+            var chuncks = new List<Chunk<T>>();
+            Chunk<T> chunk = new Chunk<T>(false);
+            bool stableChunk = false;
+
+            foreach (var m in t.children)
+            {
+                var A = m.value.Item2.A;
+                var O = m.value.Item2.O;
+                var B = m.value.Item2.B;
+
+                var isStable = comparer(A, O) && comparer(O, B) && m.value.Item1; // Modified from getChunks
+
+                if (!stableChunk && isStable || stableChunk && !isStable)
+                {
+                    stableChunk = !stableChunk;
+                    if (!chuncks.Contains(chunk)) // TODO: Improve runtime
+                        chuncks.Add(chunk);
+                    chunk = new Chunk<T>(stableChunk);
+                    chuncks.Add(chunk);
+                }
+
+                if (A != null)
+                    chunk.A.Add(A);
+                if (O != null)
+                    chunk.O.Add(O);
+                if (B != null)
+                    chunk.B.Add(B);
+            }
+            if (!chuncks.Contains(chunk)) // TODO: Improve runtime
+                chuncks.Add(chunk);
+
+
+
+            return chuncks;
+        }
+
+        public static Tree<Tuple<bool, Diff<T>>> AddModifiedFlag(Tree<Diff<T>> tree, Func<T, T, bool> equals)
+        {
+
+            var children = tree.children.Select(x => AddModifiedFlag(x, equals)).ToArray();
+            var equal = equals(tree.value.A, tree.value.B) && equals(tree.value.B, tree.value.O) && children.All(x => x.value.Item1);
+
+            return new Tree<Tuple<bool, Diff<T>>>(Tuple.Create(equal, tree.value), children);
+        }
+
 
         public static Tree<Matching<T>> Match(Tree<T> bas, Tree<T> mod, Func<T, T, bool> equals)
         {
             var basTreeConverted = bas.Convert(x => new ObjectWithMatching { tree = x });
             var modTreeConverted = mod.Convert(x => new ObjectWithMatching { tree = x });
-            
+
             var matching = new Matching<T>(bas.value, mod.value);
             basTreeConverted.value.matching = matching;
             modTreeConverted.value.matching = matching;

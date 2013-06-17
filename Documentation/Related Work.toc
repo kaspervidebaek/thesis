@@ -1,0 +1,18 @@
+\contentsline {section}{\numberline {1}Introduction}{2}{section.1}
+\contentsline {section}{\numberline {2}Theory}{3}{section.2}
+\contentsline {subsection}{\numberline {2.1}Automatic merging}{3}{subsection.2.1}
+\contentsline {subsection}{\numberline {2.2}Syntax Trees in Version Control}{4}{subsection.2.2}
+\contentsline {subsection}{\numberline {2.3}Tree differencing and merging}{5}{subsection.2.3}
+\contentsline {section}{\numberline {3}Discussions}{7}{section.3}
+\contentsline {subsection}{\numberline {3.1}Cross-language interfaces}{7}{subsection.3.1}
+\contentsline {subsection}{\numberline {3.2}Algorithm}{7}{subsection.3.2}
+\contentsline {section}{\numberline {4}Proposed solution}{8}{section.4}
+\contentsline {subsection}{\numberline {4.1}External interface}{8}{subsection.4.1}
+\contentsline {subsection}{\numberline {4.2}Cross-language interfaces}{8}{subsection.4.2}
+\contentsline {subsection}{\numberline {4.3}Running time}{9}{subsection.4.3}
+\contentsline {subsection}{\numberline {4.4}Implementation details}{9}{subsection.4.4}
+\contentsline {subsubsection}{\numberline {4.4.1}Three-way cost matching}{9}{subsubsection.4.4.1}
+\contentsline {subsubsection}{\numberline {4.4.2}Function similarity measure}{10}{subsubsection.4.4.2}
+\contentsline {subsubsection}{\numberline {4.4.3}Ordering of outputted class members}{10}{subsubsection.4.4.3}
+\contentsline {section}{\numberline {5}Evaluation}{11}{section.5}
+\contentsline {section}{\numberline {6}Conclusion}{12}{section.6}

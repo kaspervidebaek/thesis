@@ -1,10 +1,11 @@
 \title{Theory}
+
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
 \author{
         Kasper Videbæk \\
 }
 \date{\today}
-
-\documentclass[11pt]{article}
 \usepackage[numbers]{natbib}
 \usepackage{todonotes}
 \usepackage[hidelinks]{hyperref}
@@ -12,6 +13,12 @@
 \begin{document}
 \maketitle
 
+\tableofcontents
+
+\clearpage 
+\section{Introduction}
+
+\clearpage 
 \section{Theory}
 Several topics are related to the work that will be done in this thesis. In this section I will give a brief overview of what areas we will be going through, and what related work has already been done in those areas. In the first subsection we will look into research that already have worked on embedding syntax tree knowledge into version control systems, and in the second section, we will look into tree differencing. In the last section we will look into general knowledge about merging trees.
 
@@ -59,15 +66,37 @@ Merging is not a time consuming problem, as long as an edit script is provided. 
 Semistroctored Merge: Rethinking Merge in Revision Control Systems
 Diff/TS: A tool for fine grained....
 }
+\clearpage
 
 \section{Discussions}
-Several people already have looked into structural differencing and merging of structured data and specifically program code. This research seems however to focus mostly on the conflict resolution part, and glances over the problem of running times. While some algorithmic research has been done with regards to approximation algorithms and creating effective exact tree differencing algorithms, they are still prone running times many factors larger than unstructured approaches due to the tree size, counted in nodes, is generally much larger than the amount of lines in a code file. For example, running the \citet{Pawlik} algorithm on a 700 line C\# file \todo{Put this file in an appendix}, yields a syntax tree of 3800 nodes which gives running time for the matching of more than two minutes.
+Every developer has their own preferences of development environment, which makes it essential that a tool can work with many environments, and as such a operation based approach where changes are logged by an editor, seems quite impractical, so we will keep the integration in the version control systems. 
 
-Every developer has their own preferences of development environment, which makes it essential that a tool can work with many environments, and as such a operation based approach where changes are logged by an editor, seems quite impractical, so we will keep the integration in the version control systems. Also, structured differencing tools will be only for specific languages or structures. This makes such tools impractical in version control systems, since they are designed to integrate with line based tools, and do not discriminate between file types. Some research has been done into making tools that will work with either several languages, or that combines a line based approach with a structured approach.
+Several people already have looked into structural differencing and merging of structured data and specifically program code. This research seems however to focus mostly on the conflict resolution part, and glances over the problem of running times. 
+
+In this thesis, I will focus on two parts: Overcoming the running time challenge, and further creating an interface into general algorithms, that will make it easier to implement support for new languages.
+
+
+\subsection{Cross-language interfaces}
+Structured differencing tools will be only for specific languages or structures. This makes such tools impractical in version control systems, since they are designed to integrate with line based tools, and do not discriminate between file types. Some research has been done into making tools that will work with either several languages, or that combines a line based approach with a structured approach.
+
+\subsection{Algorithm}
+While some algorithmic research has been done with regards to approximation algorithms and creating effective exact tree differencing algorithms, they are still prone running times many factors larger than unstructured approaches due to the tree size, counted in nodes, is generally much larger than the amount of lines in a code file. For example, running the \citet{Pawlik} algorithm on a 700 line C\# file \todo{Put this file in an appendix}, yields a syntax tree of 3800 nodes which gives running time for the matching of more than two minutes.
+
+
 \todo[inline]{Write about assumptions in differencing and about different possible differencing operations}
 \todo[inline]{Write about which situations we can probably avoid}
 
+
+\clearpage
+
 \section{Proposed solution}
+
+\subsection{External interface}
+\todo{write about this}
+
+\subsection{Cross-language interfaces}
+\todo{write about this}
+
 \todo[inline]{Preprocessing directives}
 It does not seem plausible to be able to make an algorithm that will make differencing an entire code file as a syntax tree possible in reasonable time.
 
@@ -160,6 +189,14 @@ Observations:
 
 
 \todo{Match default? Forrest or tree? Do we allways know that the root node matches?}
+
+\clearpage
+\section{Evaluation}
+
+\clearpage
+\section{Conclusion}
+
+\clearpage
 
 \bibliographystyle{plainnat}
 \bibliography{libary}

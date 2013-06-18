@@ -13,6 +13,7 @@ namespace SyntaxDiff
         {
             unorderedmerges = new List<UnorderedMergeType<SyntaxNode>> {
                 new UnorderedMergeType<SyntaxNode> { type = typeof(ClassDeclarationSyntax), recreate = this.CreateClass, cost = this.MemberCost },
+                new UnorderedMergeType<SyntaxNode> { type = typeof(NamespaceDeclarationSyntax), recreate = this.CreateClass, cost = this.MemberCost },
                 new UnorderedMergeType<SyntaxNode> { type = typeof(CompilationUnitSyntax), recreate = this.CreateCompilationUnitSyntax, cost = this.MemberCost }
             };
         }
@@ -33,12 +34,34 @@ namespace SyntaxDiff
         }
         public int? MemberCost(SyntaxNode x, SyntaxNode y)
         {
-            // TODO: Implement heristic to also indicate closeness in body, in parameter list and identifiers.
-            var xI = ((MethodDeclarationSyntax)x).Identifier.ToString();
-            var yI = ((MethodDeclarationSyntax)y).Identifier.ToString();
-            if (xI == yI)
-                return 1;
-            return null;
+            int cost = 4;
+
+            if (x.GetType() == y.GetType())
+                cost--;
+
+            if (getIdentifier(x) == getIdentifier(y))
+                cost -= 2;
+
+            if (cost == 4)
+                return null;
+
+            return cost;
+        }
+
+        public string getIdentifier(SyntaxNode n)
+        {
+            if (n is IdentifierNameSyntax)
+                return n.ToString();
+            else if(n is ClassDeclarationSyntax) 
+                return ((ClassDeclarationSyntax)n).Identifier.ToString();
+            else if (n is MethodDeclarationSyntax)
+                return ((MethodDeclarationSyntax)n).Identifier.ToString(); // TODO: Implement heristic to also indicate closeness in body, in parameter list and identifiers.
+            else if (n is UsingDirectiveSyntax)
+                return n.ChildNodes().First().ToString();
+            else if (n is NamespaceDeclarationSyntax)
+                return ((NamespaceDeclarationSyntax)n).Name.ToString();
+
+            throw new NotImplementedException();
         }
 
         public CodeNodeType getChildType(SyntaxNode sn)
@@ -54,7 +77,7 @@ namespace SyntaxDiff
 
         public SyntaxNode SyntaxFromLines(List<string> lines)
         {
-            return SyntaxTree.ParseText(String.Join("\n", lines)).GetRoot().ChildNodes().First();
+            return SyntaxTree.ParseText(String.Join("\n", lines)).GetRoot();
         }
 
         public List<string> LinesFromSyntax(SyntaxNode m)

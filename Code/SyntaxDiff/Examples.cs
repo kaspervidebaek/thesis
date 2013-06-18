@@ -1,6 +1,7 @@
 ﻿using Roslyn.Compilers.CSharp;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,14 +10,23 @@ namespace SyntaxDiff
 {
     public class Examples
     {
-        public static SyntaxTree smartAlgorithmTree = SyntaxTree.ParseFile(@"CodeSnippets\SmartAlgorithm.cs");
-        public static SyntaxTree flowAlgorithm = SyntaxTree.ParseFile(@"CodeSnippets\FlowAlgorithm.cs");
+        public static List<string> LoadFile(string path) {
+            return File.ReadAllLines(path).ToList();
+        }
 
-        public static SyntaxTree QSbaseTree = SyntaxTree.ParseFile(@"CodeSnippets\QuickSortBasE.cs");
-        public static SyntaxTree QSleftTree = SyntaxTree.ParseFile(@"CodeSnippets\QuickSortLeft.cs");
-        public static SyntaxTree QSrightTree = SyntaxTree.ParseFile(@"CodeSnippets\QuickSortRight.cs");
+        public static List<string> StringToFile(string code)
+        {
+            return code.Split(new string[] { Environment.NewLine }, StringSplitOptions.None).ToList();
+        }
 
-        public static SyntaxTree baseTree = SyntaxTree.ParseText(@"using System;
+        public static List<string> smartAlgorithmTree = LoadFile(@"CodeSnippets\SmartAlgorithm.cs");
+        public static List<string> flowAlgorithm = LoadFile(@"CodeSnippets\FlowAlgorithm.cs");
+
+        public static List<string> QSbaseTree = LoadFile(@"CodeSnippets\QuickSortBasE.cs");
+        public static List<string> QSleftTree = LoadFile(@"CodeSnippets\QuickSortLeft.cs");
+        public static List<string> QSrightTree = LoadFile(@"CodeSnippets\QuickSortRight.cs");
+
+        public static List<string> baseTree = StringToFile(@"using System;
                 using System2.Linq;
                 namespace HelloWorld
                 {
@@ -42,7 +52,7 @@ namespace SyntaxDiff
                     }
                 }");
 
-        public static SyntaxTree leftTree = SyntaxTree.ParseText(@"using System;
+        public static List<string> leftTree = StringToFile(@"using System;
                 namespace HelloWorld2
                 {
                     class Program
@@ -69,7 +79,7 @@ namespace SyntaxDiff
                         }
                     }
                 }");
-        public static SyntaxTree rightTree = SyntaxTree.ParseText(@"using System;
+        public static List<string> rightTree = StringToFile(@"using System;
                 using System.Linq;
                 namespace HelloWorld
                 {
@@ -99,7 +109,7 @@ namespace SyntaxDiff
                 }");
 
 
-        public static SyntaxTree SmallBaseTree = SyntaxTree.ParseText(@"
+        public static List<string> SmallBaseTree = StringToFile(@"
                     class Program
                     {
                         static void Conflicts()
@@ -111,7 +121,7 @@ namespace SyntaxDiff
                     }
                 ");
 
-        public static SyntaxTree SmallLeftTree = SyntaxTree.ParseText(@"
+        public static List<string> SmallLeftTree = StringToFile(@"
                     class Program
                     {
                         static void Conflicts()
@@ -121,7 +131,7 @@ namespace SyntaxDiff
                         }
                     }
                 ");
-        public static SyntaxTree SmallRightTree = SyntaxTree.ParseText(@"
+        public static List<string> SmallRightTree = StringToFile(@"
                     class Program
                     {
                         static void Conflicts(string args)
@@ -131,20 +141,20 @@ namespace SyntaxDiff
                     }
                 ");
 
-        public static SyntaxTree ConflictingBaseTree = SyntaxTree.ParseText(@"
+        public static List<string> ConflictingBaseTree = StringToFile(@"
                         static void Conflicts(string args)
                         {
                             Console.WriteLine(""Hello, base!"");
                         }
                 ");
 
-        public static SyntaxTree ConflictingLeftTree = SyntaxTree.ParseText(@"
+        public static List<string> ConflictingLeftTree = StringToFile(@"
                         static void Conflicts(string args)
                         {
                             Console.Write(""Hello, base!"");
                         }
                 ");
-        public static SyntaxTree ConflictingRightTree = SyntaxTree.ParseText(@"
+        public static List<string> ConflictingRightTree = StringToFile(@"
                         static void Conflicts(string args)
                         {
                             Console.WriteLine(""Hello, new right World!"");

@@ -83,40 +83,6 @@ Structured differencing tools will be only for specific languages or structures.
 While some algorithmic research has been done with regards to approximation algorithms and creating effective exact tree differencing algorithms, they are still prone running times many factors larger than unstructured approaches due to the tree size, counted in nodes, is generally much larger than the amount of lines in a code file. For example, running the \citet{Pawlik} algorithm on a 700 line C\# file \todo{Put this file in an appendix}, yields a syntax tree of 3800 nodes which gives running time for the matching of more than two minutes.
 
 
-\subsection{Implementation}
-
-In this section I will dive into the implementation of the code. Lets start with some pseudocode.
-
-file merge(base, left, right)
-	if(nodes are unordered)
-		unorderedmatch(base, left, right)
-	else if(nodes are ordered)
-		orderedmatch(base, left, right);
-
-file unorderedmerge(base, left, right)
-	var bl = match B and Ls children given cost-function
-	var br = match B and Rs children given cost-function
-	var zip = match bl and br on same base object.
-
-	var members = [];
-
-	foreach(match in zip)
-		if(match exists in all)
-			member.add(m, merge(base, left, right));
-		if(match was inserted in B)
-			member.add(m, m.B);
-		if(match was inserted in A)
-			member.add(m, m.A);
-	
-	members = mergeorder(l, b, r, members);
-
-	return recreate(b, l, r, members);
-
-file orderedmerge(base, left, right)
-	run diff3 algorithm on the source text of base, left, right
-	if a conflict happens, do a three-way matching-tree matching on the trees. instead.
-	use this three-way match to reconstruct a new tree.
-
 
 \todo[inline]{Write about assumptions in differencing and about different possible differencing operations}
 \todo[inline]{Write about which situations we can probably avoid}
@@ -163,8 +129,55 @@ Matching class members can be done in cubic time, on the amount of nodes. For ea
 
 Tree matching will still have a cubic running time on the amount of nodes, however with the assumptions that conflicts are concentrated around a few functions and that functions are generally small, the running time of this part should not influence the overall running time too much.
 
-\subsection{Implementation details}
+\clearpage
+
+\section{Implementation}
+
+In this section I will dive into the implementation of the code. The main function of the algorithm looks like this:
+
+
+
+
+
+
+
+file merge(base, left, right)
+	if(nodes are unordered)
+		unorderedmatch(base, left, right)
+	else if(nodes are ordered)
+		orderedmatch(base, left, right);
+
+file unorderedmerge(base, left, right)
+	var bl = match B and Ls children given cost-function
+	var br = match B and Rs children given cost-function
+	var zip = match bl and br on same base object.
+
+	var members = [];
+
+	foreach(match in zip)
+		if(match exists in all)
+			member.add(m, merge(base, left, right));
+		if(match was inserted in B)
+			member.add(m, m.B);
+		if(match was inserted in A)
+			member.add(m, m.A);
+	
+	members = mergeorder(l, b, r, members);
+
+	return recreate(b, l, r, members);
+	
+
+file orderedmerge(base, left, right)
+	run diff3 algorithm on the source text of base, left, right
+	if a conflict happens, do a three-way matching-tree matching on the trees. instead.
+	use this three-way match to reconstruct a new tree.
+
+
+
 This leaves us with three questions that are open for discussions.
+
+
+
 
 \subsubsection{Three-way cost matching}
 Matching the members $(l_1, l_2, ..., l_{size(l)})$, $(b_1, b_2, ..., b_{size(b)})$ and $(r_1, r_2, ..., r_{size(r)})$ will be done by making a bipartite matching between the pairs $(b, l)$ and $(b, r)$, and afterwards matching the matching on the base items.

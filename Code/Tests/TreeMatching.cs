@@ -20,7 +20,6 @@ namespace Tests
             Func<TreeDiff<int?>.MergeTreeNode, string> getLabelMt = x => getLabel(x.value);
 
             var mTree = JavaMatching<int?>.getMappingTree(l, b, getLabel);*/
-
         }
 
         [TestMethod]

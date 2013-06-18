@@ -122,65 +122,6 @@ namespace SyntaxDiff
 
             return match.Convert(x => new Diff<T>(x.bas, x.other));
         }
-
-        public static Tree<T> Merge(Tree<T> A, Tree<T> O, Tree<T> B, Func<T, T, bool> equals)
-        {
-            bool x;
-            var match = ThreeWayMatch(A, O, B, equals);
-            var matchWithModifiedFlag = AddModifiedFlag(match, equals);
-            var filterDeletion = FilterDeletion(matchWithModifiedFlag, equals);
-
-        }
-
-        private static Tree<T> FilterDeletion(Tree<Tuple<bool, Diff<T>>> matchWithModifiedFlag, Func<T, T, bool> equals)
-        {
-            var newChildren = new List<Tree<T>>();
-            var chunks = getChunks(matchWithModifiedFlag, equals);
-            foreach (var chunck in chunks)
-            {
-                if (chunck.stable)
-                {
-                    foreach (var line in chunck.O)
-                        newChildren.Add(line);
-                    continue;
-                }
-
-
-                if (chunck.O.Count == 0 && chunck.A.Count == 0) // Added B
-                    foreach (var line in chunck.B)
-                        newChildren.Add(line);
-                else if (chunck.O.Count == 0 && chunck.B.Count == 0) // Added A
-                    foreach (var line in chunck.A)
-                        newChildren.Add(line);
-                else
-                { // This is an update.
-                    var AO = Chunk<T>.ChunkEqual(chunck.A, chunck.O, equals);
-                    var BO = Chunk<T>.ChunkEqual(chunck.B, chunck.O, equals);
-
-                    if (AO && !BO)  // Updated B
-                        foreach (var line in chunck.B)
-                            mergedfile.Add(line);
-                    else if (BO && !AO)  // Updated A
-                        foreach (var line in chunck.A)
-                            mergedfile.Add(line);
-                    else
-                    {
-                        if (Chunk<T>.ChunkEqual(chunck.A, chunck.B, comparer)) // Both branches added the exact same thing. Just add one of them.
-                        {
-                            foreach (var line in chunck.A)
-                                mergedfile.Add(line);
-                        }
-                        else
-                        {
-                            // Conflict
-                            if (HandleConflict(mergedfile, chunck))
-                                break;
-                        }
-                    }
-                }
-            }
-
-        }
         
         public static List<Chunk<T>> getChunks(Tree<Tuple<bool, Diff<T>>> t, Func<T, T, bool> comparer)
         {

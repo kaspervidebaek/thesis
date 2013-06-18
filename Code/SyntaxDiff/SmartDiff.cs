@@ -16,7 +16,29 @@ namespace SyntaxDiff
         }
         private ISmartDiffInterface<T> i;
 
-        public List<String> Merge(T A, T O, T B)
+
+        public List<String> Merge(List<string> A, List<string> O, List<string> B)
+        {
+            Func<List<string>, Chunk<string>, bool> conflictHandler = (output, chunk) =>
+            {
+                var aC = i.SyntaxFromLines(A);
+                var oC = i.SyntaxFromLines(O);
+                var bC = i.SyntaxFromLines(B);
+
+                output.Clear();
+                output.AddRange(MergeTree(aC, oC, bC));
+
+                return true; // We should terminate. This will do the entire merging.
+            };
+
+            Func<string, string, bool> equality = (x, y) => x != null && y != null && x.ToString().Trim() == y.ToString().Trim();
+
+            var merged = Diff3<string>.Merge(A, O, B, equality, conflictHandler);
+            return merged.Select(x => x.ToString()).ToList();
+        }
+
+
+        public List<String> MergeTree(T A, T O, T B)
         {
             if (!(i.getChildType(A) == i.getChildType(O) && i.getChildType(O) == i.getChildType(B)))
                 throw new Exception("This is bad!");
@@ -103,7 +125,7 @@ namespace SyntaxDiff
                     {
                         if (m.A != null && m.B != null && m.O != null) // Function exists in all revisions
                         {
-                            var tree = i.SyntaxFromLines(Merge(m.A, m.O, m.B));
+                            var tree = i.SyntaxFromLines(MergeTree(m.A, m.O, m.B));
                             members.Add(Tuple.Create(m, tree));
                         }
                         else if (m.A == null && m.O == null && m.B != null) // Function only exists in B - Inserted
@@ -113,6 +135,9 @@ namespace SyntaxDiff
                         else if (m.A != null && m.O == null && m.B == null) // Function only exists in A - Inserted
                         {
                             members.Add(Tuple.Create(m, m.A));
+                        }
+                        else if (m.A == null && m.O != null && m.B == null) // Function only exists in O - deleted in both
+                        {
                         }
                         else
                             throw new NotImplementedException();

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using QuickGraph;
 using QuickGraph.Algorithms;
 using QuickGraph.Graphviz;
+using Roslyn.Compilers.CSharp;
 
 
 namespace SyntaxDiff
@@ -53,6 +54,16 @@ namespace SyntaxDiff
                 : base()
             {
             }
+
+            public override string ToString()
+            {
+                var stuff = "";
+                if(item is SyntaxNode)
+                    stuff = new SyntaxDiff.SyntaxNodeSmartDiff().getIdentifier(item as SyntaxNode);
+
+                return base.ToString() + stuff; ;
+            }
+
         }
 
         public class xNode : Node
@@ -66,6 +77,14 @@ namespace SyntaxDiff
             public xNode()
                 : base()
             {
+            }
+            public override string ToString()
+            {
+                var stuff = "";
+                if (item is SyntaxNode)
+                    stuff = new SyntaxDiff.SyntaxNodeSmartDiff().getIdentifier(item as SyntaxNode);
+
+                return base.ToString() + stuff; ;
             }
         }
 

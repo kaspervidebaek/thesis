@@ -10,9 +10,9 @@
 \contentsline {subsection}{\numberline {4.1}External interface}{8}{subsection.4.1}
 \contentsline {subsection}{\numberline {4.2}Cross-language interfaces}{8}{subsection.4.2}
 \contentsline {subsection}{\numberline {4.3}Running time}{9}{subsection.4.3}
-\contentsline {subsection}{\numberline {4.4}Implementation details}{9}{subsection.4.4}
-\contentsline {subsubsection}{\numberline {4.4.1}Three-way cost matching}{9}{subsubsection.4.4.1}
-\contentsline {subsubsection}{\numberline {4.4.2}Function similarity measure}{10}{subsubsection.4.4.2}
-\contentsline {subsubsection}{\numberline {4.4.3}Ordering of outputted class members}{10}{subsubsection.4.4.3}
-\contentsline {section}{\numberline {5}Evaluation}{11}{section.5}
-\contentsline {section}{\numberline {6}Conclusion}{12}{section.6}
+\contentsline {section}{\numberline {5}Implementation}{10}{section.5}
+\contentsline {subsubsection}{\numberline {5.0.1}Three-way cost matching}{10}{subsubsection.5.0.1}
+\contentsline {subsubsection}{\numberline {5.0.2}Function similarity measure}{11}{subsubsection.5.0.2}
+\contentsline {subsubsection}{\numberline {5.0.3}Ordering of outputted class members}{11}{subsubsection.5.0.3}
+\contentsline {section}{\numberline {6}Evaluation}{13}{section.6}
+\contentsline {section}{\numberline {7}Conclusion}{14}{section.7}

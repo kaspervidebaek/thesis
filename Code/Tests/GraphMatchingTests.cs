@@ -106,33 +106,28 @@ namespace Tests
             var xs = new List<int>(new int[] { 1, 2, 7 });
             var ys = new List<int>(new int[] { 1, 2, 5 });
 
-            var b = CalculateMinCostMatching(xs, ys, (x, y) => Math.Abs(x - y));
+            //var b = CalculateMinCostMatching(xs, ys, (x, y) => Math.Abs(x - y));
             
         }
 
-        public int CalculateMinCostMatching(List<int> xs, List<int> ys, Func<int, int, int> cost)
+
+        [TestMethod]
+        [TestCategory("GraphMatching")]
+
+        public void TestNegativeWeight()
         {
-            var numbers = Enumerable.Range(0, ys.Count()*2).Select(x => (int?)x).ToArray();
-            Variations combs = new Variations(numbers, xs.Count()*2);
+            var xs = new List<int>(new int[] { 2, 3, 4, 5 });
+            var ys = new List<int>(new int[] { 2, 3, 4 });
 
-            //var minCost = Double.MaxValue;
-            var minImgs = new List<int>();
-
-            while (combs.MoveNext())
+            Func<int, int, int?> cost = (x, y) =>
             {
-                var tCombs = combs.CurrentIndeces;
-                var thisYs = tCombs.Select(x => ys[x]);
+                if (x == y)
+                    return 1;
+                return 3;
+            };
 
-                /*var costs = thisYs.Sum;
+            var match = SyntaxDiff.GraphMatching<int, int>.Match(xs, ys, cost);
 
-                if (cost < minCost)
-                {
-                    minCost = cost;
-                    minImgs = imgs;
-                }*/
-            }
-
-            return 0;
         }
 
     }

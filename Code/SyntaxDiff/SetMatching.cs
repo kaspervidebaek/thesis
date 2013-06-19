@@ -25,6 +25,7 @@ namespace SyntaxDiff
                 this.Name = name;
                 this.a = a;
             }
+
             public Node()
                 : this("fake", false)
             {
@@ -60,6 +61,8 @@ namespace SyntaxDiff
                 var stuff = "";
                 if(item is SyntaxNode)
                     stuff = new SyntaxDiff.SyntaxNodeSmartDiff().getIdentifier(item as SyntaxNode);
+                else if (item != null)
+                    stuff = item.ToString();
 
                 return base.ToString() + stuff; ;
             }
@@ -83,6 +86,8 @@ namespace SyntaxDiff
                 var stuff = "";
                 if (item is SyntaxNode)
                     stuff = new SyntaxDiff.SyntaxNodeSmartDiff().getIdentifier(item as SyntaxNode);
+                else if(item != null)
+                    stuff = item.ToString();
 
                 return base.ToString() + stuff; ;
             }
@@ -127,10 +132,11 @@ namespace SyntaxDiff
                     return 0;
 
                 var xNode = this.Source is yNode ? this.Source : this.Target;
-                var yNode = this.Source is xNode ? this.Source : this.Target;
+                var yNode = this.Source is xNode ? this.Target : this.Source;
 
                 return TagPrice[xNode] + this.Tag - TagPrice[yNode];
             }
+
             public override bool Equals(object obj)
             {
                 Edge e = (Edge)obj;
@@ -485,6 +491,9 @@ namespace SyntaxDiff
             while (M.Count != maxCount)
             {
                 var Gm = new ResidualGraph(flowgraph, M);
+                Gm.RenderToFile(RunCount + "it" + cnt++, null, p, M);
+                
+                var negativeEdges = Gm.Edges.Where(x => x.TagPrice(p) < 0);
 
                 var dijkstra = Gm.ShortestPathsDijkstra(x => x.TagPrice(p), Gm.source);
                 var target = Gm.sink;

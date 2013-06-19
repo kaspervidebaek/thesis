@@ -130,9 +130,9 @@ namespace WindowApp
 
             Func<SyntaxNode, string> getLabel = x => i.getLabel(x);
 
-            var b = i.ConvertToTree(baseSyntax.GetRoot());
-            var l = i.ConvertToTree(leftSyntax.GetRoot());
-            var r = i.ConvertToTree(rightSyntax.GetRoot());
+            var b = i.ConvertToTree(new SyntaxNodeSmartDiff().SyntaxFromLines(baseSyntax));
+            var l = i.ConvertToTree(new SyntaxNodeSmartDiff().SyntaxFromLines(leftSyntax));
+            var r = i.ConvertToTree(new SyntaxNodeSmartDiff().SyntaxFromLines(rightSyntax));
 
             addTreeToView(leftTree, b, l, getLabel);
             addTreeToView(baseTree, b, b, getLabel);

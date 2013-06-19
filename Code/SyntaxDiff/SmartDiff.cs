@@ -120,7 +120,6 @@ namespace SyntaxDiff
 
                     var members = new List<Tuple<Diff<T>, T>>();
 
-
                     foreach (var m in totalMatch)
                     {
                         if (m.A != null && m.B != null && m.O != null) // Function exists in all revisions

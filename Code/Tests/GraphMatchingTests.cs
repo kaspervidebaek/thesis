@@ -119,7 +119,7 @@ namespace Tests
             var xs = new List<int>(new int[] { 2, 3, 4, 5 });
             var ys = new List<int>(new int[] { 2, 3, 4 });
 
-            Func<int, int, int?> cost = (x, y) =>
+            SyntaxDiff.GraphMatching<int, int>.Cost cost = (x, y) =>
             {
                 if (x == y)
                     return 1;

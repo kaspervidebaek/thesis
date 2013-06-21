@@ -25,7 +25,7 @@ namespace Tests
             var O = new List<string> { a, b, c, d };
             var B = new List<string> { d, b, c, a };
 
-            var newOrder = SyntaxDiff.Reorder<String>.OrderLists(A, O, B);
+            var newOrder = SyntaxDiff.Reorder<String>.OrderLists(A, O, B, new HashSet<object>());
 
             var result = new List<string> { d, c, b, a };
 
@@ -47,7 +47,7 @@ namespace Tests
             var O = new List<string> { a, b, c };
             var B = new List<string> { a, z, b, c };
 
-            var newOrder = SyntaxDiff.Reorder<String>.OrderLists(A, O, B);
+            var newOrder = SyntaxDiff.Reorder<String>.OrderLists(A, O, B, new HashSet<object>());
 
             var result = new List<string> { a, z, c, b };
 
@@ -69,7 +69,7 @@ namespace Tests
             var O = new List<string> { a, b };
             var B = new List<string> { a, y, b };
 
-            var newOrder = SyntaxDiff.Reorder<String>.OrderLists(A, O, B);
+            var newOrder = SyntaxDiff.Reorder<String>.OrderLists(A, O, B, new HashSet<object>());
 
             var result = new List<string> { a, y, z, b };
             var result2 = new List<string> { a, z, y, b };
@@ -92,7 +92,7 @@ namespace Tests
             var O = new List<string> { a, b, c };
             var B = new List<string> { a, c };
 
-            var newOrder = SyntaxDiff.Reorder<String>.OrderLists(A, O, B);
+            var newOrder = SyntaxDiff.Reorder<String>.OrderLists(A, O, B, new HashSet<object>());
 
             var result = new List<string> { c, a };
 
@@ -112,7 +112,7 @@ namespace Tests
             var O = new List<string> { a, b, c };
             var B = new List<string> { b, c };
 
-            var newOrder = SyntaxDiff.Reorder<String>.OrderLists(A, O, B);
+            var newOrder = SyntaxDiff.Reorder<String>.OrderLists(A, O, B, new HashSet<object>());
 
             var result = new List<string> { c, b };
 
@@ -132,7 +132,7 @@ namespace Tests
             var O = new List<string> { a, b, c };
             var B = new List<string> { a, b };
 
-            var newOrder = SyntaxDiff.Reorder<String>.OrderLists(A, O, B);
+            var newOrder = SyntaxDiff.Reorder<String>.OrderLists(A, O, B, new HashSet<object>());
 
             var result = new List<string> { a };
 
@@ -153,7 +153,7 @@ namespace Tests
             var O = new List<string> { a, c };
             var B = new List<string> { a, b };
 
-            var newOrder = SyntaxDiff.Reorder<String>.OrderLists(A, O, B);
+            var newOrder = SyntaxDiff.Reorder<String>.OrderLists(A, O, B, new HashSet<object>());
 
             var result = new List<string> { a, b };
 
@@ -177,7 +177,7 @@ namespace Tests
             var O = new List<string> { a, e, b, c, d };
             var B = new List<string> { a, e, c, d, b };
 
-            var newOrder = SyntaxDiff.Reorder<String>.OrderLists(A, O, B, out conflicts);
+            var newOrder = SyntaxDiff.Reorder<String>.OrderLists(A, O, B, out conflicts, new HashSet<object>());
 
             var result = new List<string> { b, a, e, c, d, b };
             
@@ -204,7 +204,7 @@ namespace Tests
             var O = new List<string> { a, b, c, d };
             var B = new List<string> { a, z, b, c, d };
 
-            var newOrder = SyntaxDiff.Reorder<String>.OrderLists(A, O, B, out conflicts);
+            var newOrder = SyntaxDiff.Reorder<String>.OrderLists(A, O, B, out conflicts, new HashSet<object>());
             /*
             var result = new List<string> { b, a, e, c, d, b };
 
@@ -226,7 +226,7 @@ namespace Tests
             var O = new List<string> { a, b, c, d };
             var B = new List<string> { b, a, c, d };
 
-            var newOrder = SyntaxDiff.Reorder<String>.OrderLists(A, O, B);
+            var newOrder = SyntaxDiff.Reorder<String>.OrderLists(A, O, B, new HashSet<object>());
             
             var result = new List<string> { b, a,d, c};
 

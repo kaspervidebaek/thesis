@@ -8,12 +8,12 @@ namespace SyntaxDiff
 {
     public class Reorder<T> where T : class
     {
-        public static List<T> OrderLists(List<T> A, List<T> O, List<T> B)
+        public static List<T> OrderLists(List<T> A, List<T> O, List<T> B, HashSet<object> conflicts)
         {
             List<Tuple<int, int>> o;
-            return OrderLists(A, O, B, out o);
+            return OrderLists(A, O, B, out o, conflicts);
         }
-        public static List<T> OrderLists(List<T> A, List<T> O, List<T> B, out List<Tuple<int, int>> oconflicts)
+        public static List<T> OrderLists(List<T> A, List<T> O, List<T> B, out List<Tuple<int, int>> oconflicts, HashSet<object> outerConflicts)
         {
 
 
@@ -66,6 +66,8 @@ namespace SyntaxDiff
                 {
                     add(match.O);
                 }
+                else if(outerConflicts.Contains(match.O))
+                    add(match.O);
             }
 
             oconflicts = conflicts;

@@ -13,25 +13,238 @@ namespace SyntaxDiff
         {
             unorderedmerges = new List<UnorderedMergeType<SyntaxNode>> {
                 new UnorderedMergeType<SyntaxNode> { type = typeof(ClassDeclarationSyntax), recreate = this.CreateClass, cost = this.MemberCost },
-                new UnorderedMergeType<SyntaxNode> { type = typeof(NamespaceDeclarationSyntax), recreate = this.CreateClass, cost = this.MemberCost },
-                new UnorderedMergeType<SyntaxNode> { type = typeof(CompilationUnitSyntax), recreate = this.CreateCompilationUnitSyntax, cost = this.MemberCost }
+                new UnorderedMergeType<SyntaxNode> { type = typeof(NamespaceDeclarationSyntax), recreate = this.CreateNamespace, cost = this.MemberCost },
+                new UnorderedMergeType<SyntaxNode> { type = typeof(CompilationUnitSyntax), recreate = this.CreateCLU, cost = this.MemberCost },
+            };
+
+            var CompilationUnit = typeof(CompilationUnitSyntax);
+            var NamespaceDeclaration = typeof(NamespaceDeclarationSyntax);
+
+
+            treerewrites = new List<SyntaxRewriter<SyntaxNode>> {
+                new SyntaxRewriter<SyntaxNode>(CompilationUnit, CompilationUnit, CompilationUnit,                   (a, o, b, children) => children),
+                new SyntaxRewriter<SyntaxNode>(NamespaceDeclaration, NamespaceDeclaration, NamespaceDeclaration,    (a, o, b, children) =>  children),
+                new SyntaxRewriter<SyntaxNode>(NamespaceDeclaration, NamespaceDeclaration, NamespaceDeclaration,    (a, o, b, children) => children)
             };
         }
+
+
         public List<UnorderedMergeType<SyntaxNode>> unorderedmerges { get; set; }
+        public List<SyntaxRewriter<SyntaxNode>> treerewrites { get; set; }
 
-        public SyntaxNode CreateCompilationUnitSyntax(SyntaxNode O, List<SyntaxNode> newmembers)
+        public string Cast<A, O, B>(SyntaxNode a, SyntaxNode o, SyntaxNode b, string child, Func<A, O, B, string, string> f)
+            where A : SyntaxNode
+            where O : SyntaxNode
+            where B : SyntaxNode
         {
-            var Or = (CompilationUnitSyntax)O;
-            var memberList = new SyntaxList<MemberDeclarationSyntax>().Add(newmembers.Select(x => (MemberDeclarationSyntax)x).ToArray());
-            return Syntax.CompilationUnit(Or.Externs, Or.Usings, Or.AttributeLists, memberList);
+            return f((A)a, (O)o, (B)b, child);
         }
 
-        public SyntaxNode CreateClass(SyntaxNode O, List<SyntaxNode> newmembers)
+
+
+        private string StringMerge(string A, string O, string B)
         {
-            var memberList = new SyntaxList<MemberDeclarationSyntax>().Add(newmembers.Select(x => (MemberDeclarationSyntax)x).ToArray());
-            var Or = (ClassDeclarationSyntax)O;
-            return Syntax.ClassDeclaration(Or.AttributeLists, Or.Modifiers, Or.Identifier, Or.TypeParameterList, Or.BaseList, Or.ConstraintClauses, memberList);
+            if (A == O && O != B)
+            {
+                return B;
+            }
+            else if (A != O && O == B)
+            {
+                return A;
+            }
+            else if (A == O && O == B)
+            {
+                return O;
+            }
+            return "Conflict!!!";
+            throw new NotImplementedException();
         }
+
+        private string MergeToken(Triplet<SyntaxToken> n)
+        {
+            return StringMerge(n.A.ValueText, n.O.ValueText, n.B.ValueText);
+        }
+
+        private string MergeType(Triplet<TypeSyntax> n)
+        {
+            return StringMerge(n.A.ToString(), n.O.ToString(), n.B.ToString());
+        }
+
+        public Triplet<List<Y>> CastSelectList<T, Y>(SyntaxNode A, SyntaxNode O, SyntaxNode B, Func<T, IEnumerable<Y>> f)
+            where T : class
+        {
+            return new Triplet<List<Y>>
+            {
+                A = f(A as T).ToList(),
+                O = f(O as T).ToList(),
+                B = f(B as T).ToList()
+            };
+        }
+
+        public string MergeTree(SyntaxNode A, SyntaxNode O, SyntaxNode B)
+        {
+            return MergeTree(Triplet<SyntaxNode>.Create(A, O, B));
+        }
+        public string MergeTree(Triplet<SyntaxNode> nodes)
+        {
+            if (nodes.Is<MethodDeclarationSyntax>())
+            {
+                var M = nodes.Cast<MethodDeclarationSyntax>();
+
+                var name = M.Select(x => x.Identifier).Apply(MergeToken);
+                var parm = M.Select(x => x.ParameterList).Apply(MergeTree);
+                var body = M.Select(x => x.Body).Apply(MergeTree);
+                var retv = M.Select(x => x.ReturnType).Apply(MergeType);
+
+                return retv + " " + name + "(" + parm + ") \r\n" + body + "\r\n";
+            }
+            else if (nodes.Is<IfStatementSyntax>())
+            {
+                var i = nodes.Cast<IfStatementSyntax>();
+
+                var expr = i.Select(x => x.Condition).Apply(MergeTree);
+                var body = i.Select(x => x.Statement).Apply(MergeTree);
+                var elses = i.Select(x => x.Else).ApplyIfExists(MergeTree);
+
+
+                return "if( " + expr.ToString() + ")\r\n" + body + (elses != null ? " else " + elses : "");
+            }
+            else if (nodes.Is<ExpressionStatementSyntax>())
+            {
+                var e = nodes.Cast<ExpressionStatementSyntax>();
+                return e.Select(x => x.Expression).Apply(MergeTree) + ";";
+            }
+            else if (nodes.Is<InvocationExpressionSyntax>())
+            {
+                var i = nodes.Cast<InvocationExpressionSyntax>();
+
+                var arguments = i.Select(x => x.ArgumentList).Apply(MergeTree);
+                var expression = i.Select(x => x.Expression).Apply(MergeTree);
+
+                return expression + "(" + arguments + ")";
+            }
+            else if (nodes.Is<MemberAccessExpressionSyntax>())
+            {
+                var i = nodes.Cast<MemberAccessExpressionSyntax>();
+
+                var expression = i.Select(x => x.Expression).Apply(MergeTree);
+                var name = i.Select(x => x.Name).Apply(MergeTree);
+
+                return expression + "." + name;
+            }
+
+            else if (nodes.Is<LiteralExpressionSyntax>())
+            {
+                var i = nodes.Cast<LiteralExpressionSyntax>().Select(x => x.Token).Apply(MergeToken);
+
+                return i;
+            }
+            else if (nodes.Is<IdentifierNameSyntax>())
+            {
+                var i = nodes.Cast<IdentifierNameSyntax>().Select(x => x.Identifier).Apply(MergeToken);
+
+                return i;
+            }
+            else if (nodes.Is<ArgumentSyntax>())
+            {
+                var i = nodes.Cast<ArgumentSyntax>().Select(x => x.Expression).Apply(MergeTree);
+
+                return i;
+            }
+            else if (nodes.Is<ParameterListSyntax>())
+            {
+                return ListMerger<ParameterListSyntax, ParameterSyntax>(nodes, x => x.Parameters, MemberCost);
+            }
+            else if (nodes.Is<ArgumentListSyntax>())
+            {
+                return ListMerger<ArgumentListSyntax, ArgumentSyntax>(nodes, x => x.Arguments, ExpressionCost);
+            }
+            else if (nodes.Is<BlockSyntax>())
+            {
+                var b = nodes.Cast<BlockSyntax>();
+
+                var statements = b.Select(x => x.Statements.ToList());
+
+
+                Func<List<string>, Chunk<StatementSyntax>, bool> conflictHandler = (output, chunk) =>
+                {
+                    var matches = Diff3<StatementSyntax>.ThreeWayDiff(chunk.A, chunk.O, chunk.B, (x, y) => x.GetType() == y.GetType());
+
+                    foreach (var match in matches)
+                    {
+                        output.Add(MergeTree(match.A, match.O, match.B));
+                    }
+
+                    return false; 
+                };
+
+                Func<StatementSyntax, StatementSyntax, bool> comparer = (x, y) => x != null && y != null && x.ToString().Trim() == y.ToString().Trim();
+                var merge = Diff3<StatementSyntax>.Merge<string>(statements.A, statements.O, statements.B, comparer, conflictHandler, x => x.ToString());
+                return "{\r\n" + string.Join("\r\n", merge) + "}\r\n";
+            }
+
+
+            throw new NotImplementedException();
+
+        }
+
+        private string ListMerger<List, Item>(Triplet<SyntaxNode> nodes, Func<List, IEnumerable<Item>> c, GraphMatching<Item, Item>.Cost cost)
+            where List : SyntaxNode
+            where Item : SyntaxNode
+        {
+            var l = nodes.Cast<List>()
+                .Select(x => c(x).ToList());
+
+            var matches = SmartDiff<Item>.GetThreeWayUnorderedMatch(l.A, l.O, l.B, cost);
+            var reordered = SmartDiff<Item>.FilterAndMerge(l.A, l.O, l.B, matches, MergeTree);
+
+            return string.Join(", ", reordered);
+        }
+
+        public string CreateCLU(SyntaxNode O, string inside)
+        {
+            return inside;
+
+
+
+        }
+
+        private string CreateNamespace(SyntaxNode node, string members)
+        {
+            var IDENTIFIER = getIdentifier(node);
+
+            return "namespace " + IDENTIFIER + " {\n" +
+                        members + "\n" +
+                    "}";
+            
+        }
+
+
+        public string CreateClass(SyntaxNode O, string inside)
+        {
+            var IDENTIFIER = getIdentifier(O);
+
+            return "class " + IDENTIFIER + " {\n" +
+                        inside + "\n" +
+                    "}";
+        }
+
+        public int? ExpressionCost(SyntaxNode x, SyntaxNode y)
+        {
+            int cost = 4;
+
+            if (x.GetType() == y.GetType())
+                cost--;
+
+            if (x.ToString().Trim() == y.ToString().Trim())
+                cost -= 2;
+
+            if (cost == 4)
+                return null;
+
+            return cost;
+        }
+
         public int? MemberCost(SyntaxNode x, SyntaxNode y)
         {
             int cost = 4;
@@ -52,7 +265,7 @@ namespace SyntaxDiff
         {
             if (n is IdentifierNameSyntax)
                 return n.ToString();
-            else if(n is ClassDeclarationSyntax) 
+            else if (n is ClassDeclarationSyntax)
                 return ((ClassDeclarationSyntax)n).Identifier.ToString();
             else if (n is MethodDeclarationSyntax)
                 return ((MethodDeclarationSyntax)n).Identifier.ToString(); // TODO: Implement heristic to also indicate closeness in body, in parameter list and identifiers.
@@ -75,9 +288,9 @@ namespace SyntaxDiff
             return CodeNodeType.Ordered;
         }
 
-        public SyntaxNode SyntaxFromLines(List<string> lines)
+        public SyntaxNode SyntaxFromLines(string code)
         {
-            return SyntaxTree.ParseText(String.Join("\n", lines)).GetRoot();
+            return SyntaxTree.ParseText(code).GetRoot();
         }
 
         public List<string> LinesFromSyntax(SyntaxNode m)
@@ -89,7 +302,12 @@ namespace SyntaxDiff
 
         public List<SyntaxNode> Children(SyntaxNode n)
         {
-            return n.ChildNodes().ToList();
+            if(n is CompilationUnitSyntax || n is ClassDeclarationSyntax)
+                return n.ChildNodes().ToList();
+            if (n is NamespaceDeclarationSyntax)
+                return n.ChildNodes().Skip(1).Take(1).ToList();
+
+            throw new NotImplementedException();
         }
 
         public Tree<SyntaxNode> ConvertToTree(SyntaxNode n)
@@ -123,214 +341,6 @@ namespace SyntaxDiff
             s += getSyntaxString<ParameterSyntax>(t, x => x.Identifier.ToString());
 
             return s;
-        }
-
-        public SyntaxNode ConvertBack(Tree<Diff<SyntaxNode>> tree)
-        {
-            var newChildren = new List<SyntaxNode>();
-
-            foreach (var child in tree.children)
-            {
-                var convertback = ConvertBack(child);
-                if (convertback != null)
-                    newChildren.Add(convertback);
-            }
-
-            var oldNode = tree.value;
-            SyntaxNode newNode = null;
-
-            var result =
-                checkAndCast<MethodDeclarationSyntax>(oldNode, out newNode, newChildren, (x, y) => merge(x, y), (x, y) => insert(x, y)) ||
-                checkAndCast<PredefinedTypeSyntax>(oldNode, out newNode, newChildren, (x, y) => merge(x, y), (x, y) => insert(x, y)) ||
-                checkAndCast<ParameterListSyntax>(oldNode, out newNode, newChildren, (x, y) => merge(x, y), (x, y) => insert(x, y)) ||
-                checkAndCast<ParameterSyntax>(oldNode, out newNode, newChildren, (x, y) => merge(x, y), (x, y) => insert(x, y)) ||
-                checkAndCast<MemberAccessExpressionSyntax>(oldNode, out newNode, newChildren, (x, y) => merge(x, y), (x, y) => insert(x, y)) ||
-                checkAndCast<LiteralExpressionSyntax>(oldNode, out newNode, newChildren, (x, y) => merge(x, y), (x, y) => insert(x, y)) ||
-                checkAndCast<ArgumentSyntax>(oldNode, out newNode, newChildren, (x, y) => merge(x, y), (x, y) => insert(x, y)) ||
-                checkAndCast<ArgumentListSyntax>(oldNode, out newNode, newChildren, (x, y) => merge(x, y), (x, y) => insert(x, y)) ||
-                checkAndCast<InvocationExpressionSyntax>(oldNode, out newNode, newChildren, (x, y) => merge(x, y), (x, y) => insert(x, y)) ||
-                checkAndCast<ExpressionStatementSyntax>(oldNode, out newNode, newChildren, (x, y) => merge(x, y), (x, y) => insert(x, y)) ||
-                checkAndCast<BlockSyntax>(oldNode, out newNode, newChildren, (x, y) => merge(x, y), (x, y) => insert(x, y)) ||
-                checkAndCast<IfStatementSyntax>(oldNode, out newNode, newChildren, (x, y) => merge(x, y), (x, y) => insert(x, y)) ||
-                checkAndCast<IdentifierNameSyntax>(oldNode, out newNode, newChildren, (x, y) => merge(x, y), (x, y) => insert(x, y));
-
-            if (!result)
-                throw new NotImplementedException();
-            return newNode;
-        }
-
-        public static bool checkAndCast<Y>(Diff<SyntaxNode> n, out SyntaxNode on, List<SyntaxNode> newchildren, Func<Diff<Y>, List<SyntaxNode>, SyntaxNode> convert, Func<Y, List<SyntaxNode>, SyntaxNode> insert) where Y : SyntaxNode
-        {
-            Func<SyntaxNode, bool> nullOrY = x => x is Y || x == null;
-
-            if (nullOrY(n.A) && nullOrY(n.O) && nullOrY(n.B))
-            {
-                if (n.A != null && n.O == null && n.B == null)
-                {
-                    on = insert((Y)n.A, newchildren);
-                    return true;
-                }
-                else if (n.A == null && n.O == null && n.B != null)
-                {
-                    on = insert((Y)n.B, newchildren);
-                    return true;
-                }
-                else if (n.A != null && n.O == null && n.B != null)
-                    throw new Exception("WTF");
-                else if (n.A != null && n.O != null && n.B != null)
-                {
-                    on = convert(n.cast<Y>(), newchildren);
-                    return true;
-                }
-                
-                on = null;
-                return true; // If we reach this part is a delete, and we can simply return "processed"
-                            // TODO: No, we cannot. We need to know if there were changes in the rest of the tree.
-            }
-            on = null;
-            return false; // We did not process this node
-        }
-
-
-        public static PredefinedTypeSyntax merge(Diff<PredefinedTypeSyntax> n, List<SyntaxNode> children)
-        {
-            return insert(n.O, children); // Since they are matched, we know that all keywords are the same.
-        }
-        public static PredefinedTypeSyntax insert(PredefinedTypeSyntax n, List<SyntaxNode> children)
-        {
-            return Syntax.PredefinedType(n.Keyword); // We have no children.
-        }
-
-        public static ParameterSyntax merge(Diff<ParameterSyntax> n, List<SyntaxNode> children)
-        {
-            if (n.A.Identifier.ValueText != n.O.Identifier.ValueText && n.O.Identifier.ValueText == n.B.Identifier.ValueText)
-                return insert(n.A, children);
-            if (n.A.Identifier.ValueText == n.O.Identifier.ValueText && n.O.Identifier.ValueText != n.B.Identifier.ValueText)
-                return insert(n.B, children);
-            if (n.A.Identifier.ValueText == n.O.Identifier.ValueText && n.O.Identifier.ValueText == n.B.Identifier.ValueText)
-                return insert(n.O, children);
-            throw new Exception("This might be a conflict");
-
-        }
-
-        public static ParameterSyntax insert(ParameterSyntax n, List<SyntaxNode> children)
-        {
-            return Syntax.Parameter(n.Identifier); // TODO
-        }
-
-        public static ParameterListSyntax merge(Diff<ParameterListSyntax> n, List<SyntaxNode> children)
-        {
-            return insert(n.O, children);
-        }
-
-        public static ParameterListSyntax insert(ParameterListSyntax n, List<SyntaxNode> children)
-        {
-            var c = new SeparatedSyntaxList<ParameterSyntax>();
-            children.ForEach(x => c.Add((ParameterSyntax)x));
-            return Syntax.ParameterList(c);
-        }
-
-        public static IdentifierNameSyntax merge(Diff<IdentifierNameSyntax> n, List<SyntaxNode> children)
-        {
-            return insert(n.O, children);
-        }
-        public static IdentifierNameSyntax insert(IdentifierNameSyntax n, List<SyntaxNode> children)
-        {
-            return Syntax.IdentifierName(n.Identifier);
-        }
-
-        public static MemberAccessExpressionSyntax merge(Diff<MemberAccessExpressionSyntax> n, List<SyntaxNode> children)
-        {
-            return insert(n.O, children);
-        }
-        public static MemberAccessExpressionSyntax insert(MemberAccessExpressionSyntax n, List<SyntaxNode> children)
-        {
-            return Syntax.MemberAccessExpression(n.Kind, (ExpressionSyntax)children[0], (SimpleNameSyntax)children[1]);
-        }
-
-        public static LiteralExpressionSyntax merge(Diff<LiteralExpressionSyntax> n, List<SyntaxNode> children)
-        {
-            throw new NotImplementedException();
-        }
-        public static LiteralExpressionSyntax insert(LiteralExpressionSyntax n, List<SyntaxNode> children)
-        {
-            return Syntax.LiteralExpression(n.Kind, n.Token);
-        }
-
-        public static ArgumentSyntax merge(Diff<ArgumentSyntax> n, List<SyntaxNode> children)
-        {
-            return insert(n.O, children);
-        }
-        public static ArgumentSyntax insert(ArgumentSyntax n, List<SyntaxNode> children)
-        {
-            return Syntax.Argument((ExpressionSyntax)children[0]);
-        }
-
-        public static ArgumentListSyntax merge(Diff<ArgumentListSyntax> n, List<SyntaxNode> children)
-        {
-            return insert(n.O, children);
-        }
-        public static ArgumentListSyntax insert(ArgumentListSyntax n, List<SyntaxNode> children)
-        {
-            var c = Syntax.SeparatedList(children.Select(x => (ArgumentSyntax)x), Enumerable.Repeat(Syntax.Token(SyntaxKind.CommaToken), children.Count - 1));
-            return Syntax.ArgumentList(c);
-        }
-
-
-        public static InvocationExpressionSyntax merge(Diff<InvocationExpressionSyntax> n, List<SyntaxNode> children)
-        {
-            return insert(n.O, children);
-        }
-        public static InvocationExpressionSyntax insert(InvocationExpressionSyntax n, List<SyntaxNode> children)
-        {
-            return Syntax.InvocationExpression((ExpressionSyntax)children[0], (ArgumentListSyntax)children[1]);
-        }
-
-        public static ExpressionStatementSyntax merge(Diff<ExpressionStatementSyntax> n, List<SyntaxNode> children)
-        {
-            return insert(n.O, children);
-        }
-        public static ExpressionStatementSyntax insert(ExpressionStatementSyntax n, List<SyntaxNode> children)
-        {
-            return Syntax.ExpressionStatement((ExpressionSyntax)children[0]);
-        }
-
-        public static BlockSyntax merge(Diff<BlockSyntax> n, List<SyntaxNode> children)
-        {
-            return insert(n.O, children);
-        }
-        public static BlockSyntax insert(BlockSyntax n, List<SyntaxNode> children)
-        {
-            var c = Syntax.SeparatedList(children.Select(x => (StatementSyntax)x), Enumerable.Repeat(Syntax.Token(SyntaxKind.CommaToken), children.Count - 1));
-            return Syntax.Block(c);
-        }
-
-        public static IfStatementSyntax merge(Diff<IfStatementSyntax> n, List<SyntaxNode> children)
-        {
-            return insert(n.O, children) ; 
-        }
-        public static IfStatementSyntax insert(IfStatementSyntax n, List<SyntaxNode> children)
-        {
-            return Syntax.IfStatement((ExpressionSyntax)children[0], (StatementSyntax)children[1]);
-        }
-
-        public static MethodDeclarationSyntax merge(Diff<MethodDeclarationSyntax> n, List<SyntaxNode> children)
-        {
-            return insert(n.O, children); // TODO: MAJOR
-        }
-        public static MethodDeclarationSyntax insert(MethodDeclarationSyntax n, List<SyntaxNode> children)
-        {
-            return Syntax.MethodDeclaration(
-                n.AttributeLists,
-                n.Modifiers,
-                (TypeSyntax)children[0],
-                n.ExplicitInterfaceSpecifier,
-                n.Identifier,
-
-                n.TypeParameterList,
-                (ParameterListSyntax)children[1],
-                n.ConstraintClauses,
-                (BlockSyntax)children[2]);
         }
     }
 }

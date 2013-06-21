@@ -13,6 +13,8 @@ namespace SyntaxDiff
 {
     public class GraphMatching<X, Y>
     {
+        public delegate int? Cost(X x, Y y);
+
         public static int cnt = 0;
         public class Node
         {
@@ -64,7 +66,7 @@ namespace SyntaxDiff
                 else if (item != null)
                     stuff = item.ToString();
 
-                return base.ToString() + stuff; ;
+                return base.ToString() + stuff;
             }
 
         }
@@ -81,6 +83,7 @@ namespace SyntaxDiff
                 : base()
             {
             }
+
             public override string ToString()
             {
                 var stuff = "";
@@ -176,7 +179,7 @@ namespace SyntaxDiff
                     this.ys = ys;
                 }
             }
-            public static BipartiteGraph CreateFromSets(List<X> xs_, List<Y> ys_, Func<X, Y, int?> cost)
+            public static BipartiteGraph CreateFromSets(List<X> xs_, List<Y> ys_, Cost cost)
             {
                 var xs = xs_.Select(x => new xNode(x)).ToList();
                 var ys = ys_.Select(y => new yNode(y)).ToList();
@@ -246,7 +249,7 @@ namespace SyntaxDiff
 
             public void RenderToFile(string name, List<Edge> markEdges, Dictionary<Node, int> prices, Matching m)
             {
-
+                return;
                 var graphviz = new GraphvizAlgorithm<Node, Edge>(this);
 
                 graphviz.FormatEdge += (sender, edge) =>
@@ -470,7 +473,7 @@ namespace SyntaxDiff
         }
         public static int RunCount = 0;
 
-        public static List<Tuple<X, Y>> Match(List<X> xs, List<Y> ys, Func<X, Y, int?> cost)
+        public static List<Tuple<X, Y>> Match(List<X> xs, List<Y> ys, Cost cost)
         {
             RunCount++;
 

@@ -21,9 +21,9 @@ namespace Tests
 
             var diff = new SyntaxDiff.SmartDiff<SyntaxNode>(new SyntaxNodeSmartDiff());
 
-            var merge = diff.Merge(left, bas, right);
+            var merge = diff.MergeCodeLines(left, bas, right);
 
-            merge.ForEach(Console.WriteLine);
+            Console.WriteLine(merge);
         }
 
         [TestMethod]
@@ -36,9 +36,9 @@ namespace Tests
 
             var diff = new SyntaxDiff.SmartDiff<SyntaxNode>(new SyntaxNodeSmartDiff());
 
-            var merge = diff.Merge(left, bas, right);
+            var merge = diff.MergeCodeLines(left, bas, right);
 
-            merge.ForEach(Console.WriteLine);
+            Console.WriteLine(merge);
             //merge.ForEach(Console.WriteLine);
         }
 

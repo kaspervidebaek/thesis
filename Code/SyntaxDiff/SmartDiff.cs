@@ -17,7 +17,7 @@ namespace SyntaxDiff
         private ISmartDiffInterface<T> i;
 
 
-        public List<String> Merge(List<string> A, List<string> O, List<string> B)
+        public string MergeCodeLines(string A, string O, string B)
         {
             Func<List<string>, Chunk<string>, bool> conflictHandler = (output, chunk) =>
             {
@@ -26,19 +26,19 @@ namespace SyntaxDiff
                 var bC = i.SyntaxFromLines(B);
 
                 output.Clear();
-                output.AddRange(MergeTree(aC, oC, bC));
+                output.AddRange(Merge(aC, oC, bC).Split('\n'));
 
                 return true; // We should terminate. This will do the entire merging.
             };
 
             Func<string, string, bool> equality = (x, y) => x != null && y != null && x.ToString().Trim() == y.ToString().Trim();
 
-            var merged = Diff3<string>.Merge(A, O, B, equality, conflictHandler);
-            return merged.Select(x => x.ToString()).ToList();
+            var merged = Diff3<string>.Merge(A.Split('\n').ToList(), O.Split('\n').ToList(), B.Split('\n').ToList(), equality, conflictHandler);
+            return string.Join("\n", merged);
         }
 
 
-        public List<String> MergeTree(T A, T O, T B)
+        public string Merge(T A, T O, T B)
         {
             if (!(i.getChildType(A) == i.getChildType(O) && i.getChildType(O) == i.getChildType(B)))
                 throw new Exception("This is bad!");
@@ -55,21 +55,27 @@ namespace SyntaxDiff
             throw new NotImplementedException();
         }
 
-
-        private List<string> SequenceMerge(T A, T O, T B)
+        private string SequenceMerge(T A, T O, T B)
         {
             // TODO: If there are conflicts - use syntax tree merge.
 #if true
             Func<List<string>, Chunk<string>, bool> conflictHandler = (output, chunk) =>
             {
-                var aC = i.ConvertToTree(A);
+                /*var aC = i.ConvertToTree(A);
                 var oC = i.ConvertToTree(O);
                 var bC = i.ConvertToTree(B);
 
                 var matching = Tree<T>.ThreeWayMatch(aC, oC, bC, (x, y) => i.getLabel(x) == i.getLabel(y));
 
                 output.Clear();
-                output.AddRange(i.LinesFromSyntax(i.ConvertBack(matching)));
+                output.AddRange(i.LinesFromSyntax(i.ConvertBack(matching)));*/
+
+                //var mergedTree = i.MergeTree(A, O, B);
+                output.Clear();
+                output.Add(i.MergeTree(A, O, B));
+
+                
+
 
                 return true; // We should terminate. This will do the entire merging.
             };
@@ -90,10 +96,11 @@ namespace SyntaxDiff
             Func<string, string, bool> equality = (x, y) => x != null && y != null && x.ToString().Trim() == y.ToString().Trim();
 
             var merged = Diff3<string>.Merge(i.LinesFromSyntax(A), i.LinesFromSyntax(O), i.LinesFromSyntax(B), equality, conflictHandler);
-            return merged.Select(x => x.ToString()).ToList();
+            return string.Join("\n", merged);
         }
 
-        private List<string> SetMerge(T A, T O, T B)
+
+        private string SetMerge(T A, T O, T B)
         {
 
             foreach (var merge in i.unorderedmerges)
@@ -103,58 +110,90 @@ namespace SyntaxDiff
                     var Ac = i.Children(A);
                     var Oc = i.Children(O);
                     var Bc = i.Children(B);
-
-                    var Ma = GraphMatching<T, T>.Match(Ac, Oc, merge.cost);
-                    var Mb = GraphMatching<T, T>.Match(Bc, Oc, merge.cost);
-
-                    var totalMatch = GraphMatching<
-                                                Tuple<T, T>,
-                                                Tuple<T, T>
-                                                >.Match(Ma, Mb,
-                                                    (x, y) =>
-                                                    {
-                                                        if (x.Item2 == y.Item2 && y.Item2 != null)
-                                                            return 1;
-                                                        return null;
-                                                    }).Select(u => new Diff<T>(u.Item1, u.Item2)).ToList();
-
-                    var members = new List<Tuple<Diff<T>, T>>();
-
-                    foreach (var m in totalMatch)
-                    {
-                        if (m.A != null && m.B != null && m.O != null) // Function exists in all revisions
-                        {
-                            var tree = i.SyntaxFromLines(MergeTree(m.A, m.O, m.B));
-                            members.Add(Tuple.Create(m, tree));
-                        }
-                        else if (m.A == null && m.O == null && m.B != null) // Function only exists in B - Inserted
-                        {
-                            members.Add(Tuple.Create(m, m.B));
-                        }
-                        else if (m.A != null && m.O == null && m.B == null) // Function only exists in A - Inserted
-                        {
-                            members.Add(Tuple.Create(m, m.A));
-                        }
-                        else if (m.A == null && m.O != null && m.B == null) // Function only exists in O - deleted in both
-                        {
-                        }
-                        else
-                            throw new NotImplementedException();
-                    }
-
-                    var newAc = Ac.Select(a => members.First(x => x.Item1.A == a).Item2).ToList(); // TODO: Performance
-                    var newOc = Oc.Select(o => members.First(x => x.Item1.O == o).Item2).ToList();
-                    var newBc = Bc.Select(b => members.First(x => x.Item1.B == b).Item2).ToList();
-
-                    var reordered = Reorder<T>.OrderLists(newAc, newOc, newBc);
+                    var totalMatch = GetThreeWayUnorderedMatch(Ac, Oc, Bc, merge.cost);
+                    var reordered = FilterAndMerge(Ac, Oc, Bc, totalMatch, Merge);
 
                     // TODO: Merge all other class identifeirs too.
 
-                    return i.LinesFromSyntax(merge.recreate((T)O, reordered));
+                    var str = merge.recreate((T)O, string.Join("\n", reordered));
+                    return str;
                 }
             }
 
             throw new NotImplementedException();
+        }
+
+        public static List<string> FilterAndMerge(List<T> Ac, List<T> Oc, List<T> Bc, List<Diff<T>> totalMatch, Func<T, T, T, string> merge)
+        {
+
+            var members = new List<Tuple<Diff<T>, string>>();
+
+            var conflicts = new HashSet<object>();
+
+            foreach (var m in totalMatch)
+            {
+                if (m.A != null && m.B != null && m.O != null) // Function exists in all revisions
+                {
+                    var tree = merge(m.A, m.O, m.B);
+                    members.Add(Tuple.Create(m, tree));
+                }
+                else if (m.A == null && m.O == null && m.B != null) // Function only exists in B - Inserted
+                {
+                    members.Add(Tuple.Create(m, m.B.ToString()));
+                }
+                else if (m.A != null && m.O == null && m.B == null) // Function only exists in A - Inserted
+                {
+                    members.Add(Tuple.Create(m, m.A.ToString()));
+                }
+                else if (m.A == null && m.O != null && m.B == null) // Function only exists in O - deleted in both
+                {
+                }
+                else if (m.A != null && m.O != null && m.B == null) // Deleted in B
+                {
+                    if (m.A.ToString() != m.O.ToString())
+                    {
+                        var s = "/*conflictB*/";
+                        members.Add(Tuple.Create(m, s));
+                        conflicts.Add(s);
+                    }
+                }
+                else if (m.A == null && m.O != null && m.B != null) // Deleted in A
+                {
+                    if (m.B.ToString() != m.O.ToString()) {
+                        var s = "/*conflictA*/";
+                        members.Add(Tuple.Create(m, s));
+                        conflicts.Add(s);
+                    }
+                }
+                else
+                    throw new NotImplementedException();
+            }
+
+            var newAc = Ac.Select(a => members.First(x => x.Item1.A == a).Item2).ToList(); // TODO: Performance
+            var newOc = Oc.Select(o => members.First(x => x.Item1.O == o).Item2).ToList();
+            var newBc = Bc.Select(b => members.First(x => x.Item1.B == b).Item2).ToList();
+
+            var reordered = Reorder<string>.OrderLists(newAc, newOc, newBc, conflicts);
+            return reordered;
+        }
+
+        public static List<Diff<T>> GetThreeWayUnorderedMatch(List<T> Ac, List<T> Oc, List<T> Bc, GraphMatching<T, T>.Cost cost)
+        {
+
+            var Ma = GraphMatching<T, T>.Match(Ac, Oc, cost);
+            var Mb = GraphMatching<T, T>.Match(Bc, Oc, cost);
+
+            var totalMatch = GraphMatching<
+                                        Tuple<T, T>,
+                                        Tuple<T, T>
+                                        >.Match(Ma, Mb,
+                                            (x, y) =>
+                                            {
+                                                if (x.Item2 == y.Item2 && y.Item2 != null)
+                                                    return 1;
+                                                return null;
+                                            }).Select(u => new Diff<T>(u.Item1, u.Item2)).ToList();
+            return totalMatch;
         }
 
 

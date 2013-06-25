@@ -54,7 +54,6 @@ namespace SyntaxDiff
                 }
                 else if (match.A != default(T) && match.O == default(T) && match.B == default(T))
                 {
-
                     var oContained = O.Contains(match.A);
                     var bContained = B.Contains(match.A);
                     if ((oContained && bContained) || !oContained) // TODO: Performance

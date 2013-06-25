@@ -52,6 +52,11 @@ namespace SyntaxDiff
                         {
                             Console.WriteLine(""Base"");
                         }
+                        static void WhileInsertion()
+                        {
+                            Console.WriteLine(""Base"");
+                            Console.WriteLine(""BaseInside"");
+                        }
                     }
                 }");
 
@@ -80,6 +85,12 @@ namespace SyntaxDiff
                         {
                             Console.WriteLine(""Base"");
                         }
+                        static void WhileInsertion()
+                        {
+                            Console.WriteLine(""Right"");
+                            Console.WriteLine(""BaseInside"");
+                        }
+
                     }
                 }");
         public static string rightTree = StringToFile(@"using System;
@@ -110,6 +121,12 @@ namespace SyntaxDiff
                         static void EndsAsRight()
                         {
                             Console.WriteLine(""Right"");
+                        }
+                        static void WhileInsertion()
+                        {
+                            Console.WriteLine(""Right"");
+                            while(true)
+                                Console.WriteLine(""BaseInside"");
                         }
                     }
                 }");

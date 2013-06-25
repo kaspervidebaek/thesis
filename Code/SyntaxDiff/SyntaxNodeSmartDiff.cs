@@ -70,16 +70,6 @@ namespace SyntaxDiff
             return StringMerge(n.A.ToString(), n.O.ToString(), n.B.ToString());
         }
 
-        public Triplet<List<Y>> CastSelectList<T, Y>(SyntaxNode A, SyntaxNode O, SyntaxNode B, Func<T, IEnumerable<Y>> f)
-            where T : class
-        {
-            return new Triplet<List<Y>>
-            {
-                A = f(A as T).ToList(),
-                O = f(O as T).ToList(),
-                B = f(B as T).ToList()
-            };
-        }
 
         public string MergeTree(SyntaxNode A, SyntaxNode O, SyntaxNode B)
         {
@@ -168,7 +158,7 @@ namespace SyntaxDiff
 
                 Func<List<string>, Chunk<StatementSyntax>, bool> conflictHandler = (output, chunk) =>
                 {
-                    var matches = Diff3<StatementSyntax>.ThreeWayDiff(chunk.A, chunk.O, chunk.B, (x, y) => x.GetType() == y.GetType());
+                    var matches = Diff3<StatementSyntax>.ThreeWayDiff(chunk.A, chunk.O  , chunk.B, (x, y) => Similarity(Doublet<SyntaxNode>.Create((SyntaxNode)x, (SyntaxNode)y)) > 0.6f);
 
                     foreach (var match in matches)
                     {
@@ -182,11 +172,90 @@ namespace SyntaxDiff
                 var merge = Diff3<StatementSyntax>.Merge<string>(statements.A, statements.O, statements.B, comparer, conflictHandler, x => x.ToString());
                 return "{\r\n" + string.Join("\r\n", merge) + "}\r\n";
             }
+            else if (nodes.Is<WhileStatementSyntax, ExpressionStatementSyntax>())
+            {
+                var n = nodes.Cast<ExpressionStatementSyntax, WhileStatementSyntax>();
 
+                var merge = MergeTree(n.other.Statement, n.bas, n.even);
+
+            }
 
             throw new NotImplementedException();
-
         }
+        double Similarity(SyntaxNode x, SyntaxNode y)
+        {
+            return Similarity(Doublet<SyntaxNode>.Create(x, y));
+        }
+
+        double Similarity(Doublet<SyntaxNode> nodes)
+        {
+            if (nodes.Is<ExpressionStatementSyntax>())
+            {
+                return nodes.Cast<ExpressionStatementSyntax>().Select(x => x.Expression).Apply(Similarity); 
+            }
+            else if (nodes.Is<InvocationExpressionSyntax>())
+            {
+                var c = nodes.Cast<InvocationExpressionSyntax>();
+                var argumentsSimlarity = c.Select(x => x.ArgumentList).Apply(Similarity);
+                var expressionSimlarity = c.Select(x => x.Expression).Apply(Similarity);
+                return argumentsSimlarity * 0.5 + expressionSimlarity + 0.5;
+            }
+            else if (nodes.Is<ArgumentListSyntax>())
+            {
+                var c = nodes.Cast<ArgumentListSyntax>().Select(x => x.Arguments.ToList());
+
+                var matches = GraphMatching<ArgumentSyntax, ArgumentSyntax>.Match(c.X, c.Y, ExpressionCost);
+                var cost = matches.Select(x => x.Item1 == null || x.Item2 == null ? 0 : 1);
+                
+                return cost.Average();
+            }
+            else if (nodes.Is<MemberAccessExpressionSyntax>())
+            {
+                var c = nodes.Cast<MemberAccessExpressionSyntax>();
+
+                var expression = c.Select(x => x.Expression).Apply(Similarity);
+                var name = c.Select(x => x.Name).Apply(Similarity);
+
+                return expression*0.5 + name*0.5;
+            }
+            else if (nodes.Is<IdentifierNameSyntax>())
+            {
+                return nodes.Cast<IdentifierNameSyntax>().Select(x => x.Identifier.ToString()).Apply(StringSimilarity);
+            }
+            else if (nodes.Is<IfStatementSyntax>())
+            {
+                var i = nodes.Cast<IfStatementSyntax>();
+
+                var expr = i.Select(x => x.Condition).Apply(Similarity);
+                var body = i.Select(x => x.Statement).Apply(Similarity);
+                var elses = i.Select(x => x.Else).ApplyIfExists(Similarity);
+
+                return 0.33 * expr + 0.33 * body + 0.33 * elses;
+            }
+            else if (nodes.Is<LiteralExpressionSyntax>())
+            {
+                return nodes.Cast<LiteralExpressionSyntax>().Select(x => x.Token.ToString()).Apply(StringSimilarity);
+            }
+            else if (nodes.Is<ExpressionStatementSyntax, WhileStatementSyntax>())
+            {
+
+            }
+            else if (nodes.Is<WhileStatementSyntax, ExpressionStatementSyntax>())
+            {
+                return Similarity(((WhileStatementSyntax)nodes.X).Statement, nodes.Y);
+
+            }
+
+            
+            
+            throw new NotImplementedException();
+        }
+
+        double StringSimilarity(string x, string y)
+        {
+            return x == y ? 1 : 0;
+        }
+
 
         private string ListMerger<List, Item>(Triplet<SyntaxNode> nodes, Func<List, IEnumerable<Item>> c, GraphMatching<Item, Item>.Cost cost)
             where List : SyntaxNode
@@ -204,9 +273,6 @@ namespace SyntaxDiff
         public string CreateCLU(SyntaxNode O, string inside)
         {
             return inside;
-
-
-
         }
 
         private string CreateNamespace(SyntaxNode node, string members)

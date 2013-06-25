@@ -78,7 +78,7 @@ namespace SyntaxDiff
             var Ma = NeedlemanWunsch<T>.Allignment(A, O, comparer);
             var Mb = NeedlemanWunsch<T>.Allignment(B, O, comparer);
 
-            var totalMatch = NeedlemanWunsch<Tuple<T, T>>.Allignment(Ma, Mb, (a, b) => comparer(a.Item2, b.Item2)).Select(x => new Diff<T>(x.Item1, x.Item2)).ToList();
+            var totalMatch = NeedlemanWunsch<Tuple<T, T>>.Allignment(Ma, Mb, (a, b) => a.Item2 != null && b.Item2!= null && Object.ReferenceEquals(a.Item2, b.Item2)).Select(x => new Diff<T>(x.Item1, x.Item2)).ToList();
             return totalMatch;
         }
 

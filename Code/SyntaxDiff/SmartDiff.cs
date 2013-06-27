@@ -152,7 +152,7 @@ namespace SyntaxDiff
                 {
                     if (m.A.ToString() != m.O.ToString())
                     {
-                        var s = "/*conflictB*/";
+                        var s = m.A + "/*deleted in B*/";
                         members.Add(Tuple.Create(m, s));
                         conflicts.Add(s);
                     }
@@ -160,7 +160,7 @@ namespace SyntaxDiff
                 else if (m.A == null && m.O != null && m.B != null) // Deleted in A
                 {
                     if (m.B.ToString() != m.O.ToString()) {
-                        var s = "/*conflictA*/";
+                        var s =  m.B + "/*deleted in A*/";
                         members.Add(Tuple.Create(m, s));
                         conflicts.Add(s);
                     }

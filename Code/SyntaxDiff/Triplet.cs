@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,6 +14,7 @@ namespace SyntaxDiff
         public U other;
     }
 
+    [DebuggerNonUserCode]
     public class Triplet<T>
     {
         public T A, O, B;

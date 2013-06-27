@@ -64,6 +64,7 @@
     <Compile Include="ReorderingTests.cs" />
     <Compile Include="SmartDiffTests.cs" />
     <Compile Include="TreeMatching.cs" />
+    <Compile Include="TreeMerge.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SyntaxDiff\SyntaxDiff.csproj">

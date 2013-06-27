@@ -32,6 +32,10 @@ namespace SyntaxDiff
                 {
                     class Program
                     {
+                        static void WillBeDeletedInLeftConflict()
+                        {
+                            Test();
+                        }
                         static void WillBeDeletedInLeft()
                         {
                         }
@@ -53,6 +57,11 @@ namespace SyntaxDiff
                             Console.WriteLine(""Base"");
                         }
                         static void WhileInsertion()
+                        {
+                            Console.WriteLine(""Base"");
+                            Console.WriteLine(""BaseInside"");
+                        }
+                        static void IfInsertion()
                         {
                             Console.WriteLine(""Base"");
                             Console.WriteLine(""BaseInside"");
@@ -87,10 +96,14 @@ namespace SyntaxDiff
                         }
                         static void WhileInsertion()
                         {
-                            Console.WriteLine(""Right"");
+                            Console.Write(""Base"");
                             Console.WriteLine(""BaseInside"");
                         }
-
+                        static void IfInsertion()
+                        {
+                            Console.Write(""Base"");
+                            Console.WriteLine(""BaseInside"");
+                        }
                     }
                 }");
         public static string rightTree = StringToFile(@"using System;
@@ -99,6 +112,10 @@ namespace SyntaxDiff
                 {
                     class Program
                     {
+                        static void WillBeDeletedInLeftConflict()
+                        {
+                            Test2();
+                        }
                         static void WillBeDeletedInLeft()
                         {
                         }
@@ -126,6 +143,12 @@ namespace SyntaxDiff
                         {
                             Console.WriteLine(""Right"");
                             while(true)
+                                Console.WriteLine(""BaseInside"");
+                        }
+                        static void IfInsertion()
+                        {
+                            Console.WriteLine(""Right"");
+                            if(true)
                                 Console.WriteLine(""BaseInside"");
                         }
                     }

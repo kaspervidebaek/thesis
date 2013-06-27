@@ -14,7 +14,6 @@ namespace SyntaxDiff
             return Merge<T>(A, O, B, comparer, HandleConflict, x => x);
         }
 
-
         public static List<Y> Merge<Y>(List<T> A, List<T> O, List<T> B, Func<T, T, bool> comparer, Func<List<Y>, Chunk<T>, bool> HandleConflict, Func<T, Y> converter)
         {
             var chuncks = ChunksFromLists(A, O, B, comparer);

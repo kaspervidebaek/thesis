@@ -1,6 +1,7 @@
 ﻿using Roslyn.Compilers.CSharp;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -56,7 +57,10 @@ namespace SyntaxDiff
             {
                 return O;
             }
-            return "Conflict!!!";
+            else if (A == B)
+                return A;
+
+            return A + "<-" + O + "->" + B;
             throw new NotImplementedException();
         }
 
@@ -71,13 +75,23 @@ namespace SyntaxDiff
         }
 
 
+        [DebuggerNonUserCode]
         public string MergeTree(SyntaxNode A, SyntaxNode O, SyntaxNode B)
         {
             return MergeTree(Triplet<SyntaxNode>.Create(A, O, B));
         }
         public string MergeTree(Triplet<SyntaxNode> nodes)
         {
-            if (nodes.Is<MethodDeclarationSyntax>())
+            if (nodes.Is<CompilationUnitSyntax>())
+            {
+                var c = nodes.Cast<CompilationUnitSyntax>().Select(x => x.Members);
+                if (c.Select(x => x.Count).Apply((x, y, z) => x != 0 && y != 0 && z != 0))
+                {
+                    var M = c.Select(x => x.First());
+                    return M.Apply(MergeTree);
+                }
+            }
+            else if (nodes.Is<MethodDeclarationSyntax>())
             {
                 var M = nodes.Cast<MethodDeclarationSyntax>();
 
@@ -170,13 +184,24 @@ namespace SyntaxDiff
 
                 Func<StatementSyntax, StatementSyntax, bool> comparer = (x, y) => x != null && y != null && x.ToString().Trim() == y.ToString().Trim();
                 var merge = Diff3<StatementSyntax>.Merge<string>(statements.A, statements.O, statements.B, comparer, conflictHandler, x => x.ToString());
-                return "{\r\n" + string.Join("\r\n", merge) + "}\r\n";
+                return "{\r\n" + string.Join("\r\n", merge) + "\r\n}\r\n";
             }
-            else if (nodes.Is<WhileStatementSyntax, ExpressionStatementSyntax>())
+            else if (nodes.Is<ExpressionStatementSyntax, WhileStatementSyntax>())
             {
                 var n = nodes.Cast<ExpressionStatementSyntax, WhileStatementSyntax>();
 
                 var merge = MergeTree(n.other.Statement, n.bas, n.even);
+
+                return "while(" + n.other.Condition + ")\r\n" + merge;
+
+            }
+            else if (nodes.Is<ExpressionStatementSyntax, IfStatementSyntax>())
+            {
+                var n = nodes.Cast<ExpressionStatementSyntax, IfStatementSyntax>();
+
+                var merge = MergeTree(n.other.Statement, n.bas, n.even);
+
+                return "while(" + n.other.Condition + ")\r\n" + merge;
 
             }
 
@@ -206,6 +231,9 @@ namespace SyntaxDiff
 
                 var matches = GraphMatching<ArgumentSyntax, ArgumentSyntax>.Match(c.X, c.Y, ExpressionCost);
                 var cost = matches.Select(x => x.Item1 == null || x.Item2 == null ? 0 : 1);
+
+                if (cost.Count() == 0)
+                    return 1;
                 
                 return cost.Average();
             }
@@ -245,7 +273,10 @@ namespace SyntaxDiff
                 return Similarity(((WhileStatementSyntax)nodes.X).Statement, nodes.Y);
 
             }
-
+            else if (nodes.Is<IfStatementSyntax, ExpressionStatementSyntax>())
+            {
+                return Similarity(((IfStatementSyntax)nodes.X).Statement, nodes.Y);
+            }
             
             
             throw new NotImplementedException();

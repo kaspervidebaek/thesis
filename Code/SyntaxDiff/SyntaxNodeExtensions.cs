@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 
 namespace SyntaxDiff
 {
-
     public static class SyntaxNodeExtensions
     {
         public static List<SyntaxNode> getChildrenEnum(this SyntaxNode n)
@@ -15,6 +14,5 @@ namespace SyntaxDiff
             var childEnum = (n == null ? new List<SyntaxNode>() : n.ChildNodes()).ToList();
             return childEnum;
         }
-
     }
 }

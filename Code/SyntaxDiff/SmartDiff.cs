@@ -74,8 +74,6 @@ namespace SyntaxDiff
                 output.Clear();
                 output.Add(i.MergeTree(A, O, B));
 
-                
-
 
                 return true; // We should terminate. This will do the entire merging.
             };
@@ -152,7 +150,7 @@ namespace SyntaxDiff
                 {
                     if (m.A.ToString() != m.O.ToString())
                     {
-                        var s = m.A + "/*deleted in B*/";
+                        var s = m.A + " /*deleted in B*/";
                         members.Add(Tuple.Create(m, s));
                         conflicts.Add(s);
                     }
@@ -160,7 +158,7 @@ namespace SyntaxDiff
                 else if (m.A == null && m.O != null && m.B != null) // Deleted in A
                 {
                     if (m.B.ToString() != m.O.ToString()) {
-                        var s =  m.B + "/*deleted in A*/";
+                        var s =  m.B + " /*deleted in A*/";
                         members.Add(Tuple.Create(m, s));
                         conflicts.Add(s);
                     }
@@ -169,9 +167,9 @@ namespace SyntaxDiff
                     throw new NotImplementedException();
             }
 
-            var newAc = Ac.Select(a => members.First(x => x.Item1.A == a).Item2).ToList(); // TODO: Performance
-            var newOc = Oc.Select(o => members.First(x => x.Item1.O == o).Item2).ToList();
-            var newBc = Bc.Select(b => members.First(x => x.Item1.B == b).Item2).ToList();
+            var newAc = Ac.Select(a => members.SingleOrDefault(x => x.Item1.A == a)).Where(x => x != null).Select(x => x.Item2).ToList(); // TODO: Performance
+            var newOc = Oc.Select(o => members.SingleOrDefault(x => x.Item1.O == o)).Where(x => x != null).Select(x => x.Item2).ToList();
+            var newBc = Bc.Select(b => members.SingleOrDefault(x => x.Item1.B == b)).Where(x => x != null).Select(x => x.Item2).ToList();
 
             var reordered = Reorder<string>.OrderLists(newAc, newOc, newBc, conflicts);
             return reordered;
@@ -179,7 +177,6 @@ namespace SyntaxDiff
 
         public static List<Diff<T>> GetThreeWayUnorderedMatch(List<T> Ac, List<T> Oc, List<T> Bc, GraphMatching<T, T>.Cost cost)
         {
-
             var Ma = GraphMatching<T, T>.Match(Ac, Oc, cost);
             var Mb = GraphMatching<T, T>.Match(Bc, Oc, cost);
 

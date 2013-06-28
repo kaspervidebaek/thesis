@@ -11,6 +11,11 @@ using Roslyn.Compilers.CSharp;
 
 namespace SyntaxDiff
 {
+    public class GraphMatching
+    {
+        public static int RunCount = 0;
+    }
+
     public class GraphMatching<X, Y>
     {
         public delegate int? Cost(X x, Y y);
@@ -471,18 +476,17 @@ namespace SyntaxDiff
                 return m;
             }
         }
-        public static int RunCount = 0;
 
         public static List<Tuple<X, Y>> Match(List<X> xs, List<Y> ys, Cost cost)
         {
-            RunCount++;
+            GraphMatching.RunCount++;
 
             var flowgraph = BipartiteGraph.CreateFromSets(xs, ys, cost);
 
             var M = new Matching();
 
             var p = new Dictionary<Node, int>();
-            flowgraph.RenderToFile(RunCount + "it0", null, null, null);
+            flowgraph.RenderToFile(GraphMatching.RunCount + "it0", null, null, null);
 
             flowgraph.xs.ToList().ForEach(x => p.Add(x, 0));
             flowgraph.ys.ToList().ForEach(y => p.Add(y, int.MaxValue));
@@ -494,7 +498,7 @@ namespace SyntaxDiff
             while (M.Count != maxCount)
             {
                 var Gm = new ResidualGraph(flowgraph, M);
-                Gm.RenderToFile(RunCount + "it" + cnt++, null, p, M);
+                Gm.RenderToFile(GraphMatching.RunCount + "it" + cnt++, null, p, M);
                 
                 var negativeEdges = Gm.Edges.Where(x => x.TagPrice(p) < 0);
 
@@ -504,7 +508,7 @@ namespace SyntaxDiff
                 if (dijkstra(target, out path))
                 {
                     var M_ = Gm.Augment(M, path.ToList());
-                    Gm.RenderToFile(RunCount + "it" + cnt++, path.ToList(), p, M);
+                    Gm.RenderToFile(GraphMatching.RunCount + "it" + cnt++, path.ToList(), p, M);
                     p = getNewPrices(dijkstra, p);
                     M = M_;
                 }
@@ -514,7 +518,7 @@ namespace SyntaxDiff
             }
 
             var _Gm = new ResidualGraph(flowgraph, M);
-            _Gm.RenderToFile(RunCount + "it" + cnt++, null, p, M);
+            _Gm.RenderToFile(GraphMatching.RunCount + "it" + cnt++, null, p, M);
 
             var rl = new List<Tuple<X, Y>>();
             foreach (var m in M.edges)

@@ -89,7 +89,6 @@ namespace Tests
             var rTree = x.SyntaxFromLines(right);
 
             var merge = x.MergeTree(lTree, bTree, rTree);
-
         }
 
 
@@ -120,9 +119,83 @@ namespace Tests
             var merge = x.MergeTree(lTree, bTree, rTree);
 
             var mTree = x.SyntaxFromLines(merge);
-
         }
 
+        [TestMethod]
+        [TestCategory("TreeMerge")]
+        public void TreeChangeInsertCall()
+        {
+            var right = @"static void ShouldConflict()
+                        {
+                            Test();
+                            Test2 ();
+                            Test();
+                        }
+                        ";
+            var bas = @"static void ShouldConflict()
+                        {
+                            Test ();
+                            Test ();
+                        }   
+                        ";
+            var left = @"static void ShouldConflict()
+                        {
+                            Test  ();
+                            Test3  ();
+                        }
+                        ";
+            var x = new SyntaxNodeSmartDiff();
+
+            var lTree = x.SyntaxFromLines(left);
+            var bTree = x.SyntaxFromLines(bas);
+            var rTree = x.SyntaxFromLines(right);
+
+            var merge = x.MergeTree(lTree, bTree, rTree);
+
+            var mTree = x.SyntaxFromLines(merge);
+        }
+
+
+        [TestMethod]
+        [TestCategory("TreeMerge")]
+        public void TreeChangeInsertIfAsBlock()
+        {
+            var right = @"static void ShouldConflict()
+                        {
+                            Test1();
+                            Test2();
+                            Test6();
+                            Test4();
+                        }
+                        ";
+            var bas = @"static void ShouldConflict()
+                        {
+                            Test1 ();
+                            Test2 ();
+                            Test3 ();
+                            Test4 ();
+                        }   
+                        ";
+            var left = @"static void ShouldConflict()
+                        {
+                            Test1  ();
+                            if(true) {
+                                Test2  ();
+                                Test3  ();
+                            }
+                            Test4  ();
+                        }
+                        ";
+            var x = new SyntaxNodeSmartDiff();
+
+            var lTree = x.SyntaxFromLines(left);
+            var bTree = x.SyntaxFromLines(bas);
+            var rTree = x.SyntaxFromLines(right);
+
+            var merge = x.MergeTree(lTree, bTree, rTree);
+
+            var mTree = x.SyntaxFromLines(merge);
+        }
 
         [TestMethod]
         [TestCategory("TreeMerge")]
@@ -151,7 +224,6 @@ namespace Tests
             var merge = x.MergeTree(lTree, bTree, rTree);
 
             var mTree = x.SyntaxFromLines(merge);
-
         }
     }
 }

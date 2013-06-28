@@ -19,6 +19,38 @@
 \section{Introduction}
 
 \clearpage 
+\section{Background}
+\subsection{Version control systems}
+The overall goal of a version control system is to support development of documents, by keeping track of changes over time. In the context of software development, version control systems are frequently used to keep track of source code. Two overall schools of version control systems exists: Distributed and centralized. In the context of this thesis, we do not distinguish between these two - but abstract all the different merging-scenarios possible into the simple concept of merging two branches with a common ancestor.\todo[inline]{Skrive mere om process?}
+
+Merging in version controls is the process of producing a single file, given two files that have evolved in different directions from a common ancestor. Merging source code is an inherent part of software development, and has gone through some development and automation since the first version control systems. Merging algorithms generally work by matching content between the two branches and the common ancestor. Given these matchings it is possible to merge the content into one common child. If this is not possible a conflict is detected and presented to the user.
+
+A conflict can be defined in quite a few ways. Merging tools of version control systems are mostly line based and oblivious to the structure of the content of the files contained. They work by sequence matching the two branches with the common ancestor, and given this matching it will detect conflict, or do an automatic merge.
+
+Version control systems can contain any type of file. However, binary files are generally not merged by version control systems. Instead they are treated as conflicts instantly. Other document types - for example plain text files, source code or XML files - are more easily merged by line based tools. They are also quite common in version control systems.
+
+A line based approach to such files often works. Their content is grouped in lines which is structurally independent, and therefore inserting and deleting lines during the merge is quite likely to generate a structurally valid file. 
+
+It is easy to see where it fails: While XML files can be split into a new line per XML-tag, it is not necessary to do so, and 
+
+While it is quite likely that a line based merge tool generates a structurally valid output, that however does not mean that the outputted documents are 
+
+- will have an underlying structure that is either readable by a machine, or by human beings.  
+
+
+
+-- Conflicts
+-- Merging are approximations - are merge does not guarentee anything (from a line perspective)
+
+\subsection{Programming languages}
+- Grammars
+- Syntax Trees
+- Throwing away information (while-for)
+- Data outside syntax trees (comments)
+- Data that breaks the syntax tree (preprocesser directives)
+
+
+\clearpage 
 \section{Theory}
 Several topics are related to the work that will be done in this thesis. In this section I will give a brief overview of what areas we will be going through, and what related work has already been done in those areas. In the first subsection we will look into research that already have worked on embedding syntax tree knowledge into version control systems, and in the second section, we will look into tree differencing. In the last section we will look into general knowledge about merging trees.
 
@@ -27,9 +59,9 @@ Several topics are related to the work that will be done in this thesis. In this
 
 
 \subsection{Automatic merging}
-Merging in version controls is the process of producing a single file, given two files that have evolved in different directions from a common ancestor. Merging source code is an inherent part of software development, and has gone through some development and automation since the first version control systems. Merging algorithms generally work by matching content between the two branches and the common ancestor. Given these matchings it is possible to merge the content into one common child. If this is not possible a conflict is detected and presented to the user.
 
-Merging tools of version control systems are mostly line based and oblivious to the structure of the content of the files contained. This can probably attributed to such an approach working relatively well with source code, XML and other files often found in repositories.
+
+ This can probably attributed to such an approach working relatively well with source code, XML and other files often found in repositories.
 
 Structure matching will most definitely also be a more time consuming task, and given the general use case of some commits, it might not be worth the extra computation time. Further programs are generally undecidable which means it would be impossible to actually decide if a merge will work as intended by the user, without the user assessing it manually.
 
@@ -82,7 +114,7 @@ Structured differencing tools will be only for specific languages or structures.
 \subsection{Algorithm}
 While some algorithmic research has been done with regards to approximation algorithms and creating effective exact tree differencing algorithms, they are still prone running times many factors larger than unstructured approaches due to the tree size, counted in nodes, is generally much larger than the amount of lines in a code file. For example, running the \citet{Pawlik} algorithm on a 700 line C\# file \todo{Put this file in an appendix}, yields a syntax tree of 3800 nodes which gives running time for the matching of more than two minutes.
 
-
+\todo[inline]{Adaptiveness solution}
 
 \todo[inline]{Write about assumptions in differencing and about different possible differencing operations}
 \todo[inline]{Write about which situations we can probably avoid}
@@ -132,6 +164,10 @@ Tree matching will still have a cubic running time on the amount of nodes, howev
 \clearpage
 
 \section{Implementation}
+
+
+- Choosing Roslyn
+
 
 In this section I will dive into the implementation of the code. The main function of the algorithm looks like this:
 

@@ -13,9 +13,9 @@ namespace SyntaxDiff
         public SyntaxNodeSmartDiff()
         {
             unorderedmerges = new List<UnorderedMergeType<SyntaxNode>> {
-                new UnorderedMergeType<SyntaxNode> { type = typeof(ClassDeclarationSyntax), recreate = this.CreateClass, cost = this.MemberCost },
-                new UnorderedMergeType<SyntaxNode> { type = typeof(NamespaceDeclarationSyntax), recreate = this.CreateNamespace, cost = this.MemberCost },
-                new UnorderedMergeType<SyntaxNode> { type = typeof(CompilationUnitSyntax), recreate = this.CreateCLU, cost = this.MemberCost },
+                new UnorderedMergeType<SyntaxNode> { type = typeof(ClassDeclarationSyntax), recreate = this.CreateClass, cost = this.ClassMemberCost },
+                new UnorderedMergeType<SyntaxNode> { type = typeof(NamespaceDeclarationSyntax), recreate = this.CreateNamespace, cost = this.NamespaceMemberCost },
+                new UnorderedMergeType<SyntaxNode> { type = typeof(CompilationUnitSyntax), recreate = this.CreateCLU, cost = this.NamespaceMemberCost },
             };
 
             var CompilationUnit = typeof(CompilationUnitSyntax);
@@ -82,7 +82,30 @@ namespace SyntaxDiff
         }
         public string MergeTree(Triplet<SyntaxNode> nodes)
         {
-            if (nodes.Is<CompilationUnitSyntax>())
+            if (nodes.O != null && nodes.A != null && nodes.B == null)
+            {
+                if(Equal(nodes.A, nodes.O)) {
+                    return "";
+                }
+                return "/*Conflict: Deleted in B*/\r\n" + nodes.A;
+            }
+            else if(nodes.O != null && nodes.A == null && nodes.B != null)
+            {
+                if (Equal(nodes.B, nodes.O))
+                {
+                    return "";
+                }
+                return "/*Conflict: Deleted in A*/\r\n" + nodes.B;
+            }
+            if (nodes.O == null && nodes.A != null && nodes.B == null)
+            {
+                return nodes.A.ToString();
+            }
+            else if (nodes.O == null && nodes.A == null && nodes.B != null)
+            {
+                return nodes.B.ToString();
+            }
+            else if (nodes.Is<CompilationUnitSyntax>())
             {
                 var c = nodes.Cast<CompilationUnitSyntax>().Select(x => x.Members);
                 if (c.Select(x => x.Count).Apply((x, y, z) => x != 0 && y != 0 && z != 0))
@@ -157,7 +180,7 @@ namespace SyntaxDiff
             }
             else if (nodes.Is<ParameterListSyntax>())
             {
-                return ListMerger<ParameterListSyntax, ParameterSyntax>(nodes, x => x.Parameters, MemberCost);
+                return ListMerger<ParameterListSyntax, ParameterSyntax>(nodes, x => x.Parameters, ClassMemberCost);
             }
             else if (nodes.Is<ArgumentListSyntax>())
             {
@@ -172,11 +195,31 @@ namespace SyntaxDiff
 
                 Func<List<string>, Chunk<StatementSyntax>, bool> conflictHandler = (output, chunk) =>
                 {
-                    var matches = Diff3<StatementSyntax>.ThreeWayDiff(chunk.A, chunk.O  , chunk.B, (x, y) => Similarity(Doublet<SyntaxNode>.Create((SyntaxNode)x, (SyntaxNode)y)) > 0.6f);
+                    var totalmatches = Diff3<StatementSyntax>.ThreeWayDiff(chunk.A, chunk.O, chunk.B, Equal);
 
-                    foreach (var match in matches)
+                    var chunks = Chunk<StatementSyntax>.getChunks(totalmatches, Equal);
+
+                    foreach (var c in chunks)
                     {
-                        output.Add(MergeTree(match.A, match.O, match.B));
+                        if (c.stable)
+                        {
+                            // No need to merge - they are equal
+                            foreach(var m in c.O)
+                                output.Add(m.ToString());
+
+                            /*for (int i = 0; i < c.A.Count; i++) 
+                            {
+                                output.Add(MergeTree(c.A[i], c.O[i], c.B[i]));
+                            }*/
+                        }
+                        else
+                        {
+                            var matches = Diff3<StatementSyntax>.ThreeWayDiff(c.A, c.O, c.B, (x, y) => Similarity(x, y) > 0.6f);
+                            foreach (var match in matches)
+                            {
+                                output.Add(MergeTree(match.A, match.O, match.B));
+                            }
+                        }
                     }
 
                     return false; 
@@ -202,11 +245,82 @@ namespace SyntaxDiff
                 var merge = MergeTree(n.other.Statement, n.bas, n.even);
 
                 return "while(" + n.other.Condition + ")\r\n" + merge;
-
             }
 
             throw new NotImplementedException();
         }
+
+        bool Equal(SyntaxNode x, SyntaxNode y)
+        {
+            return Equal(Doublet<SyntaxNode>.Create(x, y));
+        }
+
+        bool Equal(Doublet<SyntaxNode> nodes)
+        {
+            if (nodes.X == null || nodes.Y == null)
+                return false;
+
+            if (nodes.X.GetType() != nodes.Y.GetType())
+                return false;
+
+            if (nodes.Is<ExpressionStatementSyntax>())
+            {
+                return nodes.Cast<ExpressionStatementSyntax>().Select(x => x.Expression).Apply(Equal);
+            }
+            else if (nodes.Is<InvocationExpressionSyntax>())
+            {
+                var c = nodes.Cast<InvocationExpressionSyntax>();
+                var argumentsSimlarity = c.Select(x => x.ArgumentList).Apply(Equal);
+                var expressionSimlarity = c.Select(x => x.Expression).Apply(Equal);
+                return argumentsSimlarity && expressionSimlarity;
+            }
+            else if (nodes.Is<ArgumentListSyntax>())
+            {
+                var c = nodes.Cast<ArgumentListSyntax>().Select(x => x.Arguments.ToList());
+                if (c.X.Count == c.Y.Count)
+                {
+                    for (int i = 0; i < c.Y.Count; i++)
+                        if (!Equal(c.X[i], c.Y[i]))
+                            return false;
+                    return true;
+                }
+                return false;
+            }
+            else if (nodes.Is<MemberAccessExpressionSyntax>())
+            {
+                var c = nodes.Cast<MemberAccessExpressionSyntax>();
+
+                var expression = c.Select(x => x.Expression).Apply(Equal);
+                var name = c.Select(x => x.Name).Apply(Equal);
+
+                return expression && name;
+            }
+            else if (nodes.Is<IdentifierNameSyntax>())
+            {
+                return nodes.Cast<IdentifierNameSyntax>().Select(x => x.Identifier.ToString()).Apply((x, y) => x == y);
+            }
+            else if (nodes.Is<IfStatementSyntax>())
+            {
+                var i = nodes.Cast<IfStatementSyntax>();
+
+                var expr = i.Select(x => x.Condition).Apply(Equal);
+                var body = i.Select(x => x.Statement).Apply(Equal);
+                var elses = i.Select(x => x.Else).ApplyIfExists(Equal);
+
+                return expr && body && elses;
+            }
+            else if (nodes.Is<LiteralExpressionSyntax>())
+            {
+                return nodes.Cast<LiteralExpressionSyntax>().Select(x => x.Token.ToString()).Apply((x, y) => x == y);
+            }
+            else if (nodes.Is<ExpressionStatementSyntax, WhileStatementSyntax>())
+            {
+
+            }
+            throw new NotImplementedException();
+
+        }
+
         double Similarity(SyntaxNode x, SyntaxNode y)
         {
             return Similarity(Doublet<SyntaxNode>.Create(x, y));
@@ -271,14 +385,13 @@ namespace SyntaxDiff
             else if (nodes.Is<WhileStatementSyntax, ExpressionStatementSyntax>())
             {
                 return Similarity(((WhileStatementSyntax)nodes.X).Statement, nodes.Y);
-
             }
             else if (nodes.Is<IfStatementSyntax, ExpressionStatementSyntax>())
             {
                 return Similarity(((IfStatementSyntax)nodes.X).Statement, nodes.Y);
             }
-            
-            
+
+            return 0;
             throw new NotImplementedException();
         }
 
@@ -342,7 +455,23 @@ namespace SyntaxDiff
             return cost;
         }
 
-        public int? MemberCost(SyntaxNode x, SyntaxNode y)
+        public int? ClassMemberCost(SyntaxNode x, SyntaxNode y)
+        {
+            int cost = 4;
+
+            /*if (x.GetType() == y.GetType())
+                cost--;*/
+
+            if (getIdentifier(x) == getIdentifier(y))
+                cost -= 2;
+
+            if (cost == 4)
+                return null;
+
+            return cost;
+        }
+
+        public int? NamespaceMemberCost(SyntaxNode x, SyntaxNode y)
         {
             int cost = 4;
 

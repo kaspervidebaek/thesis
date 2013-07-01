@@ -21,33 +21,143 @@
 \clearpage 
 \section{Background}
 \subsection{Version control systems}
-The overall goal of a version control system is to support development of documents, by keeping track of changes over time. In the context of software development, version control systems are frequently used to keep track of source code. Two overall schools of version control systems exists: Distributed and centralized. In the context of this thesis, we do not distinguish between these two - but abstract all the different merging-scenarios possible into the simple concept of merging two branches with a common ancestor.\todo[inline]{Skrive mere om process?}
+The overall goal of a version control system is to support development of documents, by keeping track of changes over time. In the context of software development, version control systems are frequently used to keep track of source code. Two overall groups of version control systems exists: Distributed and centralized. In the context of this thesis, we do not distinguish between these two - but abstract all the different merging-scenarios possible into the simple concept of merging two branches with a common ancestor.\todo[inline]{Skrive mere om process?}
 
 Merging in version controls is the process of producing a single file, given two files that have evolved in different directions from a common ancestor. Merging source code is an inherent part of software development, and has gone through some development and automation since the first version control systems. Merging algorithms generally work by matching content between the two branches and the common ancestor. Given these matchings it is possible to merge the content into one common child. If this is not possible a conflict is detected and presented to the user.
 
-A conflict can be defined in quite a few ways. Merging tools of version control systems are mostly line based and oblivious to the structure of the content of the files contained. They work by sequence matching the two branches with the common ancestor, and given this matching it will detect conflict, or do an automatic merge.
+Merging tools of version control systems are mostly line based and oblivious to the structure of the content of the files contained. They work by matching each line in the two branches with the common ancestor. Given these matchings, it will conclude which lines has been deleted and added in the two different branches, and produce single file that has all these deletions ans insertions included. If changes happen near each other, it will produce a conflict.
 
-Version control systems can contain any type of file. However, binary files are generally not merged by version control systems. Instead they are treated as conflicts instantly. Other document types - for example plain text files, source code or XML files - are more easily merged by line based tools. They are also quite common in version control systems.
+%Version control systems can contain any type of file. Binary files are generally not merged by version control systems. Instead they are treated as conflicts instantly. 
 
-A line based approach to such files often works. Their content is grouped in lines which is structurally independent, and therefore inserting and deleting lines during the merge is quite likely to generate a structurally valid file. 
+A line based approach to works relatively well with source files and XML files, since line breaks are often used to make the structure of the code more easily readable for users. It is common for XML files to have opening and closing XML-tags on their own lines, and conventions of most programming languages have only one statement per line and opening block on lines of their own. In some programming languages, off-side rule languages, line breaks are actually a part of the structure of the code - which makes them even more suitable for this approach.
 
-It is easy to see where it fails: While XML files can be split into a new line per XML-tag, it is not necessary to do so, and 
+However conventions of XMl or source code can be broken. An entire XML-file can be a single line, and have the exact same meaning. Likewise with most source code - a function body can be written on a single line in many programming languages, and the compiler will never notice.
 
-While it is quite likely that a line based merge tool generates a structurally valid output, that however does not mean that the outputted documents are 
+\todo[inline]{Er formålet med dette speciale at fixe "ikke bruger-læsbar-merging"?}
 
-- will have an underlying structure that is either readable by a machine, or by human beings.  
+A structured merging approach will clearly be helpful for files that are not structured with line breaks. However this is not a very common case. The better case for improving version control by introducing structural knowledge, is where a single line contains structure. \todo[inline]{Dette hører nok til et andet sted}
 
-
-
--- Conflicts
--- Merging are approximations - are merge does not guarentee anything (from a line perspective)
+A conflict can be defined in quite a few ways for line based tools. In the Unix tool diff3, a conflict is a sequence of lines, that is changed in both branches, and is not separated by a single line that is unchanged in both branches. Such a conflict detection scheme is clearly an approximation. It is oblivious to the structure of the data and one could craft input that will output invalid structural data. Further, the  actual meaning of the merged data is not considered at all - even if it is structurally valid, it might semantically be nonsense, even though a conflicts is not produced.
 
 \subsection{Programming languages}
+Programming languages are abstractions over the way computers work. They makes it easier for a programmer to express the problems they need to solve, without requiring the programmer to handle intricate details about memory and processors, and they allow the user to write programs as text files, and let the computer handle the process of executing it.
+
+In this section we will look into the process that a program goes through, from source code to execution, to give an overview of which techniques will be used later in the thesis.
+
+\subsubsection{Pre-processing}
+-- TODO!
+
+\subsubsection{Grammars}
+The process of turning programs into execution relies on lexers and parsers, generated through a token specification and a context-free grammar. A token in this context means any concrete string of text that is legal in the program. A string could be a token, a number, a keyword and a parenthesis. In an analogy they define any words that a language can consist of. The lexer will simply output a sequence of tokens, to be used by the grammar, in this the list of tokens, only terminals exists as actual the string representation that they have in the original file.
+
+
+The context free grammar is the structure that defines which tokens are valid at a given point. It defines that only expressions are valid conditions for if-statements, and that only statements are valid in the body. In the analogy, it is the definition of valid sentences in a language.
+
+Given a grammar of a language, we will be able to to parse the syntax of a legal program, or to generate syntax errors for invalid ones. A little toy token specification and grammar is presented below. It resembles some of the constructs you would see in a imperative programming language, but is a nonsensical language that cannot be used to much besides exemplifying different constructs.\\
+
+\textbf{Token specification}
+\begin{verbatim}
+TOKEN:
+    IDENTIFIER
+    KEYWORD
+    BOOLEAN
+    STRUCTURE
+    
+KEYWORD:
+    IF =          "if"
+    WHILE =       "while"
+    ELSE =        "else"
+    
+BOOLEAN:
+    TRUE          "true"
+    FALSE         "false"
+    
+STRUCTURE:
+    LPAR =        "("
+    RPAR =        ")"
+    LBRACKET =    "{"
+    RBRACKET =    "}"
+    SEMI =        ";"
+
+\end{verbatim}
+
+\textbf{Grammar}
+\begin{verbatim}
+start:
+    statement list
+
+statement:
+    expression SEMICOLON
+    ifstatement
+    whilestatement
+    statementblock
+
+    
+expression:
+    BOOLEAN
+    
+ifstatement:
+    IF LPAR expression RPAR statement
+    IF LPAR expression RPAR statement ELSE statement
+
+whilestatement:
+    while LPAR expression RPAR statement
+    
+statementblock:
+    LBRACKET statement list RBRACKET
+\end{verbatim}.
+
+\subsubsection{Syntax Trees}
+Parsing languages often result in the generation of a syntax tree. A syntax tree is the a tree representing of the program. The syntax tree representation is quite good for further processing of the program, however at this point a lot of details about the concrete textual representation of the code has also left behind.
+
+A abstract syntax tree for the above grammar could look like this:
+\begin{verbatim}
+program:
+  body(statement list)
+
+statement:
+  expr(expression)
+  if(expression, statement, statement)
+  while(expression, statement)
+  block(statement list)
+  
+expression:
+  true
+  false
+\end{verbatim}
+
+%this also means, that a program like this:
+%
+%\begin{verbatim}
+%true;
+%while(false)
+%    if(false)
+%        true;
+%    else
+%        false;
+%\end{verbatim}
+
+%Would look like this:
+
+
+%\begin{verbatim}
+%program([expr(expression(false);while(
+%
+%\end{verbatim}
+
+
+
+Much syntactic sugar is for example lost. Depending on your syntax tree, however it might also be 
+
+
+
+
 - Grammars
 - Syntax Trees
 - Throwing away information (while-for)
 - Data outside syntax trees (comments)
 - Data that breaks the syntax tree (preprocesser directives)
+- Undecidability
 
 
 \clearpage 
@@ -140,16 +250,16 @@ First syntax trees are generated. These are parsed recursively until class membe
 An overall description for the proposed merge:
 
 \begin{enumerate}
-	\item Create syntax trees of each file.
-	\item Do an unordered match of classes and class-members.
-	\item Foreach member of a class do a unstructured merge.
-	\item If a conflict exists after the unstructured merge:
-	\begin{enumerate}
-		\item If the conflict is two updates on the same line, try to do a syntax tree merging. If the conflict persists, merge the entire function and include a rename detection.
-		\item If the conflict is the deletion of a block in one branch, and the insertion of the other - put this specific line aside for move detection.
-	\end{enumerate}
-	\item Run through lines set aside for move detection, and see if it is possible to find a (heuristicly) corresponding insert. Do a merge, or a syntactic merge if this fails.
-	\item If conflicts cannot be resolved, present these to the user.
+    \item Create syntax trees of each file.
+    \item Do an unordered match of classes and class-members.
+    \item Foreach member of a class do a unstructured merge.
+    \item If a conflict exists after the unstructured merge:
+    \begin{enumerate}
+        \item If the conflict is two updates on the same line, try to do a syntax tree merging. If the conflict persists, merge the entire function and include a rename detection.
+        \item If the conflict is the deletion of a block in one branch, and the insertion of the other - put this specific line aside for move detection.
+    \end{enumerate}
+    \item Run through lines set aside for move detection, and see if it is possible to find a (heuristicly) corresponding insert. Do a merge, or a syntactic merge if this fails.
+    \item If conflicts cannot be resolved, present these to the user.
 \end{enumerate}
 
 \subsection{Running time}
@@ -178,35 +288,35 @@ In this section I will dive into the implementation of the code. The main functi
 
 
 file merge(base, left, right)
-	if(nodes are unordered)
-		unorderedmatch(base, left, right)
-	else if(nodes are ordered)
-		orderedmatch(base, left, right);
+    if(nodes are unordered)
+        unorderedmatch(base, left, right)
+    else if(nodes are ordered)
+        orderedmatch(base, left, right);
 
 file unorderedmerge(base, left, right)
-	var bl = match B and Ls children given cost-function
-	var br = match B and Rs children given cost-function
-	var zip = match bl and br on same base object.
+    var bl = match B and Ls children given cost-function
+    var br = match B and Rs children given cost-function
+    var zip = match bl and br on same base object.
 
-	var members = [];
+    var members = [];
 
-	foreach(match in zip)
-		if(match exists in all)
-			member.add(m, merge(base, left, right));
-		if(match was inserted in B)
-			member.add(m, m.B);
-		if(match was inserted in A)
-			member.add(m, m.A);
-	
-	members = mergeorder(l, b, r, members);
+    foreach(match in zip)
+        if(match exists in all)
+            member.add(m, merge(base, left, right));
+        if(match was inserted in B)
+            member.add(m, m.B);
+        if(match was inserted in A)
+            member.add(m, m.A);
+    
+    members = mergeorder(l, b, r, members);
 
-	return recreate(b, l, r, members);
-	
+    return recreate(b, l, r, members);
+    
 
 file orderedmerge(base, left, right)
-	run diff3 algorithm on the source text of base, left, right
-	if a conflict happens, do a three-way matching-tree matching on the trees. instead.
-	use this three-way match to reconstruct a new tree.
+    run diff3 algorithm on the source text of base, left, right
+    if a conflict happens, do a three-way matching-tree matching on the trees. instead.
+    use this three-way match to reconstruct a new tree.
 
 
 
@@ -236,10 +346,10 @@ Doing cost-based matching, means we also will have to define function similarity
 Four overall parameters are obvious as similarity measures:
 
 \begin{enumerate}
-	\item The identifier of a class member.
-	\item The parameters of a class member.
-	\item The modifiers of a class member.
-	\item The body of a class member.
+    \item The identifier of a class member.
+    \item The parameters of a class member.
+    \item The modifiers of a class member.
+    \item The body of a class member.
 \end{enumerate}
 
 For identifiers equal strings will of course have to be the lowest cost. Besides that, one could think up different string similarity measures that would allow different renames of a member to have lower costs than others.

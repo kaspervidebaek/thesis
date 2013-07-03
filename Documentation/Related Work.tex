@@ -50,27 +50,38 @@ In this section we will look into the process that a program goes through, from 
 \subsubsection{Grammars}
 The process of turning programs into execution relies on lexers and parsers, generated through a token specification and a context-free grammar. A token in this context means any concrete string of text that is legal in the program. A string could be a token, a number, a keyword and a parenthesis. In an analogy they define any words that a language can consist of. The lexer will simply output a sequence of tokens, to be used by the grammar, in this the list of tokens, only terminals exists as actual the string representation that they have in the original file.
 
-
 The context free grammar is the structure that defines which tokens are valid at a given point. It defines that only expressions are valid conditions for if-statements, and that only statements are valid in the body. In the analogy, it is the definition of valid sentences in a language.
 
-Given a grammar of a language, we will be able to to parse the syntax of a legal program, or to generate syntax errors for invalid ones. A little toy token specification and grammar is presented below. It resembles some of the constructs you would see in a imperative programming language, but is a nonsensical language that cannot be used to much besides exemplifying different constructs.\\
+Given a grammar of a language, we will be able to to parse the syntax of a legal program, or to generate syntax errors for invalid ones. A little token specification and grammar is presented in Figure \ref{token} and Figure \ref{grammar}. It resembles some of the constructs you would see in a imperative programming language, but is a nonsensical language that cannot be used to much besides supporting examples needed in this section.
 
-\textbf{Token specification}
+\begin{figure}
+  \caption{An example of a simple token specification.}
+  \label{token}
 \begin{verbatim}
 TOKEN:
     IDENTIFIER
     KEYWORD
     BOOLEAN
+    NUMBER
+    IDENTIFIER
     STRUCTURE
     
 KEYWORD:
     IF =          "if"
     WHILE =       "while"
+    FOR =         "for"
     ELSE =        "else"
+    INT =         "int"
     
 BOOLEAN:
     TRUE          "true"
     FALSE         "false"
+
+NUMBER:
+	{int}         parse("['0'-'9']+")
+	
+IDENTIFIER:
+	{string}     "[a-zA-Z0-9]+"
     
 STRUCTURE:
     LPAR =        "("
@@ -78,10 +89,16 @@ STRUCTURE:
     LBRACKET =    "{"
     RBRACKET =    "}"
     SEMI =        ";"
+    EQUAL =       "="
+    LT =          "<"
+    INC =         "++"
 
 \end{verbatim}
+\end{figure}
 
-\textbf{Grammar}
+\begin{figure}
+  \caption{An example of a simple grammar.}
+  \label{grammar}
 \begin{verbatim}
 start:
     statement list
@@ -90,11 +107,17 @@ statement:
     expression SEMICOLON
     ifstatement
     whilestatement
+    forstatement
     statementblock
 
+forstatement:
+    FOR LPAR expression SEMI expression SEMI expression SEMI expression LPAR statement
     
 expression:
     BOOLEAN
+    identifier INC
+    identifier LT NUM
+    INT identifier EQUALS NUM
     
 ifstatement:
     IF LPAR expression RPAR statement
@@ -105,59 +128,49 @@ whilestatement:
     
 statementblock:
     LBRACKET statement list RBRACKET
-\end{verbatim}.
+\end{verbatim}
+\end{figure}
 
 \subsubsection{Syntax Trees}
-Parsing languages often result in the generation of a syntax tree. A syntax tree is the a tree representing of the program. The syntax tree representation is quite good for further processing of the program, however at this point a lot of details about the concrete textual representation of the code has also left behind.
+The purpose of parsing source code is often iterating over the elements of it, to generate a syntax tree. A syntax tree is a tree representation of the program. The syntax tree representation is quite good for further processing of the program, however at this point a lot of details about the concrete textual representation of the code has also left behind. And example of a syntax tree can be found in Figure \ref{syntaxtree}. 
 
-A abstract syntax tree for the above grammar could look like this:
+Syntactic sugar can for example easily be lost, depending on what kind of choice of syntax tree is done. On the syntax tree level it might for example be easier to convert \texttt{int? x;} into the same structure as \texttt{Nullable<int> x;} to not clutter the abstract syntax tree with unnecessary information.
+
+Even grander structure rewrites could be done in the transformation from a code file to a syntax tree. For example it is possible to fit the grammar from Figure \ref{grammar} into the syntax tree of \ref{syntaxtree} even though no for-loop exists in the tree. This would be done by rewriting it into a while loop construction. Such a rewrite would of course make it quite hard to deconstruct a syntax tree back into the actual concrete code that was used to generate it.
+
+\begin{figure}
+  \caption{An example of a simple syntax tree written as a F\# type.}
+  \label{syntaxtree}
 \begin{verbatim}
-program:
-  body(statement list)
 
-statement:
-  expr(expression)
-  if(expression, statement, statement)
-  while(expression, statement)
-  block(statement list)
-  
-expression:
-  true
-  false
+
+type statement =
+  | EXPR of expression
+  | IF of expression * statement * statement
+  | WHILE of expression * statement
+  | BLOCK of statement list
+
+and expression =
+  | BOOL of bool
+  | INC of string
+  | DEC of string * int
+  | LT of string * int
+
+and program = 
+  | BODY of statement list
+
+
 \end{verbatim}
+\end{figure}
 
-%this also means, that a program like this:
-%
-%\begin{verbatim}
-%true;
-%while(false)
-%    if(false)
-%        true;
-%    else
-%        false;
-%\end{verbatim}
-
-%Would look like this:
-
-
-%\begin{verbatim}
-%program([expr(expression(false);while(
-%
-%\end{verbatim}
-
-
-
-Much syntactic sugar is for example lost. Depending on your syntax tree, however it might also be 
-
-
-
-
-- Grammars
-- Syntax Trees
-- Throwing away information (while-for)
+\subsection{The lost information}
 - Data outside syntax trees (comments)
 - Data that breaks the syntax tree (preprocesser directives)
-- Undecidability
+
+
+\subsection{Undecidability}
+A last point that is important to consider about merging algorithms, is the properties of a program is generally undecidable without actually running it. Many different strictness levels exists across the landscape of programming languages, but even the strictest programming language will allow incorrect programs through - simply because 
+
 
 
 \clearpage 

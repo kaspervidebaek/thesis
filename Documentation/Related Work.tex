@@ -21,17 +21,17 @@
 \clearpage 
 \section{Background}
 \subsection{Version control systems}
-The overall goal of a version control system is to support development of documents, by keeping track of changes over time. In the context of software development, version control systems are frequently used to keep track of source code. Two overall groups of version control systems exists: Distributed and centralized. In the context of this thesis, we do not distinguish between these two - but abstract all the different merging-scenarios possible into the simple concept of merging two branches with a common ancestor.\todo[inline]{Skrive mere om process?}
+The overall goal of version control systems is to support development of documents, by keeping track of changes over time. In the context of software development, version control systems are frequently used to keep track of source code. Two overall groups of version control systems exists: Distributed and centralized. In the context of this thesis, we do not distinguish between these two - but abstract all the different merging-scenarios possible into the simple concept of merging two branches with a common ancestor.\todo[inline]{Skrive mere om process?}
 
-Merging in version controls is the process of producing a single file, given two files that have evolved in different directions from a common ancestor. Merging source code is an inherent part of software development, and has gone through some development and automation since the first version control systems. Merging algorithms generally work by matching content between the two branches and the common ancestor. Given these matchings it is possible to merge the content into one common child. If this is not possible a conflict is detected and presented to the user.
+Merging in version controls is the process of producing a single file, given two files that have evolved in different directions from a common ancestor. Merging source code is an inherent part of software development, and has gone through some development and automation since the first version control systems. Merging algorithms generally work by matching content between the two branches and the common ancestor. Given these matchings it is possible to merge the content into one common child. If this is not possible, we have a conflict and it will be presented to the user.
 
 Merging tools of version control systems are mostly line based and oblivious to the structure of the content of the files contained. They work by matching each line in the two branches with the common ancestor. Given these matchings, it will conclude which lines has been deleted and added in the two different branches, and produce single file that has all these deletions ans insertions included. If changes happen near each other, it will produce a conflict.
 
 %Version control systems can contain any type of file. Binary files are generally not merged by version control systems. Instead they are treated as conflicts instantly. 
 
-A line based approach to works relatively well with source files and XML files, since line breaks are often used to make the structure of the code more easily readable for users. It is common for XML files to have opening and closing XML-tags on their own lines, and conventions of most programming languages have only one statement per line and opening block on lines of their own. In some programming languages, off-side rule languages, line breaks are actually a part of the structure of the code - which makes them even more suitable for this approach.
+A line based approach to works relatively well with source files and XML files, since line breaks are often used to make the structure of the code more easily readable for users. It is common for XML files to have opening and closing XML-tags on their own lines, and conventions of most programming languages have only one statement per line and opening block on lines of their own. In some programming languages line breaks are actually a part of the structure of the code - which makes them even more suitable for this approach.
 
-However conventions of XMl or source code can be broken. An entire XML-file can be a single line, and have the exact same meaning. Likewise with most source code - a function body can be written on a single line in many programming languages, and the compiler will never notice.
+However conventions of XML or source code can be broken. An entire XML-file can be a single line, and have the exact same meaning. Likewise with most source code - a function body can be written on a single line in many programming languages, and the compiler will never notice.
 
 \todo[inline]{Er formålet med dette speciale at fixe "ikke bruger-læsbar-merging"?}
 
@@ -40,7 +40,7 @@ A structured merging approach will clearly be helpful for files that are not str
 A conflict can be defined in quite a few ways for line based tools. In the Unix tool diff3, a conflict is a sequence of lines, that is changed in both branches, and is not separated by a single line that is unchanged in both branches. Such a conflict detection scheme is clearly an approximation. It is oblivious to the structure of the data and one could craft input that will output invalid structural data. Further, the  actual meaning of the merged data is not considered at all - even if it is structurally valid, it might semantically be nonsense, even though a conflicts is not produced.
 
 \subsection{Programming languages}
-Programming languages are abstractions over the way computers work. They makes it easier for a programmer to express the problems they need to solve, without requiring the programmer to handle intricate details about memory and processors, and they allow the user to write programs as text files, and let the computer handle the process of executing it.
+Programming languages are abstractions over the calculations computers can perform. They makes it easier for a programmer to express the problems they need to solve, without requiring the programmer to handle intricate details about memory and processors, and they allow the user to write programs as text files, and let the computer handle the process of executing the ideas expressed in the code.
 
 In this section we will look into the process that a program goes through, from source code to execution, to give an overview of which techniques will be used later in the thesis.
 
@@ -48,11 +48,13 @@ In this section we will look into the process that a program goes through, from 
 -- TODO!
 
 \subsubsection{Grammars}
-The process of turning programs into execution relies on lexers and parsers, generated through a token specification and a context-free grammar. A token in this context means any concrete string of text that is legal in the program. A string could be a token, a number, a keyword and a parenthesis. In an analogy they define any words that a language can consist of. The lexer will simply output a sequence of tokens, to be used by the grammar, in this the list of tokens, only terminals exists as actual the string representation that they have in the original file.
+The process of turning programs into execution relies on lexers and parsers, generated through token specifications and a context-free grammars.
 
-The context free grammar is the structure that defines which tokens are valid at a given point. It defines that only expressions are valid conditions for if-statements, and that only statements are valid in the body. In the analogy, it is the definition of valid sentences in a language.
+A token is any concrete string of text that is legal at any point in the program text. Figure \ref{token} shows a token specification, for a very simply language, that understands numbers, strings, a couple of keywords and structural tokens like parenthesis. Strings and integers are parsed through regular expressions and 
 
-Given a grammar of a language, we will be able to to parse the syntax of a legal program, or to generate syntax errors for invalid ones. A little token specification and grammar is presented in Figure \ref{token} and Figure \ref{grammar}. It resembles some of the constructs you would see in a imperative programming language, but is a nonsensical language that cannot be used to much besides supporting examples needed in this section.
+The context free grammar is the structure that defines which tokens are valid in which sequence in the program text. At any given point of the parsing - it defines whether or not a given token is valid. Given a grammar of a language, we will be able to to parse the syntax of a legal program, or to generate syntax errors for invalid ones. Figure \ref{grammar} defines a grammar relying on the token specification in figure \ref{token}.
+
+In combination they create a very small imperative programming language, that is mostly nonsensical outside of as an example of this section.
 
 \begin{figure}
   \caption{An example of a simple token specification.}
@@ -78,10 +80,10 @@ BOOLEAN:
     FALSE         "false"
 
 NUMBER:
-	{int}         parse("['0'-'9']+")
+    {int}         "['0'-'9']+"
 	
 IDENTIFIER:
-	{string}     "[a-zA-Z0-9]+"
+    {string}     "[a-zA-Z0-9]+"
     
 STRUCTURE:
     LPAR =        "("
@@ -132,7 +134,7 @@ statementblock:
 \end{figure}
 
 \subsubsection{Syntax Trees}
-The purpose of parsing source code is often iterating over the elements of it, to generate a syntax tree. A syntax tree is a tree representation of the program. The syntax tree representation is quite good for further processing of the program, however at this point a lot of details about the concrete textual representation of the code has also left behind. And example of a syntax tree can be found in Figure \ref{syntaxtree}. 
+The purpose of parsing source code is often iterating over the elements of it to generate a syntax tree. A syntax tree is a tree representation of the program. The syntax tree representation is quite good for further processing of the program, however at this point a lot of details about the concrete textual representation of the code has also left behind. And example of a syntax tree can be found in Figure \ref{syntaxtree}. 
 
 Syntactic sugar can for example easily be lost, depending on what kind of choice of syntax tree is done. On the syntax tree level it might for example be easier to convert \texttt{int? x;} into the same structure as \texttt{Nullable<int> x;} to not clutter the abstract syntax tree with unnecessary information.
 
@@ -164,11 +166,15 @@ and program =
 \end{figure}
 
 \subsection{The lost information}
+When looking at the syntax tree quite a lot of information will not be immediately available: Everything from the preprocessing phase, syntactic sugar, whitespace and comments.
+
+While this information is not immediately available in the structure of the syntax tree most of this information can however be found, if the text that generates a specific node 
+
 - Data outside syntax trees (comments)
 - Data that breaks the syntax tree (preprocesser directives)
 
-
 \subsection{Undecidability}
+
 
 
 A last point that is important to consider about merging algorithms, is the properties of a program is generally undecidable. 
@@ -186,9 +192,7 @@ Several topics are related to the work that will be done in this thesis. In this
 
 
 \subsection{Automatic merging}
-
-
- This can probably attributed to such an approach working relatively well with source code, XML and other files often found in repositories.
+This can probably attributed to such an approach working relatively well with source code, XML and other files often found in repositories.
 
 Structure matching will most definitely also be a more time consuming task, and given the general use case of some commits, it might not be worth the extra computation time. Further programs are generally undecidable which means it would be impossible to actually decide if a merge will work as intended by the user, without the user assessing it manually.
 

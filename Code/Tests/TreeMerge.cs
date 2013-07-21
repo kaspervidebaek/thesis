@@ -164,7 +164,8 @@ namespace Tests
                         {
                             Test1();
                             Test2();
-                            Test6();
+                            TestNew();
+                            Test3();
                             Test4();
                         }
                         ";
@@ -194,7 +195,11 @@ namespace Tests
 
             var merge = x.MergeTree(lTree, bTree, rTree);
 
+            Console.WriteLine(merge);
+
             var mTree = x.SyntaxFromLines(merge);
+
+            
         }
 
         [TestMethod]

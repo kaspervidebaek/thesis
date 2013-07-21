@@ -193,35 +193,28 @@ namespace SyntaxDiff
                 var statements = b.Select(x => x.Statements.ToList());
 
 
-                Func<List<string>, Chunk<StatementSyntax>, bool> conflictHandler = (output, chunk) =>
+                Func<List<string>, Chunk<StatementSyntax>, bool> conflictHandler = (output, original) =>
                 {
-                    var totalmatches = Diff3<StatementSyntax>.ThreeWayDiff(chunk.A, chunk.O, chunk.B, Equal);
+                    var chunks = Diff3<StatementSyntax>.ThreeWayDiffPriority(original.A, original.O, original.B, Equal, (x, y) => Similarity(x, y) > 0.6f);
 
-                    var chunks = Chunk<StatementSyntax>.getChunks(totalmatches, Equal);
-
-                    foreach (var c in chunks)
+                    foreach (var chunk in chunks)
                     {
-                        if (c.stable)
+                        if (chunk.equalType == ChunkEqualType.PrimaryEqual)
                         {
-                            // No need to merge - they are equal
-                            foreach(var m in c.O)
+                            // They are completely equal. Just add O.
+                            foreach (var m in chunk.chunk.O)
                                 output.Add(m.ToString());
-
-                            /*for (int i = 0; i < c.A.Count; i++) 
-                            {
-                                output.Add(MergeTree(c.A[i], c.O[i], c.B[i]));
-                            }*/
+                        }
+                        else if (chunk.equalType == ChunkEqualType.SecondaryEqual)
+                        {
+                            output.Add(MergeChunk(chunk));
                         }
                         else
                         {
-                            var matches = Diff3<StatementSyntax>.ThreeWayDiff(c.A, c.O, c.B, (x, y) => Similarity(x, y) > 0.6f);
-                            foreach (var match in matches)
-                            {
-                                output.Add(MergeTree(match.A, match.O, match.B));
-                            }
+                            // They are not equal. Try an uneven merge.
+                            output.Add(MergeTreeUneven(chunk));
                         }
                     }
-
                     return false; 
                 };
 
@@ -245,6 +238,55 @@ namespace SyntaxDiff
                 var merge = MergeTree(n.other.Statement, n.bas, n.even);
 
                 return "while(" + n.other.Condition + ")\r\n" + merge;
+            }
+
+            throw new NotImplementedException();
+        }
+
+        private string MergeChunk(PriorityChunk<StatementSyntax> chunk)
+        {
+            if (chunk.chunk.stable)
+            {
+                string output = "";
+
+                for (int i = 0; i < chunk.chunk.A.Count; i++)
+                {
+                    output += MergeTree(chunk.chunk.A[i], chunk.chunk.O[i], chunk.chunk.B[i]) + "\r\n";
+                }
+
+                return output;
+            }
+
+            if (chunk.chunk.A.Count == 0 && chunk.chunk.O.Count != 0 && chunk.chunk.B.Count != 0)
+            {
+            }
+
+            throw new NotImplementedException();
+
+        }
+
+
+        private string MergeTreeUneven(PriorityChunk<StatementSyntax> originals)
+        {
+
+            if (originals.chunk.A.First() is IfStatementSyntax)
+            {
+                var ifstatement =  (originals.chunk.A.First() as IfStatementSyntax);
+                var substatements = (ifstatement.Statement as BlockSyntax).Statements.ToList();
+
+                var chunks = Diff3<StatementSyntax>.ThreeWayDiffPriority(substatements, originals.chunk.O, originals.chunk.B, Equal, (x, y) => Similarity(x, y) > 0.6f);
+                string output = "";
+
+                if (chunks.First().chunk.stable && chunks.Last().chunk.stable)
+                {
+                    var mergedBlock = String.Join("\r\n", chunks.Select(MergeChunk).ToArray());
+                    return "while(" + ifstatement.Condition.ToString() + ") {" + mergedBlock + "}";
+                }
+
+                //var chunks = Chunk<StatementSyntax>.getChunks(matches, Equal);
+
+                
+
             }
 
             throw new NotImplementedException();

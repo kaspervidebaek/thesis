@@ -6,8 +6,14 @@ using System.Threading.Tasks;
 
 namespace SyntaxDiff
 {
+    public enum ChunkEqualType { NotEqual, PrimaryEqual, SecondaryEqual };
+    public class PriorityChunk<T>
+    {
+        public ChunkEqualType equalType;
+        public Chunk<T> chunk;
+    }
 
-    public class Diff3<T> where T: class
+    public class Diff3<T> where T : class
     {
         public static List<T> Merge(List<T> A, List<T> O, List<T> B, Func<T, T, bool> comparer, Func<List<T>, Chunk<T>, bool> HandleConflict)
         {
@@ -81,5 +87,48 @@ namespace SyntaxDiff
             return totalMatch;
         }
 
+
+
+        public static List<PriorityChunk<T>> ThreeWayDiffPriority(List<T> A, List<T> O, List<T> B, Func<T, T, bool> comparer, Func<T, T, bool> comparer2)
+        {
+            var outChunks = new List<PriorityChunk<T>>();
+
+            var matches = ThreeWayDiff(A, O, B, comparer);
+            var chunks = Chunk<T>.getChunks(matches, comparer);
+
+            foreach (var chunk in chunks)
+            {
+                if (chunk.A.Count == 0 && chunk.B.Count == 0 && chunk.O.Count == 0)
+                    continue;
+
+                if (chunk.stable)
+                    outChunks.Add(new PriorityChunk<T>() { chunk = chunk, equalType = ChunkEqualType.PrimaryEqual });
+
+                else
+                {
+                    var innermatches = ThreeWayDiff(chunk.A, chunk.O, chunk.B, comparer2);
+                    var innerchunks = Chunk<T>.getChunks(innermatches, comparer2);
+
+                    foreach (var innerchunk in innerchunks)
+                    {
+                        if (chunk.A.Count == 0 && chunk.B.Count == 0 && chunk.O.Count == 0)
+                            continue;
+
+                        if (chunk.stable)
+                            outChunks.Add(new PriorityChunk<T>() { chunk = chunk, equalType = ChunkEqualType.SecondaryEqual });
+                        else
+                            outChunks.Add(new PriorityChunk<T>() { chunk = chunk, equalType = ChunkEqualType.NotEqual });
+
+                    }
+
+
+
+                }
+
+            }
+            
+
+            return outChunks;
+        }
     }
 }

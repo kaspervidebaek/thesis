@@ -73,6 +73,9 @@ namespace SyntaxDiff
             }
             if (!chuncks.Contains(chunk)) // TODO: Improve runtime
                 chuncks.Add(chunk);
+
+
+
             return chuncks;
         }
     }

@@ -136,7 +136,7 @@ statementblock:
 \subsubsection{Syntax Trees}
 The purpose of parsing source code is often iterating over the elements of it to generate a syntax tree. A syntax tree is a tree representation of the program. The syntax tree representation is quite good for further processing of the program, however at this point a lot of details about the concrete textual representation of the code has also left behind. And example of a syntax tree can be found in Figure \ref{syntaxtree}. 
 
-Syntactic sugar can for example easily be lost, depending on what kind of choice of syntax tree is done. On the syntax tree level it might for example be easier to convert \texttt{int? x;} into the same structure as \texttt{Nullable<int> x;} to not clutter the abstract syntax tree with unnecessary information.
+Depending on what kind of choice of syntax tree is done, information of the concrete syntax might be lost. On the syntax tree level it might for example be easier to convert \texttt{int? x;} into the same structure as \texttt{Nullable<int> x;} to not clutter the abstract syntax tree with unnecessary information of syntactic sugar.
 
 Even grander structure rewrites could be done in the transformation from a code file to a syntax tree. For example it is possible to fit the grammar from Figure \ref{grammar} into the syntax tree of \ref{syntaxtree} even though no for-loop exists in the tree. This would be done by rewriting it into a while loop construction. Such a rewrite would of course make it quite hard to deconstruct a syntax tree back into the actual concrete code that was used to generate it.
 
@@ -166,9 +166,7 @@ and program =
 \end{figure}
 
 \subsection{The lost information}
-When looking at the syntax tree quite a lot of information will not be immediately available: Everything from the preprocessing phase, syntactic sugar, whitespace and comments.
-
-While this information is not immediately available in the structure of the syntax tree most of this information can however be found, if the text that generates a specific node 
+When looking at the syntax tree quite a lot of information will not be immediately available: Everything from the preprocessing phase, syntactic sugar, whitespace and comments. While this information is not immediately available in the structure of the syntax tree most of this information can be found, by looking at the text that generated each node in the tree. 
 
 - Data outside syntax trees (comments)
 - Data that breaks the syntax tree (preprocesser directives)

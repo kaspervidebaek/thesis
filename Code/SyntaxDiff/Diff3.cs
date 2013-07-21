@@ -111,13 +111,13 @@ namespace SyntaxDiff
 
                     foreach (var innerchunk in innerchunks)
                     {
-                        if (chunk.A.Count == 0 && chunk.B.Count == 0 && chunk.O.Count == 0)
+                        if (innerchunk.A.Count == 0 && innerchunk.B.Count == 0 && innerchunk.O.Count == 0)
                             continue;
 
-                        if (chunk.stable)
-                            outChunks.Add(new PriorityChunk<T>() { chunk = chunk, equalType = ChunkEqualType.SecondaryEqual });
+                        if (innerchunk.stable)
+                            outChunks.Add(new PriorityChunk<T>() { chunk = innerchunk, equalType = ChunkEqualType.SecondaryEqual });
                         else
-                            outChunks.Add(new PriorityChunk<T>() { chunk = chunk, equalType = ChunkEqualType.NotEqual });
+                            outChunks.Add(new PriorityChunk<T>() { chunk = innerchunk, equalType = ChunkEqualType.NotEqual });
 
                     }
 

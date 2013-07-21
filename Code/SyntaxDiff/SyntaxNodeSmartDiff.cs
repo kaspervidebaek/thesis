@@ -257,8 +257,25 @@ namespace SyntaxDiff
                 return output;
             }
 
+            // Deletion of A, do nothing.
             if (chunk.chunk.A.Count == 0 && chunk.chunk.O.Count != 0 && chunk.chunk.B.Count != 0)
             {
+                return "";
+            }
+            // Deletion of B, do nothing.
+            if (chunk.chunk.A.Count != 0 && chunk.chunk.O.Count != 0 && chunk.chunk.B.Count == 0)
+            {
+                return "";
+            }
+            // Isertion of A, return A
+            if (chunk.chunk.A.Count != 0 && chunk.chunk.O.Count == 0 && chunk.chunk.B.Count == 0)
+            {
+                return String.Join("\r\n", chunk.chunk.A);
+            }
+            // Isertion of B, return B
+            if (chunk.chunk.A.Count == 0 && chunk.chunk.O.Count == 0 && chunk.chunk.B.Count != 0)
+            {
+                return String.Join("\r\n", chunk.chunk.B);
             }
 
             throw new NotImplementedException();
@@ -268,28 +285,38 @@ namespace SyntaxDiff
 
         private string MergeTreeUneven(PriorityChunk<StatementSyntax> originals)
         {
+            // This function will test if an unstable chunk is simply due to insertion of a node and handling on a deeper level.
 
             if (originals.chunk.A.First() is IfStatementSyntax)
             {
                 var ifstatement =  (originals.chunk.A.First() as IfStatementSyntax);
                 var substatements = (ifstatement.Statement as BlockSyntax).Statements.ToList();
 
-                var chunks = Diff3<StatementSyntax>.ThreeWayDiffPriority(substatements, originals.chunk.O, originals.chunk.B, Equal, (x, y) => Similarity(x, y) > 0.6f);
-                string output = "";
+                var mergedBlock = MergeBlocks(substatements, originals.chunk.O, originals.chunk.B);
 
-                if (chunks.First().chunk.stable && chunks.Last().chunk.stable)
-                {
-                    var mergedBlock = String.Join("\r\n", chunks.Select(MergeChunk).ToArray());
-                    return "while(" + ifstatement.Condition.ToString() + ") {" + mergedBlock + "}";
-                }
-
-                //var chunks = Chunk<StatementSyntax>.getChunks(matches, Equal);
-
-                
+                return "if(" + ifstatement.Condition.ToString() + ") {\r\n" + mergedBlock + "}";
 
             }
 
             throw new NotImplementedException();
+        }
+
+        private string MergeBlocks(List<StatementSyntax> a, List<StatementSyntax> o, List<StatementSyntax> b)
+        {
+            var mergedBlock = string.Empty;
+
+            var chunks = Diff3<StatementSyntax>.ThreeWayDiffPriority(a, o, b, Equal, (x, y) => Similarity(x, y) > 0.6f);
+
+            // We can merge a block only if the starting and ending chunk are equal.
+            if (chunks.First().chunk.stable && chunks.Last().chunk.stable)
+            {
+                mergedBlock = String.Join("\r\n", chunks.Select(MergeChunk).ToArray());
+            }
+            else
+            {
+                throw new Exception("Block Conflict!");
+            }
+            return mergedBlock;
         }
 
         bool Equal(SyntaxNode x, SyntaxNode y)
@@ -355,12 +382,11 @@ namespace SyntaxDiff
             {
                 return nodes.Cast<LiteralExpressionSyntax>().Select(x => x.Token.ToString()).Apply((x, y) => x == y);
             }
-            else if (nodes.Is<ExpressionStatementSyntax, WhileStatementSyntax>())
+            else if (nodes.Is<ArgumentSyntax>())
             {
-
+                return nodes.Cast<ArgumentSyntax>().Select(x => x.Expression).Apply(Equal);
             }
             throw new NotImplementedException();
-
         }
 
         double Similarity(SyntaxNode x, SyntaxNode y)
@@ -370,6 +396,12 @@ namespace SyntaxDiff
 
         double Similarity(Doublet<SyntaxNode> nodes)
         {
+            if(nodes.X == null || nodes.Y == null)
+                return 0.0f;
+
+            if (nodes.X.GetType() != nodes.Y.GetType())
+                return 0.0f;
+
             if (nodes.Is<ExpressionStatementSyntax>())
             {
                 return nodes.Cast<ExpressionStatementSyntax>().Select(x => x.Expression).Apply(Similarity); 
@@ -379,7 +411,7 @@ namespace SyntaxDiff
                 var c = nodes.Cast<InvocationExpressionSyntax>();
                 var argumentsSimlarity = c.Select(x => x.ArgumentList).Apply(Similarity);
                 var expressionSimlarity = c.Select(x => x.Expression).Apply(Similarity);
-                return argumentsSimlarity * 0.5 + expressionSimlarity + 0.5;
+                return argumentsSimlarity * 0.5 + expressionSimlarity * 0.5;
             }
             else if (nodes.Is<ArgumentListSyntax>())
             {
@@ -420,20 +452,7 @@ namespace SyntaxDiff
             {
                 return nodes.Cast<LiteralExpressionSyntax>().Select(x => x.Token.ToString()).Apply(StringSimilarity);
             }
-            else if (nodes.Is<ExpressionStatementSyntax, WhileStatementSyntax>())
-            {
 
-            }
-            else if (nodes.Is<WhileStatementSyntax, ExpressionStatementSyntax>())
-            {
-                return Similarity(((WhileStatementSyntax)nodes.X).Statement, nodes.Y);
-            }
-            else if (nodes.Is<IfStatementSyntax, ExpressionStatementSyntax>())
-            {
-                return Similarity(((IfStatementSyntax)nodes.X).Statement, nodes.Y);
-            }
-
-            return 0;
             throw new NotImplementedException();
         }
 

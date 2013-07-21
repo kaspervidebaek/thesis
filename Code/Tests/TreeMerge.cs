@@ -205,6 +205,93 @@ namespace Tests
 
         [TestMethod]
         [TestCategory("TreeMerge")]
+        public void TreeChangeInsertIfAsStatement()
+        {
+            var right = @"static void ShouldConflict()
+                        {
+                            Test1();
+                            Test2  (1, 2, 2, 19);
+                            Test3();
+                        }
+                        ";
+            var bas = @"static void ShouldConflict()
+                        {
+                            Test1 ();
+                            Test2 (1, 2, 2, 3);
+                            Test3 ();
+                        }   
+                        ";
+            var left = @"static void ShouldConflict()
+                        {
+                            Test1  ();
+                            if(true)
+                                Test2(2, 2, 3);
+                            Test3  ();
+                        }
+                        ";
+            var x = new SyntaxNodeSmartDiff();
+
+            var lTree = x.SyntaxFromLines(left);
+            var bTree = x.SyntaxFromLines(bas);
+            var rTree = x.SyntaxFromLines(right);
+
+            var merge = x.MergeTree(lTree, bTree, rTree);
+
+            Console.WriteLine(merge);
+
+            var mTree = x.SyntaxFromLines(merge);
+
+
+        }
+
+
+        [TestMethod]
+        [TestCategory("TreeMerge")]
+        public void TreeChangeIfFromStatementToBlock()
+        {
+            var right = @"static void ShouldConflict()
+                        {
+                            Test1();
+                            if(true) {
+                                Test2 (1, 2, 2, 3);
+                                TestNew ();
+                            }
+                            Test3();
+                        }
+                        ";
+            var bas = @"static void ShouldConflict()
+                        {
+                            Test1 ();
+                            if(true)
+                                Test2 (1, 2, 2, 3);
+                            Test3 ();
+                        }   
+                        ";
+            var left = @"static void ShouldConflict()
+                        {
+                            Test1  ();
+                            if(true)
+                                Test2 (1, 2, 2, 3, 4);
+                            Test3  ();
+                        }
+                        ";
+            var x = new SyntaxNodeSmartDiff();
+
+            var lTree = x.SyntaxFromLines(left);
+            var bTree = x.SyntaxFromLines(bas);
+            var rTree = x.SyntaxFromLines(right);
+
+            var merge = x.MergeTree(lTree, bTree, rTree);
+
+            Console.WriteLine(merge);
+
+            var mTree = x.SyntaxFromLines(merge);
+
+
+        }
+
+        [TestMethod]
+        [TestCategory("TreeMerge")]
         public void TreeChangeAndDeleteSingleInBlockWithChangeInOther()
         {
             var right = @"static void ShouldConflict()

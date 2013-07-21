@@ -15,7 +15,7 @@ namespace ConsoleApp
             x.TestExampleTreeMerge();*/
 
             var x = new Tests.TreeMerge();
-            x.TreeChangeInsertIfAsBlock();
+            x.TreeChangeIfFromStatementToBlock();
             Console.ReadLine();
             return;
 

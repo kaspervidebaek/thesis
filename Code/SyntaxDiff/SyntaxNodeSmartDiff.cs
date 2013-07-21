@@ -283,18 +283,63 @@ namespace SyntaxDiff
         }
 
 
+        // This function will test if an unstable chunk is simply due to insertion of a node and handling on a deeper level.
         private string MergeTreeUneven(PriorityChunk<StatementSyntax> originals)
         {
-            // This function will test if an unstable chunk is simply due to insertion of a node and handling on a deeper level.
+            if (originals.chunk.A.First() is IfStatementSyntax && originals.chunk.O.First() is IfStatementSyntax && originals.chunk.B.First() is IfStatementSyntax)
+            {
+                var A = (originals.chunk.A.First() as IfStatementSyntax).Statement;
+                var O = (originals.chunk.O.First() as IfStatementSyntax).Statement;
+                var B = (originals.chunk.B.First() as IfStatementSyntax).Statement;
+
+                if (A is StatementSyntax && O is StatementSyntax && B is BlockSyntax)
+                {
+                    var AC = A as StatementSyntax;
+                    var OC = O as StatementSyntax;
+                    var BC = B as BlockSyntax;
+
+                    if (Similarity(AC, OC) > 0.6f)
+                    {
+                        var BestMatch = BC.Statements.Select(x => new {item = x, sim = Similarity(OC, x)})
+                            .OrderByDescending(x => x.sim).Take(1).First();
+                        if (BestMatch.sim > 0.6f)
+                        {
+                                
+                        }
+                    }
+                    else
+                        throw new Exception("Conflict");
+
+
+                }
+
+            }
 
             if (originals.chunk.A.First() is IfStatementSyntax)
             {
                 var ifstatement =  (originals.chunk.A.First() as IfStatementSyntax);
-                var substatements = (ifstatement.Statement as BlockSyntax).Statements.ToList();
+                
+                if(ifstatement.Statement is BlockSyntax) {
+                    var substatements = (ifstatement.Statement as BlockSyntax).Statements.ToList();
+                    var mergedBlock = MergeBlocks(substatements, originals.chunk.O, originals.chunk.B);
+                    return "if(" + ifstatement.Condition.ToString() + ") {\r\n" + mergedBlock + "}";
+                }
+                if (ifstatement.Statement is StatementSyntax)
+                {
+                    if(originals.chunk.O.Count != 1 || originals.chunk.B.Count != 1)
+                        throw new Exception("Conflict!");
 
-                var mergedBlock = MergeBlocks(substatements, originals.chunk.O, originals.chunk.B);
+                    var A = ifstatement.Statement as StatementSyntax;
+                    var O = originals.chunk.O.First();
+                    var B = originals.chunk.B.First();
 
-                return "if(" + ifstatement.Condition.ToString() + ") {\r\n" + mergedBlock + "}";
+                    if(Similarity(A, O) > 0.6f && Similarity(O, B) > 0.6f) {
+                        return "if(" + ifstatement.Condition.ToString() + ") \r\n" + MergeTree(A, O, B);
+                    }
+                    else
+                        throw new Exception("Conflict!");
+
+                }
 
             }
 
@@ -303,20 +348,14 @@ namespace SyntaxDiff
 
         private string MergeBlocks(List<StatementSyntax> a, List<StatementSyntax> o, List<StatementSyntax> b)
         {
-            var mergedBlock = string.Empty;
-
             var chunks = Diff3<StatementSyntax>.ThreeWayDiffPriority(a, o, b, Equal, (x, y) => Similarity(x, y) > 0.6f);
 
             // We can merge a block only if the starting and ending chunk are equal.
             if (chunks.First().chunk.stable && chunks.Last().chunk.stable)
             {
-                mergedBlock = String.Join("\r\n", chunks.Select(MergeChunk).ToArray());
+                return String.Join("\r\n", chunks.Select(MergeChunk).ToArray());
             }
-            else
-            {
-                throw new Exception("Block Conflict!");
-            }
-            return mergedBlock;
+            throw new Exception("Block Conflict!");
         }
 
         bool Equal(SyntaxNode x, SyntaxNode y)

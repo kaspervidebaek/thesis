@@ -244,6 +244,52 @@ namespace Tests
 
         }
 
+        [TestMethod]
+        [TestCategory("TreeMerge")]
+        public void TreeChangeIfFromBlockToStatement()
+        {
+            var right = @"static void ShouldConflict()
+                        {
+                            Test1();
+                            if(true) {
+                                Test2(2, 2, 3);
+                                TestNew();
+                            }
+                            Test3();
+                        }
+                        ";
+            var bas = @"static void ShouldConflict()
+                        {
+                            Test1 ();
+                            if(true) {
+                                Test2 (2, 2, 3);
+                                TestNew ();
+                            }
+                            Test3 ();
+                        }   
+                        ";
+            var left = @"static void ShouldConflict()
+                        {
+                            Test1  ();
+                            if(true)
+                                Test2 (2, 2, 3);
+                            Test3  ();
+                        }
+                        ";
+            var x = new SyntaxNodeSmartDiff();
+
+            var lTree = x.SyntaxFromLines(left);
+            var bTree = x.SyntaxFromLines(bas);
+            var rTree = x.SyntaxFromLines(right);
+
+            var merge = x.MergeTree(lTree, bTree, rTree);
+
+            Console.WriteLine(merge);
+
+            var mTree = x.SyntaxFromLines(merge);
+
+
+        }
 
         [TestMethod]
         [TestCategory("TreeMerge")]
@@ -253,7 +299,7 @@ namespace Tests
                         {
                             Test1();
                             if(true) {
-                                Test2 (1, 2, 2, 3);
+                                Test2 (2, 2, 3);
                                 TestNew ();
                             }
                             Test3();

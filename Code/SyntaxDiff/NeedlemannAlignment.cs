@@ -76,5 +76,7 @@ namespace SyntaxDiff
             Allignment.Reverse();
             return Allignment;
         }
+
+
     }
 }

@@ -19,63 +19,64 @@ namespace SyntaxDiff
         {
             return Merge<T>(A, O, B, comparer, HandleConflict, x => x);
         }
-
         public static List<Y> Merge<Y>(List<T> A, List<T> O, List<T> B, Func<T, T, bool> comparer, Func<List<Y>, Chunk<T>, bool> HandleConflict, Func<T, Y> converter)
         {
-            var chuncks = ChunksFromLists(A, O, B, comparer);
+            var match = ThreeWayDiff(A, O, B, comparer);
+            var chunks = Chunk<T>.getChunks(match, comparer);
 
+            return Merge(chunks, comparer, HandleConflict, converter);
+        }
+
+        public static List<Y> Merge<Y>(List<Chunk<T>> chunks, Func<T, T, bool> comparer, Func<List<Y>, Chunk<T>, bool> HandleConflict, Func<T, Y> converter)
+        {
             var mergedfile = new List<Y>();
 
-            foreach (var chunck in chuncks)
+            foreach (var chunk in chunks)
             {
-                if (chunck.stable)
+                /*if (!allowUnstablePadding && !chunk.stable && (chunk == chunks.First() || chunk == chunks.Last()))
+                    throw new Exception("Conflict!");*/
+
+                if (chunk.stable)
                 {
-                    foreach (var line in chunck.O)
+                    foreach (var line in chunk.O)
                         mergedfile.Add(converter(line));
                     continue;
                 }
 
 
-                if(chunck.O.Count == 0 && chunck.A.Count == 0) // Added B
-                    foreach (var line in chunck.B)
+                if(chunk.O.Count == 0 && chunk.A.Count == 0) // Added B
+                    foreach (var line in chunk.B)
                         mergedfile.Add(converter(line));
-                else if (chunck.O.Count == 0 && chunck.B.Count == 0) // Added A
-                    foreach (var line in chunck.A)
+                else if (chunk.O.Count == 0 && chunk.B.Count == 0) // Added A
+                    foreach (var line in chunk.A)
                         mergedfile.Add(converter(line));
                 else { // This is an update.
-                    var AO = Chunk<T>.ChunkEqual(chunck.A, chunck.O, comparer);
-                    var BO = Chunk<T>.ChunkEqual(chunck.B, chunck.O, comparer);
+                    var AO = Chunk<T>.ChunkEqual(chunk.A, chunk.O, comparer);
+                    var BO = Chunk<T>.ChunkEqual(chunk.B, chunk.O, comparer);
                     
                     if (AO && !BO)  // Updated B
-                        foreach (var line in chunck.B)
+                        foreach (var line in chunk.B)
                             mergedfile.Add(converter(line));
                     else if (BO && !AO)  // Updated A
-                        foreach (var line in chunck.A)
+                        foreach (var line in chunk.A)
                             mergedfile.Add(converter(line));
                     else
                     {
-                        if (Chunk<T>.ChunkEqual(chunck.A, chunck.B, comparer)) // Both branches added the exact same thing. Just add one of them.
+                        if (Chunk<T>.ChunkEqual(chunk.A, chunk.B, comparer)) // Both branches added the exact same thing. Just add one of them.
                         {
-                            foreach (var line in chunck.A)
+                            foreach (var line in chunk.A)
                                 mergedfile.Add(converter(line));
                         }
                         else
                         {
                             // Conflict
-                            if(HandleConflict(mergedfile, chunck))
+                            if(HandleConflict(mergedfile, chunk))
                                 break;
                         }
                     }
                 }
             }
             return mergedfile;
-        }
-
-        public static List<Chunk<T>> ChunksFromLists(List<T> A, List<T> O, List<T> B, Func<T, T, bool> comparer)
-        {
-            var totalMatch = ThreeWayDiff(A, O, B, comparer);
-            var chuncks = Chunk<T>.getChunks(totalMatch, comparer);
-            return chuncks;
         }
 
         public static List<Diff<T>> ThreeWayDiff(List<T> A, List<T> O, List<T> B, Func<T, T, bool> comparer)

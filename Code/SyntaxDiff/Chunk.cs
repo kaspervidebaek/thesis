@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SyntaxDiff
 {
- 
+
 
     public class Chunk<T>
     {
@@ -23,7 +23,8 @@ namespace SyntaxDiff
             B = new List<T>();
         }
 
-        public Chunk(bool stable, Diff<T> d) : this(stable)
+        public Chunk(bool stable, Diff<T> d)
+            : this(stable)
         {
             A.Add(d.A);
             O.Add(d.O);
@@ -46,40 +47,30 @@ namespace SyntaxDiff
         }
 
 
-        public static List<Chunk<T>> getChunks(List<Diff<T>> totalMatch, Func<T, T, bool> comparer)
+        public static List<Chunk<T>> getChunks(List<Diff<T>> match, Func<T, T, bool> comparer)
         {
+            var cs = match.ChunkBy(m => comparer(m.A, m.O) && comparer(m.O, m.B));
+
             var chuncks = new List<Chunk<T>>();
-            Chunk<T> chunk = new Chunk<T>(false);
-            bool stableChunk = false;
 
-            foreach (var m in totalMatch)
-            {
-                var isStable = comparer(m.A, m.O) && comparer(m.O, m.B);
+            foreach(var c in cs) {
+                Chunk<T> chunk = new Chunk<T>(c.Key);
 
-                if (!stableChunk && isStable || stableChunk && !isStable)
-                {
-                    stableChunk = !stableChunk;
-                    if (!chuncks.Contains(chunk)) // TODO: Improve runtime
-                        chuncks.Add(chunk);
-                    chunk = new Chunk<T>(stableChunk);
-                    chuncks.Add(chunk);
+                foreach(var m in c) {
+                    if (m.A != null)
+                        chunk.A.Add(m.A);
+                    if (m.O != null)
+                        chunk.O.Add(m.O);
+                    if (m.B != null)
+                        chunk.B.Add(m.B);
                 }
 
-                if (m.A != null)
-                    chunk.A.Add(m.A);
-                if (m.O != null)
-                    chunk.O.Add(m.O);
-                if (m.B != null)
-                    chunk.B.Add(m.B);
-            }
-            if (!chuncks.Contains(chunk)) // TODO: Improve runtime
                 chuncks.Add(chunk);
-
-
+            }
 
             return chuncks;
         }
     }
 
-    
+
 }

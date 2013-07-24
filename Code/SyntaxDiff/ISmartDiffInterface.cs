@@ -45,7 +45,7 @@ namespace SyntaxDiff
         string getLabel(T n);
         List<string> LinesFromSyntax(T m);
 
-        string MergeTree(T a, T o, T b);
+        string MergeNode(T a, T o, T b);
 
         T SyntaxFromLines(string l);
         List<T> Children(T n);

@@ -72,7 +72,7 @@ namespace SyntaxDiff
 
                 //var mergedTree = i.MergeTree(A, O, B);
                 output.Clear();
-                output.Add(i.MergeTree(A, O, B));
+                output.Add(i.MergeNode(A, O, B));
 
 
                 return true; // We should terminate. This will do the entire merging.

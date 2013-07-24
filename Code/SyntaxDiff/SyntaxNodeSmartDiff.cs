@@ -76,11 +76,11 @@ namespace SyntaxDiff
 
 
         [DebuggerNonUserCode]
-        public string MergeTree(SyntaxNode A, SyntaxNode O, SyntaxNode B)
+        public string MergeNode(SyntaxNode A, SyntaxNode O, SyntaxNode B)
         {
-            return MergeTree(Triplet<SyntaxNode>.Create(A, O, B));
+            return MergeNode(Triplet<SyntaxNode>.Create(A, O, B));
         }
-        public string MergeTree(Triplet<SyntaxNode> nodes)
+        public string MergeNode(Triplet<SyntaxNode> nodes)
         {
             if (nodes.O != null && nodes.A != null && nodes.B == null)
             {
@@ -111,7 +111,7 @@ namespace SyntaxDiff
                 if (c.Select(x => x.Count).Apply((x, y, z) => x != 0 && y != 0 && z != 0))
                 {
                     var M = c.Select(x => x.First());
-                    return M.Apply(MergeTree);
+                    return M.Apply(MergeNode);
                 }
             }
             else if (nodes.Is<MethodDeclarationSyntax>())
@@ -119,8 +119,8 @@ namespace SyntaxDiff
                 var M = nodes.Cast<MethodDeclarationSyntax>();
 
                 var name = M.Select(x => x.Identifier).Apply(MergeToken);
-                var parm = M.Select(x => x.ParameterList).Apply(MergeTree);
-                var body = M.Select(x => x.Body).Apply(MergeTree);
+                var parm = M.Select(x => x.ParameterList).Apply(MergeNode);
+                var body = M.Select(x => x.Body).Apply(MergeNode);
                 var retv = M.Select(x => x.ReturnType).Apply(MergeType);
 
                 return retv + " " + name + "(" + parm + ") \r\n" + body + "\r\n";
@@ -129,9 +129,9 @@ namespace SyntaxDiff
             {
                 var i = nodes.Cast<IfStatementSyntax>();
 
-                var expr = i.Select(x => x.Condition).Apply(MergeTree);
-                var body = i.Select(x => x.Statement).Apply(MergeTree);
-                var elses = i.Select(x => x.Else).ApplyIfExists(MergeTree);
+                var expr = i.Select(x => x.Condition).Apply(MergeNode);
+                var body = i.Select(x => x.Statement).Apply(MergeNode);
+                var elses = i.Select(x => x.Else).ApplyIfExists(MergeNode);
 
 
                 return "if( " + expr.ToString() + ")\r\n" + body + (elses != null ? " else " + elses : "");
@@ -139,14 +139,14 @@ namespace SyntaxDiff
             else if (nodes.Is<ExpressionStatementSyntax>())
             {
                 var e = nodes.Cast<ExpressionStatementSyntax>();
-                return e.Select(x => x.Expression).Apply(MergeTree) + ";";
+                return e.Select(x => x.Expression).Apply(MergeNode) + ";";
             }
             else if (nodes.Is<InvocationExpressionSyntax>())
             {
                 var i = nodes.Cast<InvocationExpressionSyntax>();
 
-                var arguments = i.Select(x => x.ArgumentList).Apply(MergeTree);
-                var expression = i.Select(x => x.Expression).Apply(MergeTree);
+                var arguments = i.Select(x => x.ArgumentList).Apply(MergeNode);
+                var expression = i.Select(x => x.Expression).Apply(MergeNode);
 
                 return expression + "(" + arguments + ")";
             }
@@ -154,8 +154,8 @@ namespace SyntaxDiff
             {
                 var i = nodes.Cast<MemberAccessExpressionSyntax>();
 
-                var expression = i.Select(x => x.Expression).Apply(MergeTree);
-                var name = i.Select(x => x.Name).Apply(MergeTree);
+                var expression = i.Select(x => x.Expression).Apply(MergeNode);
+                var name = i.Select(x => x.Name).Apply(MergeNode);
 
                 return expression + "." + name;
             }
@@ -174,7 +174,7 @@ namespace SyntaxDiff
             }
             else if (nodes.Is<ArgumentSyntax>())
             {
-                var i = nodes.Cast<ArgumentSyntax>().Select(x => x.Expression).Apply(MergeTree);
+                var i = nodes.Cast<ArgumentSyntax>().Select(x => x.Expression).Apply(MergeNode);
 
                 return i;
             }
@@ -192,41 +192,13 @@ namespace SyntaxDiff
 
                 var statements = b.Select(x => x.Statements.ToList());
 
-
-                Func<List<string>, Chunk<StatementSyntax>, bool> conflictHandler = (output, original) =>
-                {
-                    var chunks = Diff3<StatementSyntax>.ThreeWayDiffPriority(original.A, original.O, original.B, Equal, (x, y) => Similarity(x, y) > 0.6f);
-
-                    foreach (var chunk in chunks)
-                    {
-                        if (chunk.equalType == ChunkEqualType.PrimaryEqual)
-                        {
-                            // They are completely equal. Just add O.
-                            foreach (var m in chunk.chunk.O)
-                                output.Add(m.ToString());
-                        }
-                        else if (chunk.equalType == ChunkEqualType.SecondaryEqual)
-                        {
-                            output.Add(MergeChunk(chunk));
-                        }
-                        else
-                        {
-                            // They are not equal. Try an uneven merge.
-                            output.Add(MergeTreeUneven(chunk));
-                        }
-                    }
-                    return false; 
-                };
-
-                Func<StatementSyntax, StatementSyntax, bool> comparer = (x, y) => x != null && y != null && x.ToString().Trim() == y.ToString().Trim();
-                var merge = Diff3<StatementSyntax>.Merge<string>(statements.A, statements.O, statements.B, comparer, conflictHandler, x => x.ToString());
-                return "{\r\n" + string.Join("\r\n", merge) + "\r\n}\r\n";
+                return MergeStatementList(statements.A, statements.O, statements.B);
             }
             else if (nodes.Is<ExpressionStatementSyntax, WhileStatementSyntax>())
             {
                 var n = nodes.Cast<ExpressionStatementSyntax, WhileStatementSyntax>();
 
-                var merge = MergeTree(n.other.Statement, n.bas, n.even);
+                var merge = MergeNode(n.other.Statement, n.bas, n.even);
 
                 return "while(" + n.other.Condition + ")\r\n" + merge;
 
@@ -235,12 +207,44 @@ namespace SyntaxDiff
             {
                 var n = nodes.Cast<ExpressionStatementSyntax, IfStatementSyntax>();
 
-                var merge = MergeTree(n.other.Statement, n.bas, n.even);
+                var merge = MergeNode(n.other.Statement, n.bas, n.even);
 
                 return "while(" + n.other.Condition + ")\r\n" + merge;
             }
 
             throw new NotImplementedException();
+        }
+
+        private string MergeStatementList(List<StatementSyntax> A, List<StatementSyntax> O, List<StatementSyntax> B)
+        {
+            Func<List<string>, Chunk<StatementSyntax>, bool> conflictHandler = (output, original) =>
+            {
+                var chunks = Diff3<StatementSyntax>.ThreeWayDiffPriority(original.A, original.O, original.B, Equal, (x, y) => Similarity(x, y) > 0.6f);
+
+                foreach (var chunk in chunks)
+                {
+                    if (chunk.equalType == ChunkEqualType.PrimaryEqual)
+                    {
+                        // They are completely equal. Just add O.
+                        foreach (var m in chunk.chunk.O)
+                            output.Add(m.ToString());
+                    }
+                    else if (chunk.equalType == ChunkEqualType.SecondaryEqual)
+                    {
+                        output.Add(MergeChunk(chunk));
+                    }
+                    else
+                    {
+                        // They are not equal. Try an uneven merge.
+                        output.Add(MergeTreeUneven(chunk));
+                    }
+                }
+                return false;
+            };
+
+            Func<StatementSyntax, StatementSyntax, bool> comparer = (x, y) => x != null && y != null && x.ToString().Trim() == y.ToString().Trim();
+            var merge = Diff3<StatementSyntax>.Merge<string>(A, O, B, comparer, conflictHandler, x => x.ToString());
+            return "{\r\n" + string.Join("\r\n", merge) + "\r\n}\r\n";
         }
 
         private string MergeChunk(PriorityChunk<StatementSyntax> chunk)
@@ -249,9 +253,9 @@ namespace SyntaxDiff
             {
                 string output = "";
 
-                for (int i = 0; i < chunk.chunk.A.Count; i++)
+                for (int i = 0; i < chunk.chunk.A.Count; i++) // Since it is a stable chunk, the length of A and O and B are equal.
                 {
-                    output += MergeTree(chunk.chunk.A[i], chunk.chunk.O[i], chunk.chunk.B[i]) + "\r\n";
+                    output += MergeNode(chunk.chunk.A[i], chunk.chunk.O[i], chunk.chunk.B[i]) + "\r\n"; // TODO: What if it is a primary equal block?
                 }
 
                 return output;
@@ -299,8 +303,8 @@ namespace SyntaxDiff
                     var BC = B.Statement as BlockSyntax;
 
 
-                    var expression = MergeTree(A.Condition, O.Condition, B.Condition);
-                    var statements = MergeBlocks(new List<StatementSyntax> { AC }, new List<StatementSyntax> { OC }, BC.Statements.ToList(), true);
+                    var expression = MergeNode(A.Condition, O.Condition, B.Condition);
+                    var statements = MergeStatementList(new List<StatementSyntax> { AC }, new List<StatementSyntax> { OC }, BC.Statements.ToList());
                     return "if(" + expression + ") \r\n{" + statements + "}";
                 }
 
@@ -310,8 +314,8 @@ namespace SyntaxDiff
                     var OC = O.Statement as BlockSyntax;
                     var BC = B.Statement as BlockSyntax;
 
-                    var expression = MergeTree(A.Condition, O.Condition, B.Condition);
-                    var statements = MergeBlocks(new List<StatementSyntax> { AC }, OC.Statements.ToList(), BC.Statements.ToList(), true);
+                    var expression = MergeNode(A.Condition, O.Condition, B.Condition);
+                    var statements = MergeStatementList(new List<StatementSyntax> { AC }, OC.Statements.ToList(), BC.Statements.ToList());
                     return "if(" + expression + ") \r\n" + statements + "";
                 }
 
@@ -323,7 +327,7 @@ namespace SyntaxDiff
                 
                 if(ifstatement.Statement is BlockSyntax) {
                     var substatements = (ifstatement.Statement as BlockSyntax).Statements.ToList();
-                    var mergedBlock = MergeBlocks(substatements, originals.chunk.O, originals.chunk.B, false);
+                    var mergedBlock = MergeStatementList(substatements, originals.chunk.O, originals.chunk.B);
                     return "if(" + ifstatement.Condition.ToString() + ") {\r\n" + mergedBlock + "}";
                 }
                 if (ifstatement.Statement is StatementSyntax)
@@ -336,7 +340,7 @@ namespace SyntaxDiff
                     var B = originals.chunk.B.First();
 
                     if(Similarity(A, O) > 0.6f && Similarity(O, B) > 0.6f) {
-                        return "if(" + ifstatement.Condition.ToString() + ") \r\n" + MergeTree(A, O, B);
+                        return "if(" + ifstatement.Condition.ToString() + ") \r\n" + MergeNode(A, O, B);
                     }
                     else
                         throw new Exception("Conflict!");
@@ -348,7 +352,7 @@ namespace SyntaxDiff
             throw new NotImplementedException();
         }
 
-        private string MergeBlocks(List<StatementSyntax> a, List<StatementSyntax> o, List<StatementSyntax> b, bool allowUnstable)
+/*        private string MergeBlocks(List<StatementSyntax> a, List<StatementSyntax> o, List<StatementSyntax> b, bool allowUnstable)
         {
             var chunks = Diff3<StatementSyntax>.ThreeWayDiffPriority(a, o, b, Equal, (x, y) => Similarity(x, y) > 0.6f);
 
@@ -358,7 +362,7 @@ namespace SyntaxDiff
                 return String.Join("\r\n", chunks.Select(MergeChunk).ToArray());
             }
             throw new Exception("Block Conflict!");
-        }
+        }*/
 
         bool Equal(SyntaxNode x, SyntaxNode y)
         {
@@ -580,7 +584,7 @@ namespace SyntaxDiff
                 .Select(x => c(x).ToList());
 
             var matches = SmartDiff<Item>.GetThreeWayUnorderedMatch(l.A, l.O, l.B, cost);
-            var reordered = SmartDiff<Item>.FilterAndMerge(l.A, l.O, l.B, matches, MergeTree);
+            var reordered = SmartDiff<Item>.FilterAndMerge(l.A, l.O, l.B, matches, MergeNode);
 
             return string.Join(", ", reordered);
         }

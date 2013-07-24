@@ -88,7 +88,7 @@ namespace Tests
             var bTree = x.SyntaxFromLines(bas);
             var rTree = x.SyntaxFromLines(right);
 
-            var merge = x.MergeTree(lTree, bTree, rTree);
+            var merge = x.MergeNode(lTree, bTree, rTree);
         }
 
 
@@ -116,7 +116,7 @@ namespace Tests
             var bTree = x.SyntaxFromLines(bas);
             var rTree = x.SyntaxFromLines(right);
 
-            var merge = x.MergeTree(lTree, bTree, rTree);
+            var merge = x.MergeNode(lTree, bTree, rTree);
 
             var mTree = x.SyntaxFromLines(merge);
         }
@@ -150,7 +150,7 @@ namespace Tests
             var bTree = x.SyntaxFromLines(bas);
             var rTree = x.SyntaxFromLines(right);
 
-            var merge = x.MergeTree(lTree, bTree, rTree);
+            var merge = x.MergeNode(lTree, bTree, rTree);
 
             var mTree = x.SyntaxFromLines(merge);
         }
@@ -194,7 +194,7 @@ namespace Tests
             var bTree = x.SyntaxFromLines(bas);
             var rTree = x.SyntaxFromLines(right);
 
-            var merge = x.MergeTree(lTree, bTree, rTree);
+            var merge = x.MergeNode(lTree, bTree, rTree);
 
             Console.WriteLine(merge);
 
@@ -235,7 +235,7 @@ namespace Tests
             var bTree = x.SyntaxFromLines(bas);
             var rTree = x.SyntaxFromLines(right);
 
-            var merge = x.MergeTree(lTree, bTree, rTree);
+            var merge = x.MergeNode(lTree, bTree, rTree);
 
             Console.WriteLine(merge);
 
@@ -252,7 +252,7 @@ namespace Tests
                         {
                             Test1();
                             if(true) {
-                                Test2(2, 2, 3);
+                                Test2(2, 2, 3, 4);
                                 TestNew();
                             }
                             Test3();
@@ -282,7 +282,7 @@ namespace Tests
             var bTree = x.SyntaxFromLines(bas);
             var rTree = x.SyntaxFromLines(right);
 
-            var merge = x.MergeTree(lTree, bTree, rTree);
+            var merge = x.MergeNode(lTree, bTree, rTree);
 
             Console.WriteLine(merge);
 
@@ -327,7 +327,7 @@ namespace Tests
             var bTree = x.SyntaxFromLines(bas);
             var rTree = x.SyntaxFromLines(right);
 
-            var merge = x.MergeTree(lTree, bTree, rTree);
+            var merge = x.MergeNode(lTree, bTree, rTree);
 
             Console.WriteLine(merge);
 
@@ -360,7 +360,7 @@ namespace Tests
             var bTree = x.SyntaxFromLines(bas);
             var rTree = x.SyntaxFromLines(right);
 
-            var merge = x.MergeTree(lTree, bTree, rTree);
+            var merge = x.MergeNode(lTree, bTree, rTree);
 
             var mTree = x.SyntaxFromLines(merge);
         }

@@ -84,12 +84,13 @@ namespace SyntaxDiff
         {
             if (nodes.O != null && nodes.A != null && nodes.B == null)
             {
-                if(Equal(nodes.A, nodes.O)) {
+                if (Equal(nodes.A, nodes.O))
+                {
                     return "";
                 }
                 return "/*Conflict: Deleted in B*/\r\n" + nodes.A;
             }
-            else if(nodes.O != null && nodes.A == null && nodes.B != null)
+            else if (nodes.O != null && nodes.A == null && nodes.B != null)
             {
                 if (Equal(nodes.B, nodes.O))
                 {
@@ -219,7 +220,7 @@ namespace SyntaxDiff
         {
             Func<List<string>, Chunk<StatementSyntax>, bool> conflictHandler = (output, original) =>
             {
-                var chunks = Diff3<StatementSyntax>.ThreeWayDiffPriority(original.A, original.O, original.B, Equal, (x, y) => Similarity(x, y) > 0.6f);
+                var chunks = Diff3<StatementSyntax>.ThreeWayDiffPriority(original.A, original.O, original.B, Equal, Similar);
 
                 foreach (var chunk in chunks)
                 {
@@ -233,13 +234,14 @@ namespace SyntaxDiff
                     {
                         output.Add(MergeChunk(chunk));
                     }
-                    else if (chunk.chunk.A.Count == 0 || chunk.chunk.B.Count == 0 || chunk.chunk.B.Count == 0) // It seems its a deletion or insertion
+                    else if (chunk.chunk.A.Count == 0 || chunk.chunk.O.Count == 0 || chunk.chunk.B.Count == 0) // It seems its a deletion or insertion
                     {
                         output.Add(MergeChunk(chunk));
                     }
-                    else {
+                    else
+                    {
                         // They are not equal, and is not a pure insertion or deletion. Try unevenness
-                        output.Add(MergeTreeUneven(chunk));
+                        output.Add(MergeTreeUneven(chunk.chunk));
                     }
                 }
                 return false;
@@ -252,54 +254,67 @@ namespace SyntaxDiff
 
         private string MergeChunk(PriorityChunk<StatementSyntax> chunk)
         {
-            if (chunk.chunk.stable)
+            if (chunk.equalType == ChunkEqualType.PrimaryEqual)
             {
                 string output = "";
-                if (chunk.equalType == ChunkEqualType.PrimaryEqual)
+                for (int i = 0; i < chunk.chunk.A.Count; i++) // Since it is a stable chunk, the length of A and O and B are equal.
                 {
-                    for (int i = 0; i < chunk.chunk.A.Count; i++) // Since it is a stable chunk, the length of A and O and B are equal.
-                    {
-                        output += chunk.chunk.O[i].ToString() + "\r\n";
-                    }
+                    output += chunk.chunk.O[i].ToString() + "\r\n";
                 }
-                else // Implicit secondary equaltype
+                return output;
+            }
+
+            return MergeChunk(chunk.chunk); // This is not completely equal. Lets merge.
+        }
+
+        private string MergeChunk(Chunk<StatementSyntax> chunk)
+        {
+            if (chunk.stable)
+            {
+                string output = "";
                 {
-                    for (int i = 0; i < chunk.chunk.A.Count; i++) // Since it is a stable chunk, the length of A and O and B are equal.
+                    for (int i = 0; i < chunk.A.Count; i++) // Since it is a stable chunk, the length of A and O and B are equal.
                     {
-                        output += MergeNode(chunk.chunk.A[i], chunk.chunk.O[i], chunk.chunk.B[i]) + "\r\n"; 
+                        output += MergeNode(chunk.A[i], chunk.O[i], chunk.B[i]) + "\r\n";
                     }
                 }
 
                 return output;
             }
 
+            return MergeChunk(chunk.A, chunk.O, chunk.B);
+        }
+
+        private string MergeChunk(List<StatementSyntax> A, List<StatementSyntax> O, List<StatementSyntax> B)
+        {
+
             // Deletion of A, do nothing.
-            if (chunk.chunk.A.Count == 0 && chunk.chunk.O.Count != 0 && chunk.chunk.B.Count != 0)
+            if (A.Count == 0 && O.Count != 0 && B.Count != 0)
             {
                 return "";
             }
             // Deletion of B, do nothing.
-            if (chunk.chunk.A.Count != 0 && chunk.chunk.O.Count != 0 && chunk.chunk.B.Count == 0)
+            if (A.Count != 0 && O.Count != 0 && B.Count == 0)
             {
                 return "";
             }
             // Isertion of A, return A
-            if (chunk.chunk.A.Count != 0 && chunk.chunk.O.Count == 0 && chunk.chunk.B.Count == 0)
+            if (A.Count != 0 && O.Count == 0 && B.Count == 0)
             {
-                return String.Join("\r\n", chunk.chunk.A);
+                return String.Join("\r\n", A);
             }
             // Isertion of B, return B
-            if (chunk.chunk.A.Count == 0 && chunk.chunk.O.Count == 0 && chunk.chunk.B.Count != 0)
+            if (A.Count == 0 && O.Count == 0 && B.Count != 0)
             {
-                return String.Join("\r\n", chunk.chunk.B);
+                return String.Join("\r\n", B);
             }
 
             throw new NotImplementedException();
 
         }
 
-        // This function will test if an unstable chunk is simply due to insertion of a node and handling on a deeper level.
-        private string MergeTreeUneven(PriorityChunk<StatementSyntax> originals)
+
+        private string MergeTreeBlockToStatement(PriorityChunk<StatementSyntax> originals)
         {
             if (originals.chunk.A.First() is IfStatementSyntax && originals.chunk.O.First() is IfStatementSyntax && originals.chunk.B.First() is IfStatementSyntax)
             {
@@ -316,51 +331,193 @@ namespace SyntaxDiff
                 return "if(" + expression + ") \r\n" + ChangeBetweenBlockAndStatement(As, Os, Bs);
             }
 
-            if (originals.chunk.A.First() is IfStatementSyntax)
-            {
-                var ifstatement = (originals.chunk.A.First() as IfStatementSyntax);
-                return "if(" + ifstatement.Condition.ToString() + ")\r\n" +
-                    CreateInnerBlock(ifstatement.Statement, originals.chunk.O, originals.chunk.B);
-            }
-
-
             throw new NotImplementedException();
         }
 
+        // This function will test if an unstable chunk is simply due to insertion of a node and handling on a deeper level.
+        // Will also handle how Statements can be chagned into blocks.
+        private string MergeTreeUneven(Chunk<StatementSyntax> originals)
+        {
+            /*
+            var output = new List<String>();
+
+            List<StatementSyntax> restA = new List<StatementSyntax>();
+            RestChunk O = new RestChunk { top = null, bottom = originals.O };
+            RestChunk B = new RestChunk { top = null, bottom = originals.B };
+
+            foreach (var aItem in originals.A)
+            {
+                if (aItem is IfStatementSyntax)
+                {
+                    var ifstatement = (aItem as IfStatementSyntax);
+                    var innerblock = CreateInnerBlock(ifstatement.Statement, O.bottom, B.bottom, out O, out B);
+
+                    output.Add(MergeChunk(restA, O.top, B.top));
+                    output.Add("if(" + ifstatement.Condition.ToString() + ")\r\n" + innerblock);
+                }
+                else
+                    restA.Add(aItem);
+            }*/
+
+            Func<StatementSyntax, bool> hasSub = x => x is IfStatementSyntax || x is BlockSyntax || x is WhileStatementSyntax;
+            Func<StatementSyntax, StatementSyntax> subStatement = x =>
+            {
+                if (x is IfStatementSyntax)
+                    return (x as IfStatementSyntax).Statement;
+                if (x is WhileStatementSyntax)
+                    return (x as IfStatementSyntax).Statement;
+                if (x is BlockSyntax)
+                    return x;
+
+                throw new NotImplementedException();
+            };
+            var aBlocks = originals.A.Where(hasSub).Select(x => Tuple.Create(x, subStatement(x)));
+            var bBlocks = originals.B.Where(hasSub).Select(x => Tuple.Create(x, subStatement(x)));
+
+            var aMatches = aBlocks.Select(x => Tuple.Create(x, IdentifyChunkRests(x, originals.O))).ToList();
+            var bMatches = bBlocks.Select(x => Tuple.Create(x, IdentifyChunkRests(x, originals.O))).ToList();
+
+            //var totalMatch = NeedlemanWunsch<PriorityChunk2<StatementSyntax>>.Allignment(aMatches, bMatches, (x, y) => StatementListEquals(x.chunk.y, y.chunk.y));
+
+            var aCnt = 0;
+            var bCnt = 0;
+
+            while (aCnt < aMatches.Count && bCnt < bMatches.Count)
+            {
+            }
+
+
+            return "CHUNK";
+            //throw new NotImplementedException();
+        }
+
+        public bool Similar(StatementSyntax x, StatementSyntax y)
+        {
+            return Similarity(x, y) > 0.6f;
+        }
+
+        private List<PriorityChunk2<StatementSyntax, StatementSyntax>> IdentifyChunkRests(Tuple<StatementSyntax, StatementSyntax> Statement, List<StatementSyntax> originChunk)
+        {
+            var SubStatement = Statement.Item2;
+            if (SubStatement is ExpressionStatementSyntax)
+            {
+                /*var asd = Chunk2<Tuple<StatementSyntax, StatementSyntax>, StatementSyntax>
+                    .TwoWayDiffPriority(new List<Tuple<StatementSyntax, StatementSyntax>> { Statement }, originChunk, (x, y) => x != null && y != null && Equal(x.Item2, y), (x, y) => x != null && y != null && Similar(x.Item2, y));
+                */
+
+            }
+            else if (SubStatement is BlockSyntax)
+            {
+                var mat = (SubStatement as BlockSyntax).Statements.Select(x => Tuple.Create(Statement.Item1, x)).ToList();
+                var chunks = Chunk2<Tuple<StatementSyntax, StatementSyntax>, StatementSyntax>
+                    .TwoWayDiffPriority(mat, originChunk, (x, y) => x != null && y != null && Equal(x.Item2, y), (x, y) => x != null && y != null && Similar(x.Item2, y));
+
+                var firstStableChunk = chunks.First(x => x.chunk.stable);
+                var lastStableChunk = chunks.Last(x => x.chunk.stable);
+
+                var rv = new List<PriorityChunk2<StatementSyntax, StatementSyntax>>();
+
+                var recordToSequence = false;
+                foreach (var chunk in chunks)
+                {
+                    if (chunk == firstStableChunk)
+                        recordToSequence = true;
+
+                    if (!recordToSequence)
+                        continue;
+
+                    rv.Add(new PriorityChunk2<StatementSyntax, StatementSyntax>
+                    {
+                        equal = chunk.equal,
+                        chunk = new Chunk2<StatementSyntax, StatementSyntax>
+                        {
+                            stable = chunk.chunk.stable,
+                            x = chunk.chunk.x.Select(x => x.Item2).ToList(),
+                            y = chunk.chunk.y
+                        }
+
+                    });
+
+                    if (chunk == lastStableChunk)
+                        break;
+                }
+
+                return rv;
+            }
+
+            throw new NotImplementedException();
+
+        }
+
+        /*
+        private List<Tuple<StatementSyntax, List<Tuple<StatementSyntax, double>>> ChunkPrices(StatementSyntax other, List<StatementSyntax> bas) {
+            if (other is ExpressionStatementSyntax)
+            {
+                return bas.Select(x => Tuple.Create(x, Similarity(x, other))).ToList();
+            }
+            if (other is BlockSyntax)
+            {
+                var block = (other as BlockSyntax).Statements.ToList();;
+                return bas.Select(x => Tuple.Create(x, block.Select(y => Tuple.Create((StatementSyntax)y, Similarity(x, y)).ToList()))).ToList();
+            }
+            throw new NotImplementedException();
+        }*/
         private string ChangeBetweenBlockAndStatement(StatementSyntax A, StatementSyntax O, StatementSyntax B)
         {
-            if (A is ExpressionStatementSyntax && O is ExpressionStatementSyntax && B is BlockSyntax)
-            {
-                var AC = A as ExpressionStatementSyntax;
-                var OC = O as ExpressionStatementSyntax;
-                var BC = B as BlockSyntax;
+            // Changed into block, when others were expressions
+            if ((A is ExpressionStatementSyntax && O is ExpressionStatementSyntax && B is BlockSyntax) ||
+                (A is BlockSyntax && O is ExpressionStatementSyntax && B is ExpressionStatementSyntax))
+                return "{\r\n" + TestForBlockAndStatement(A, O, B) + "\r\n}";
 
-                var statements = MergeStatementList(new List<StatementSyntax> { AC }, new List<StatementSyntax> { OC }, BC.Statements.ToList());
-                return "{\r\n" + statements + "\r\n}";
-            }
-
-            if (A is ExpressionStatementSyntax && O is BlockSyntax && B is BlockSyntax)
-            {
-                var AC = A as ExpressionStatementSyntax;
-                var OC = O as BlockSyntax;
-                var BC = B as BlockSyntax;
-
-                var statements = MergeStatementList(new List<StatementSyntax> { AC }, OC.Statements.ToList(), BC.Statements.ToList());
-                return statements;
-            }
+            // Changed into expression when others were blocks
+            if ((A is ExpressionStatementSyntax && O is BlockSyntax && B is BlockSyntax) ||
+                (A is BlockSyntax && O is BlockSyntax && B is ExpressionStatementSyntax))
+                return TestForBlockAndStatement(A, O, B);
 
             throw new Exception();
         }
 
-        // Match a statement with two chunks.
-        private string CreateInnerBlock(StatementSyntax pA, List<StatementSyntax> pO, List<StatementSyntax> pB)
+        private List<StatementSyntax> getStatementList(StatementSyntax a)
         {
+            if (a is ExpressionStatementSyntax)
+                return new List<StatementSyntax> { a };
+            else if (a is BlockSyntax)
+                return (a as BlockSyntax).Statements.ToList();
+            throw new NotImplementedException();
+        }
+
+
+        private string TestForBlockAndStatement(StatementSyntax A, StatementSyntax O, StatementSyntax B)
+        {
+            var a = getStatementList(A);
+            var o = getStatementList(O);
+            var b = getStatementList(B);
+
+            var statements = MergeStatementList(a, o, b);
+            return statements;
+        }
+
+        struct RestChunk
+        {
+            public List<StatementSyntax> top;
+            public List<StatementSyntax> bottom;
+        }
+
+        // Match a statement with two chunks.
+        private string CreateInnerBlock(StatementSyntax pA, List<StatementSyntax> pO, List<StatementSyntax> pB, out RestChunk restO, out RestChunk restB)
+        {
+            restB = new RestChunk();
+            restO = new RestChunk();
+
+            // Check if the statement inside an if-statement is a block. If it is, try to merge with the current chunk. TODO: When does it suceed?
             if (pA is BlockSyntax)
             {
                 var substatements = (pA as BlockSyntax).Statements.ToList();
                 var mergedBlock = MergeStatementList(substatements, pO, pB);
                 return "{\r\n" + mergedBlock + "}";
             }
+
+            // Check if the statement inside an if-statement is a single expressionstatement. if it is, merge with the others.
             if (pA is ExpressionStatementSyntax)
             {
                 if (pO.Count != 1 || pB.Count != 1)
@@ -370,7 +527,7 @@ namespace SyntaxDiff
                 var O = pO.First();
                 var B = pB.First();
 
-                if (Similarity(A, O) > 0.6f && Similarity(O, B) > 0.6f)
+                if (Similar(A, O) && Similar(O, B))
                 {
                     return MergeNode(A, O, B);
                 }
@@ -452,7 +609,7 @@ namespace SyntaxDiff
                 var statements = nodes.Cast<BlockSyntax>().Select(x => x.Statements);
                 if (statements.X.Count == statements.Y.Count)
                 {
-                    for (int i = 0; i < statements.X.Count;i++ )
+                    for (int i = 0; i < statements.X.Count; i++)
                     {
                         if (!Equal(statements.X[i], statements.Y[i]))
                             return false;
@@ -461,7 +618,7 @@ namespace SyntaxDiff
                 }
                 else
                     return false;
-                
+
 
             }
             throw new NotImplementedException();
@@ -474,7 +631,7 @@ namespace SyntaxDiff
 
         double Similarity(Doublet<SyntaxNode> nodes)
         {
-            if(nodes.X == null || nodes.Y == null)
+            if (nodes.X == null || nodes.Y == null)
                 return 0.0f;
 
             if (nodes.X.GetType() != nodes.Y.GetType())
@@ -482,7 +639,7 @@ namespace SyntaxDiff
 
             if (nodes.Is<ExpressionStatementSyntax>())
             {
-                return nodes.Cast<ExpressionStatementSyntax>().Select(x => x.Expression).Apply(Similarity); 
+                return nodes.Cast<ExpressionStatementSyntax>().Select(x => x.Expression).Apply(Similarity);
             }
             else if (nodes.Is<InvocationExpressionSyntax>())
             {
@@ -500,7 +657,7 @@ namespace SyntaxDiff
 
                 if (cost.Count() == 0)
                     return 1;
-                
+
                 return cost.Average();
             }
             else if (nodes.Is<MemberAccessExpressionSyntax>())
@@ -510,7 +667,7 @@ namespace SyntaxDiff
                 var expression = c.Select(x => x.Expression).Apply(Similarity);
                 var name = c.Select(x => x.Name).Apply(Similarity);
 
-                return expression*0.5 + name*0.5;
+                return expression * 0.5 + name * 0.5;
             }
             else if (nodes.Is<IdentifierNameSyntax>())
             {
@@ -534,57 +691,36 @@ namespace SyntaxDiff
             {
                 var c = nodes.Cast<BlockSyntax>().Select(x => x.Statements.ToList());
 
-                var matching = NeedlemanWunsch<StatementSyntax>.Allignment(c.X, c.Y, Equal);
-
-                var chunks = matching.ChunkBy(x => x.Item1 != null && x.Item2 != null);
+                var chunks = Chunk2<StatementSyntax>.TwoWayDiffPriority(c.X, c.Y, Equal, Similar);
 
                 var statements = 0;
                 var statementsTotal = 0D;
 
                 foreach (var chunk in chunks)
                 {
-                    if (chunk.Key) // Stable Chunk
+                    if (chunk.equal == ChunkEqualType.PrimaryEqual)
                     {
-                        foreach (var statement in chunk)
-                        {
-                            statements++;
-                            statementsTotal++;
-                        }
+                        statements += chunk.chunk.x.Count;
+                        statementsTotal += chunk.chunk.x.Count;
+                    }
+                    else if (chunk.equal == ChunkEqualType.SecondaryEqual)
+                    {
+                        statements += chunk.chunk.x.Count;
+                        for (int i = 0; i < chunk.chunk.x.Count; i++)
+                            statementsTotal += Similarity(chunk.chunk.x[i], chunk.chunk.y[i]);
                     }
                     else
                     {
-                        var innermatching = NeedlemanWunsch<StatementSyntax>.Allignment(c.X, c.Y, (x, y) => Similarity(x, y) > 0.6f);
-                        var innerchunks = innermatching.ChunkBy(x => x.Item1 != null && x.Item2 != null);
-
-                        foreach (var innerchunk in innerchunks)
-                        {
-                            if (chunk.Key)
-                            {
-                                foreach (var statement in chunk)
-                                {
-                                    statements++;
-                                    statementsTotal += Similarity(statement.Item1, statement.Item2);
-                                }
-                            }
-                            else
-                            {
-                                foreach (var statement in chunk)
-                                {
-                                    statements++;
-                                }
-                            }
-
-                        }
-
-
+                        statements += chunk.chunk.x.Count + chunk.chunk.y.Count;
                     }
                 }
                 var avg = statementsTotal / statements;
-                return avg;
+                throw new NotImplementedException("We need to tests thissssSSS");
+                //                return avg;
             }
-
             throw new NotImplementedException();
         }
+
 
         double StringSimilarity(string x, string y)
         {
@@ -617,7 +753,7 @@ namespace SyntaxDiff
             return "namespace " + IDENTIFIER + " {\n" +
                         members + "\n" +
                     "}";
-            
+
         }
 
 
@@ -719,7 +855,7 @@ namespace SyntaxDiff
 
         public List<SyntaxNode> Children(SyntaxNode n)
         {
-            if(n is CompilationUnitSyntax || n is ClassDeclarationSyntax)
+            if (n is CompilationUnitSyntax || n is ClassDeclarationSyntax)
                 return n.ChildNodes().ToList();
             if (n is NamespaceDeclarationSyntax)
                 return n.ChildNodes().Skip(1).Take(1).ToList();

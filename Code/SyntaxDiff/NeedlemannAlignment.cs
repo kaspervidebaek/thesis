@@ -3,10 +3,17 @@ using System.Collections.Generic;
 
 namespace SyntaxDiff
 {
-    public class NeedlemanWunsch<T> 
+    public class NeedlemanWunsch<T>
+    {
+        public static List<Tuple<T, T>> Allignment(List<T> A, List<T> B, Func<T, T, bool> equal)
+        {
+            return NeedlemanWunsch<T, T>.Allignment(A, B, equal);
+        }
+    }
+    public class NeedlemanWunsch<T, U> 
     {
 
-        static Func<int, int, int> Sg(List<T> A, List<T> B, Func<T, T, bool> equal)
+        static Func<int, int, int> Sg(List<T> A, List<U> B, Func<T, U, bool> equal)
         {
             return  (i, j) => {
                 if (equal(A[i-1], B[j-1]))
@@ -16,7 +23,7 @@ namespace SyntaxDiff
         }
 
         static int d = 0;
-        public static int[,] AllignmentMatrix(List<T> A, List<T> B, Func<T, T, bool> equal)
+        public static int[,] AllignmentMatrix(List<T> A, List<U> B, Func<T, U, bool> equal)
         {
             var S = Sg(A, B, equal);
 
@@ -43,12 +50,12 @@ namespace SyntaxDiff
             return F;
         }
 
-        public static List<Tuple<T, T>> Allignment(List<T> A, List<T> B, Func<T, T, bool> equal)
+        public static List<Tuple<T, U>> Allignment(List<T> A, List<U> B, Func<T, U, bool> equal)
         {
             var S = Sg(A, B, equal);
             var F = AllignmentMatrix(A, B, equal);
 
-            var Allignment = new List<Tuple<T, T>>();
+            var Allignment = new List<Tuple<T, U>>();
             
             int i = A.Count;
             int j = B.Count;
@@ -64,7 +71,7 @@ namespace SyntaxDiff
                 }
                 else if (i > 0 && F[i, j] == F[i - 1, j] + d)
                 {
-                    Allignment.Add(Tuple.Create(A[i - 1], default(T)));
+                    Allignment.Add(Tuple.Create(A[i - 1], default(U)));
                     i--;
                 }
                 else //if (j > 0 && F[i, j] == F[i, j - 1] + d)

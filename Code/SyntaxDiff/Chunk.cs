@@ -46,7 +46,6 @@ namespace SyntaxDiff
 
         }
 
-
         public static List<Chunk<T>> getChunks(List<Diff<T>> match, Func<T, T, bool> comparer)
         {
             var cs = match.ChunkBy(m => comparer(m.A, m.O) && comparer(m.O, m.B));

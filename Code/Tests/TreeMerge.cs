@@ -158,6 +158,63 @@ namespace Tests
 
         [TestMethod]
         [TestCategory("TreeMerge")]
+        public void TreeChangeInsertIfLikeOnPaper()
+        {
+            var B = @"static void ShouldConflict()
+                        {
+                            Test1();
+                            if(true) {
+                                Test2(2, 2, 3, 4);
+                                Test78();
+                                Test3();
+                            }
+                            Test4();
+                            Test5();
+                            Test6();
+                        }
+                        ";
+            var O = @"static void ShouldConflict()
+                        {
+                            Test1 ();
+                            Test2 (2, 2, 3);
+                            Test3 ();
+                            Test4 ();
+                            Test99();
+                            Test5 ();
+                            Test6 ();
+                        }   
+                        ";
+            var A = @"static void ShouldConflict()
+                        {
+                            Test1  ();
+                            Test2  (2, 2, 3);
+                            Test3  ();
+                            if(true) {
+                                Test4  ();
+                                Test5  ();
+                                Test78();
+                                Test6  ();
+                            }
+                        }
+                        ";
+            var x = new SyntaxNodeSmartDiff();
+
+            var aTree = x.SyntaxFromLines(A);
+            var oTree = x.SyntaxFromLines(O);
+            var bTree = x.SyntaxFromLines(B);
+
+            var merge = x.MergeNode(aTree, oTree, bTree);
+
+            Console.WriteLine(merge);
+
+            var mTree = x.SyntaxFromLines(merge);
+
+
+        }
+
+
+        [TestMethod]
+        [TestCategory("TreeMerge")]
         public void TreeChangeInsertIfAsBlock()
         {
             var right = @"static void ShouldConflict()
@@ -248,7 +305,7 @@ namespace Tests
         [TestCategory("TreeMerge")]
         public void TreeChangeIfFromBlockToStatement()
         {
-            var right = @"static void ShouldConflict()
+            var B = @"static void ShouldConflict()
                         {
                             Test1();
                             if(true) {
@@ -258,7 +315,7 @@ namespace Tests
                             Test3();
                         }
                         ";
-            var bas = @"static void ShouldConflict()
+            var O = @"static void ShouldConflict()
                         {
                             Test1 ();
                             if(true) {
@@ -268,7 +325,7 @@ namespace Tests
                             Test3 ();
                         }   
                         ";
-            var left = @"static void ShouldConflict()
+            var A = @"static void ShouldConflict()
                         {
                             Test1  ();
                             if(true)
@@ -278,11 +335,106 @@ namespace Tests
                         ";
             var x = new SyntaxNodeSmartDiff();
 
-            var lTree = x.SyntaxFromLines(left);
-            var bTree = x.SyntaxFromLines(bas);
-            var rTree = x.SyntaxFromLines(right);
+            var aTree = x.SyntaxFromLines(A);
+            var oTree = x.SyntaxFromLines(O);
+            var bTree = x.SyntaxFromLines(B);
 
-            var merge = x.MergeNode(lTree, bTree, rTree);
+            var merge = x.MergeNode(aTree, oTree, bTree);
+
+            Console.WriteLine(merge);
+
+            var mTree = x.SyntaxFromLines(merge);
+        }
+
+        [TestMethod]
+        [TestCategory("TreeMerge")]
+        public void TreeChangeIfFromBlockToStatementInsertOnTheOutside()
+        {
+            var B = @"static void ShouldConflict()
+                        {
+                            Test1();
+                            if(true) {
+                                Test2(2, 2, 3, 4);
+                                TestNew();
+                            }
+                            Test3();
+                        }
+                        ";
+            var O = @"static void ShouldConflict()
+                        {
+                            Test1 ();
+                            if(true) {
+                                Test2 (2, 2, 3);
+                                TestNew ();
+                            }
+                            Test3 ();
+                        }   
+                        ";
+            var A = @"static void ShouldConflict()
+                        {
+                            Test1  ();
+                            Teeeest();
+                            if(true)
+                                Test2 (2, 2, 3);
+                            TeeeestTWOOO();
+                            Test3  ();
+                        }
+                        ";
+            var x = new SyntaxNodeSmartDiff();
+
+            var aTree = x.SyntaxFromLines(A);
+            var oTree = x.SyntaxFromLines(O);
+            var bTree = x.SyntaxFromLines(B);
+
+            var merge = x.MergeNode(aTree, oTree, bTree);
+
+            Console.WriteLine(merge);
+
+            var mTree = x.SyntaxFromLines(merge);
+
+
+        }
+
+
+        [TestMethod]
+        [TestCategory("TreeMerge")]
+        public void TreeChangeInsertTwoNewIfStatements()
+        {
+            var B = @"static void ShouldConflict()
+                        {
+                            Test1();
+                            TestOutside1();
+                            Test2();
+                            Test3();
+                            TestOutside2();
+                            Test4();   
+                        }
+                        ";
+            var O = @"static void ShouldConflict()
+                        {
+                            Test1 ();
+                            Test2 ();
+                            Test3 ();
+                            Test4 ();   
+                        }   
+                        ";
+            var A = @"static void ShouldConflict()
+                        {
+                            Test1  ();
+                            if(true)
+                                Test2  ();
+                            if(false)
+                                Test3  ();
+                            Test4  ();   
+                        }
+                        ";
+            var x = new SyntaxNodeSmartDiff();
+
+            var aTree = x.SyntaxFromLines(A);
+            var oTree = x.SyntaxFromLines(O);
+            var bTree = x.SyntaxFromLines(B);
+
+            var merge = x.MergeNode(aTree, oTree, bTree);
 
             Console.WriteLine(merge);
 

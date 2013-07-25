@@ -15,8 +15,15 @@ namespace ConsoleApp
             x.TestExampleTreeMerge();*/
 
             var x = new Tests.TreeMerge();
-            x.TreeChangeIfFromStatementToBlock();
-            x.TreeChangeIfFromBlockToStatement();
+            x.TreeChangeInsertIfLikeOnPaper();
+#if true
+            //x.TreeChangeIfFromStatementToBlock();
+            //x.TreeChangeIfFromBlockToStatement();
+            x.TreeChangeInsertIfAsBlock();
+            x.TreeChangeInsertIfAsStatement();
+
+#endif
+            x.TreeChangeInsertTwoNewIfStatements();
             Console.ReadLine();
             /*
             var x = new List<Tuple<string, int>>

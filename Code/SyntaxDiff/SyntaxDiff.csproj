@@ -66,6 +66,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Chunk.cs" />
+    <Compile Include="Chunk2.cs" />
     <Compile Include="Diff.cs" />
     <Compile Include="ISmartDiffInterface.cs" />
     <Compile Include="Reorder.cs" />

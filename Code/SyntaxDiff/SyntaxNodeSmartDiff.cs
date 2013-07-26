@@ -380,10 +380,18 @@ namespace SyntaxDiff
             //var totalMatch = NeedlemanWunsch<PriorityChunk2<StatementSyntax>>.Allignment(aMatches, bMatches, (x, y) => StatementListEquals(x.chunk.y, y.chunk.y));
 
             var aCnt = 0;
+            var oCnt = 0;
             var bCnt = 0;
 
-            while (aCnt < aMatches.Count && bCnt < bMatches.Count)
+            while (aCnt < originals.A.Count && oCnt < originals.O.Count && bCnt < originals.B.Count)
             {
+                if (hasSub(originals.A[aCnt]) || hasSub(originals.B[bCnt]))
+                {
+
+                }
+                else
+                {
+                }
             }
 
 

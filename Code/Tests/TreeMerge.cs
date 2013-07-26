@@ -171,6 +171,7 @@ namespace Tests
                             Test4();
                             Test5();
                             Test6();
+                            Test7();
                         }
                         ";
             var O = @"static void ShouldConflict()
@@ -182,6 +183,7 @@ namespace Tests
                             Test99();
                             Test5 ();
                             Test6 ();
+                            Test7 ();
                         }   
                         ";
             var A = @"static void ShouldConflict()
@@ -194,6 +196,7 @@ namespace Tests
                                 Test5  ();
                                 Test78();
                                 Test6  ();
+                                Test7  ();
                             }
                         }
                         ";

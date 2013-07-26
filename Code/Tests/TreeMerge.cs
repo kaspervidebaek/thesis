@@ -160,21 +160,22 @@ namespace Tests
         [TestCategory("TreeMerge")]
         public void TreeChangeInsertIfLikeOnPaper()
         {
-            var B = @"static void ShouldConflict()
+            var B = @"static void TreeChangeInsertIfLikeOnPaper()
                         {
                             Test1();
                             if(true) {
                                 Test2(2, 2, 3, 4);
                                 Test78();
                                 Test3();
-                            }
+                            Test55()
                             Test4();
                             Test5();
+                            }
                             Test6();
                             Test7();
                         }
                         ";
-            var O = @"static void ShouldConflict()
+            var O = @"static void TreeChangeInsertIfLikeOnPaper()
                         {
                             Test1 ();
                             Test2 (2, 2, 3);
@@ -186,7 +187,7 @@ namespace Tests
                             Test7 ();
                         }   
                         ";
-            var A = @"static void ShouldConflict()
+            var A = @"static void TreeChangeInsertIfLikeOnPaper()
                         {
                             Test1  ();
                             Test2  (2, 2, 3);
@@ -198,6 +199,7 @@ namespace Tests
                                 Test6  ();
                                 Test7  ();
                             }
+                            Test77  ();
                         }
                         ";
             var x = new SyntaxNodeSmartDiff();

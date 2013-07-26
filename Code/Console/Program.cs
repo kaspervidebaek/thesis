@@ -19,11 +19,11 @@ namespace ConsoleApp
 #if true
             //x.TreeChangeIfFromStatementToBlock();
             //x.TreeChangeIfFromBlockToStatement();
-            x.TreeChangeInsertIfAsBlock();
-            x.TreeChangeInsertIfAsStatement();
+            //x.TreeChangeInsertIfAsBlock();
+            //x.TreeChangeInsertIfAsStatement();
 
 #endif
-            x.TreeChangeInsertTwoNewIfStatements();
+            //x.TreeChangeInsertTwoNewIfStatements();
             Console.ReadLine();
             /*
             var x = new List<Tuple<string, int>>

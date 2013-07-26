@@ -14,6 +14,19 @@ namespace SyntaxDiff
             var childEnum = (n == null ? new List<SyntaxNode>() : n.ChildNodes()).ToList();
             return childEnum;
         }
+
+        public static IEnumerable<TSource> TakeRange<TSource>(
+                this IList<TSource> source,
+                int fromIndex,
+                int toIndex)
+        {
+            int currIndex = fromIndex;
+            while (currIndex < toIndex)
+            {
+                yield return source[currIndex];
+                currIndex++;
+            }
+        }
     }
 
 
@@ -218,6 +231,7 @@ namespace SyntaxDiff
                 return GetEnumerator();
             }
         }
+
     }
 
     // A simple named type is used for easier viewing in the debugger. Anonymous types 

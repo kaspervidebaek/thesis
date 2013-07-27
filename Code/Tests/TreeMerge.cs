@@ -167,10 +167,11 @@ namespace Tests
                                 Test2(2, 2, 3, 4);
                                 Test78();
                                 Test3();
-                            Test55()
+                            }
+                            if(1==1)
+                            Test55();
                             Test4();
                             Test5();
-                            }
                             Test6();
                             Test7();
                         }
@@ -192,7 +193,7 @@ namespace Tests
                             Test1  ();
                             Test2  (2, 2, 3);
                             Test3  ();
-                            if(true) {
+                            if(false) {
                                 Test4  ();
                                 Test5  ();
                                 Test78();

@@ -373,102 +373,232 @@ namespace SyntaxDiff
                 throw new NotImplementedException();
             };
 
-            var aBlocks = originals.A.Where(hasSub).Select(x => new { statement = x, sub = subStatement(x) });
-            var bBlocks = originals.B.Where(hasSub).Select(x => new { statement = x, sub = subStatement(x) });
 
-            var aMatches = aBlocks.Select(x => new { parents = x, chunks = IdentifyChunkRests(originals, x.sub, SubstatementPosition.A) }).ToList();
-            var bMatches = bBlocks.Select(x => new { parents = x, chunks = IdentifyChunkRests(originals, x.sub, SubstatementPosition.B) }).ToList();
+            var aParent = originals.A.First().Parent;
+            var oParent = originals.A.First().Parent;
+            var bParent = originals.A.First().Parent;
 
-            var aStatements = aMatches.SelectMany(x => x.chunks).SelectMany(x => x.chunk.O).ToList();
-            var bStatements = bMatches.SelectMany(x => x.chunks).SelectMany(x => x.chunk.O).ToList();
+            // Flatten all substatements out
+            var aStatementsFlattened = originals.A.SelectMany(x => hasSub(x) ? GetSubstatementList(subStatement(x)).Select(y => Tuple.Create(x, y)) : new List<Tuple<StatementSyntax, StatementSyntax>> { Tuple.Create((StatementSyntax)null, x) }).ToList();
+            var oStatementsFlattened = originals.O.SelectMany(x => hasSub(x) ? GetSubstatementList(subStatement(x)).Select(y => Tuple.Create(x, y)) : new List<Tuple<StatementSyntax, StatementSyntax>> { Tuple.Create((StatementSyntax)null, x) }).ToList();
+            var bStatementsFlattened = originals.B.SelectMany(x => hasSub(x) ? GetSubstatementList(subStatement(x)).Select(y => Tuple.Create(x, y)) : new List<Tuple<StatementSyntax, StatementSyntax>> { Tuple.Create((StatementSyntax)null, x) }).ToList();
 
-            var overlap = aStatements.Any(x => bStatements.Contains(x));
+            var flattenedMatch = Diff3<Tuple<StatementSyntax, StatementSyntax>>.ThreeWayDiffPriority(aStatementsFlattened, oStatementsFlattened, bStatementsFlattened, (x, y) => x != null && y != null && Equal(x.Item2, y.Item2), (x, y) => x != null && y != null && Similar(x.Item2, y.Item2));
 
-            if (overlap)
-                throw new Exception("Conflcit");
-
-            
-            var aCnt = 0;
-            var oCnt = 0;
-            var bCnt = 0;
-
-            var chunks = new List<Chunk<StatementSyntax>>();
+            StatementSyntax lastAItem = null;
+            StatementSyntax lastOItem = null;
+            StatementSyntax lastBItem = null;
 
             var output = new List<String>();
 
-            while (aCnt < originals.A.Count && oCnt < originals.O.Count && bCnt < originals.B.Count)
+            foreach (var match in flattenedMatch)
             {
-                var aItem = originals.A[aCnt];
-                var oItem = originals.O[oCnt];
-                var bItem = originals.B[bCnt];
-                if (hasSub(aItem))
+                if (new List<StatementSyntax> { lastAItem, lastOItem, lastBItem }.Where(x => x != null).Count() > 1)
+                    throw new Exception("Conflict");
+
+                if (match.chunk.stable)
                 {
-                    var match = aMatches.Single(x => x.parents.statement == aItem);
+                    var zipped = match.chunk.A.Zip(match.chunk.O.Zip(match.chunk.B, (o, b) => new { o = o, b = b }), (a, o) => new { a = a, o = o.o, b = o.b });
 
-                    var newoCnt = oCnt;
-                    while(originals.O[newoCnt] != match.chunks.First().chunk.O.First())
-                        newoCnt++;
-
-                    var newbCnt = bCnt;
-                    while (originals.B[newbCnt] != match.chunks.First().chunk.B.First())
-                        newbCnt++;
-                    
-                    var restMerge = MergeChunk(new List<StatementSyntax>(), originals.O.TakeRange(oCnt, newoCnt).ToList(), originals.B.TakeRange(bCnt, newbCnt).ToList());
-                    output.Add(restMerge);
-
-                    output.Add(getStr(aItem));
-                    if (match.parents.sub is BlockSyntax)
-                        output.Add("{");
-                    foreach (var chunk in match.chunks)
+                    var merged = new List<string>();
+                    foreach (var item in zipped)
                     {
-                        var mergeChunk = MergeChunk(chunk);
-                        output.Add(mergeChunk);
+                        var aOpen = item.a.Item1 != null;
+                        var oOpen = item.o.Item1 != null;
+                        var bOpen = item.b.Item1 != null;
+                        var lastAOpen = lastAItem != null;
+                        var lastOOpen = lastOItem != null;
+                        var lastBOpen = lastBItem != null;
+
+                        if (lastAItem != null && item.a.Item1 != null && lastAItem != item.a.Item1)
+                        {
+
+                        }
+                        else if (lastBItem != null && item.b.Item1 != null && lastBItem != item.b.Item1)
+                        {
+
+                        }
+
+                        if ((!aOpen && lastAOpen) || (!bOpen && lastBOpen))
+                        {
+                            merged.Add("}");
+                        }
+                        if (aOpen && !lastAOpen)
+                            merged.Add("if(" + ((IfStatementSyntax)item.a.Item1).Condition + ") {");
+                        if (oOpen && !lastOOpen)
+                            merged.Add("if(" + ((IfStatementSyntax)item.o.Item1).Condition + ") {");
+                        if (bOpen && !lastBOpen)
+                            merged.Add("if(" + ((IfStatementSyntax)item.b.Item1).Condition + ") {");
+
+                        merged.Add(MergeNode(item.a.Item2, item.o.Item2, item.b.Item2));
+
+                        lastAItem = item.a.Item1;
+                        lastOItem = item.o.Item1;
+                        lastBItem = item.b.Item1;
                     }
-                    if (match.parents.sub is BlockSyntax)
-                        output.Add("}");
 
-                    aCnt ++;
-                    oCnt = newoCnt + match.chunks.Sum(x => x.chunk.O.Count);
-                    bCnt = newbCnt + match.chunks.Sum(x => x.chunk.B.Count);
-                }
-                else if (hasSub(bItem))
-                {
-                    var match = bMatches.Single(x => x.parents.statement == bItem);
+                    output.Add(String.Join("\r\n", merged));
 
-                    var newoCnt = oCnt;
-                    while (originals.O[newoCnt] != match.chunks.First().chunk.O.First())
-                        newoCnt++;
-
-                    var newaCnt = aCnt;
-                    while (originals.A[newaCnt] != match.chunks.First().chunk.A.First())
-                        newaCnt++;
-
-                    var restMerge = MergeChunk(originals.A.TakeRange(aCnt, newaCnt).ToList(), originals.O.TakeRange(oCnt, newoCnt).ToList(), new List<StatementSyntax>());
-
-                    output.Add(getStr(bItem));
-                    if(match.parents.sub is BlockSyntax)
-                        output.Add("{");
-                    foreach(var chunk in match.chunks) {
-                        var mergeChunk = MergeChunk(chunk);
-                        output.Add(mergeChunk);
-                    }
-                    if (match.parents.sub is BlockSyntax)
-                        output.Add("}");
-
-                    aCnt += match.chunks.Sum(x => x.chunk.A.Count);
-                    oCnt += match.chunks.Sum(x => x.chunk.O.Count);
-                    bCnt++;
                 }
                 else
                 {
-                    throw new Exception("This should not happen");
-                }
+                    if (match.chunk.A.Count == 0 && match.chunk.O.Count == 0 && match.chunk.B.Count != 0)
+                    {
+                        var merged = new List<string>();
+                        foreach (var item in match.chunk.B)
+                        {
+                            var bOpen = item.Item1 != null;
+                            var lastBOpen = lastBItem != null;
+
+                            if (!bOpen && lastBOpen)
+                            {
+                                merged.Add("}");
+                            }
+                            if ((bOpen && !lastBOpen))
+                                merged.Add("if() {");
+                            else if(item.Item1 != lastBItem)
+                                merged.Add("}\r\nif() {");
+
+
+                            merged.Add(MergeNode(null, null, item.Item2));
+
+                            lastBItem = item.Item1;
+                        }
+
+                        output.Add(String.Join("\r\n", merged));
+                    }
+                    else if (match.chunk.A.Count != 0 && match.chunk.O.Count == 0 && match.chunk.B.Count == 0)
+                    {
+                        var merged = new List<string>();
+                        foreach (var item in match.chunk.A)
+                        {
+                            var aOpen = item.Item1 != null;
+                            var lastAOpen = lastAItem != null;
+
+                            if (!aOpen && lastAOpen)
+                            {
+                                merged.Add("}");
+                            }
+                            if (aOpen && !lastAOpen)
+                                merged.Add("if() {");
+
+                            merged.Add(MergeNode(null, null, item.Item2));
+
+                            lastAItem = item.Item1;
+                        }
+
+                        output.Add(String.Join("\r\n", merged));
+
+                    }
+                    else if (match.chunk.A.Count == 0 && match.chunk.O.Count != 0 && match.chunk.B.Count == 0);
+                    else
+                        throw new NotImplementedException();
+                };
             }
 
+            if (lastAItem != null || lastOItem != null || lastBItem != null)
+                output.Add("}");
 
-            output.Add(MergeChunk(originals.A.Skip(aCnt).ToList(), originals.O.Skip(oCnt).ToList(), originals.B.Skip(bCnt).ToList()));
+/*
+
+        // OLD METHOD. Lets try something new.
+        var aBlocks = originals.A.Where(hasSub).Select(x => new { statement = x, sub = subStatement(x) });
+        var bBlocks = originals.B.Where(hasSub).Select(x => new { statement = x, sub = subStatement(x) });
+
+        var aMatches = aBlocks.Select(x => new { parents = x, chunks = IdentifyChunkRests(originals, x.sub, SubstatementPosition.A) }).ToList();
+        var bMatches = bBlocks.Select(x => new { parents = x, chunks = IdentifyChunkRests(originals, x.sub, SubstatementPosition.B) }).ToList();
+
+        var aStatements = aMatches.SelectMany(x => x.chunks).SelectMany(x => x.chunk.O).ToList();
+        var bStatements = bMatches.SelectMany(x => x.chunks).SelectMany(x => x.chunk.O).ToList();
 
 
+        var overlap = aStatements.Any(x => bStatements.Contains(x));
+
+        if (overlap)
+            throw new Exception("Conflcit");
+
+            
+        var aCnt = 0;
+        var oCnt = 0;
+        var bCnt = 0;
+
+        var chunks = new List<Chunk<StatementSyntax>>();
+
+        var output = new List<String>();
+
+        while (aCnt < originals.A.Count && oCnt < originals.O.Count && bCnt < originals.B.Count)
+        {
+            var aItem = originals.A[aCnt];
+            var oItem = originals.O[oCnt];
+            var bItem = originals.B[bCnt];
+            if (hasSub(aItem))
+            {
+                var match = aMatches.Single(x => x.parents.statement == aItem);
+
+                var newoCnt = oCnt;
+                while(originals.O[newoCnt] != match.chunks.First().chunk.O.First())
+                    newoCnt++;
+
+                var newbCnt = bCnt;
+                while (originals.B[newbCnt] != match.chunks.First().chunk.B.First())
+                    newbCnt++;
+                    
+                var restMerge = MergeChunk(new List<StatementSyntax>(), originals.O.TakeRange(oCnt, newoCnt).ToList(), originals.B.TakeRange(bCnt, newbCnt).ToList());
+                output.Add(restMerge);
+
+                output.Add(getStr(aItem));
+                if (match.parents.sub is BlockSyntax)
+                    output.Add("{");
+                foreach (var chunk in match.chunks)
+                {
+                    var mergeChunk = MergeChunk(chunk);
+                    output.Add(mergeChunk);
+                }
+                if (match.parents.sub is BlockSyntax)
+                    output.Add("}");
+
+                aCnt ++;
+                oCnt = newoCnt + match.chunks.Sum(x => x.chunk.O.Count);
+                bCnt = newbCnt + match.chunks.Sum(x => x.chunk.B.Count);
+            }
+            else if (hasSub(bItem))
+            {
+                var match = bMatches.Single(x => x.parents.statement == bItem);
+
+                var newoCnt = oCnt;
+                while (originals.O[newoCnt] != match.chunks.First().chunk.O.First())
+                    newoCnt++;
+
+                var newaCnt = aCnt;
+                while (originals.A[newaCnt] != match.chunks.First().chunk.A.First())
+                    newaCnt++;
+
+                var restMerge = MergeChunk(originals.A.TakeRange(aCnt, newaCnt).ToList(), originals.O.TakeRange(oCnt, newoCnt).ToList(), new List<StatementSyntax>());
+
+                output.Add(getStr(bItem));
+                if(match.parents.sub is BlockSyntax)
+                    output.Add("{");
+                foreach(var chunk in match.chunks) {
+                    var mergeChunk = MergeChunk(chunk);
+                    output.Add(mergeChunk);
+                }
+                if (match.parents.sub is BlockSyntax)
+                    output.Add("}");
+
+                aCnt += match.chunks.Sum(x => x.chunk.A.Count);
+                oCnt += match.chunks.Sum(x => x.chunk.O.Count);
+                bCnt++;
+            }
+            else
+            {
+                throw new Exception("This should not happen");
+            }
+        }
+
+
+        output.Add(MergeChunk(originals.A.Skip(aCnt).ToList(), originals.O.Skip(oCnt).ToList(), originals.B.Skip(bCnt).ToList()));
+
+        */
             return string.Join("\r\n", output.Where(x => x != null).ToArray());
             //throw new NotImplementedException();
         }
@@ -483,6 +613,18 @@ namespace SyntaxDiff
 
         private List<PriorityChunk<StatementSyntax>> IdentifyChunkRests(Chunk<StatementSyntax> originals, StatementSyntax substatement, SubstatementPosition pos)
         {
+            var Subs = GetSubstatementList(substatement);
+
+            var A = pos == SubstatementPosition.A ? Subs : originals.A;
+            var O = pos == SubstatementPosition.O ? Subs : originals.O;
+            var B = pos == SubstatementPosition.B ? Subs : originals.B;
+
+            return ExtractRelevantChunks(A, O, B);
+
+        }
+
+        private static List<StatementSyntax> GetSubstatementList(StatementSyntax substatement)
+        {
             List<StatementSyntax> Subs;
 
             if (substatement is ExpressionStatementSyntax)
@@ -496,27 +638,20 @@ namespace SyntaxDiff
             }
             else
                 throw new NotImplementedException();
-
-            var A = pos == SubstatementPosition.A ? Subs : originals.A;
-            var O = pos == SubstatementPosition.O ? Subs : originals.O;
-            var B = pos == SubstatementPosition.B ? Subs : originals.B;
-
-            return ExtractRelevantChunks(A, O, B);
-
+            return Subs;
         }
 
         private List<PriorityChunk<StatementSyntax>> ExtractRelevantChunks(List<StatementSyntax> A, List<StatementSyntax> O, List<StatementSyntax> B)
         {
-            //var chunks = Diff3<StatementSyntax>
-                //.ThreeWayDiffPriority(A, O, B, (x, y) => x != null && y != null && Equal(x, y), (x, y) => x != null && y != null && Similar(x, y));
+            var chunks = Diff3<StatementSyntax>
+                .ThreeWayDiffPriority(A, O, B, (x, y) => x != null && y != null && Equal(x, y), (x, y) => x != null && y != null && Similar(x, y));
 
-            var chunkAO = Chunk2<StatementSyntax>
+            /*var chunkAO = Chunk2<StatementSyntax>
                 .TwoWayDiffPriority(A, O, (x, y) => x != null && y != null && Equal(x, y), (x, y) => x != null && y != null && Similar(x, y));
             var chunkBO = Chunk2<StatementSyntax>
-                .TwoWayDiffPriority(B, O, (x, y) => x != null && y != null && Equal(x, y), (x, y) => x != null && y != null && Similar(x, y));
+                .TwoWayDiffPriority(B, O, (x, y) => x != null && y != null && Equal(x, y), (x, y) => x != null && y != null && Similar(x, y));*/
 
 
-            /*
             var firstStableChunk = chunks.First(x => x.chunk.stable);
             var lastStableChunk = chunks.Last(x => x.chunk.stable);
 
@@ -537,8 +672,7 @@ namespace SyntaxDiff
                     break;
             }
 
-            return rv;*/
-            return null;
+            return rv;
         }
         /*
         private List<Tuple<StatementSyntax, List<Tuple<StatementSyntax, double>>> ChunkPrices(StatementSyntax other, List<StatementSyntax> bas) {

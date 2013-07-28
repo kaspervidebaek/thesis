@@ -15,6 +15,17 @@ namespace SyntaxDiff
             return childEnum;
         }
 
+        public static void ForAdjacent<T>(this List<T> l, Action<T, T, T> f) where T:class
+        {
+            f(null, l[0], l[1]);
+            for (int i = 1; i < l.Count - 1; i++)
+            {
+                f(l[i - 1], l[i], l[i + 1]);
+            }
+            f(l[l.Count - 2], l[l.Count - 1], null);
+        }
+
+
         public static IEnumerable<TSource> TakeRange<TSource>(
                 this IList<TSource> source,
                 int fromIndex,

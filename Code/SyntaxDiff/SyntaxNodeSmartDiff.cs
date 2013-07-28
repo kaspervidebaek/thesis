@@ -398,7 +398,14 @@ namespace SyntaxDiff
 
                 if (match.chunk.stable)
                 {
-                    var zipped = match.chunk.A.Zip(match.chunk.O.Zip(match.chunk.B, (o, b) => new { o = o, b = b }), (a, o) => new { a = a, o = o.o, b = o.b });
+                    var zipped = from index in Enumerable.Range(0, match.chunk.A.Count)
+                                select new
+                                {
+                                    a = match.chunk.A[index],
+                                    o = match.chunk.O[index],
+                                    b = match.chunk.B[index]
+                                }; 
+
 
                     var merged = new List<string>();
                     foreach (var item in zipped)
@@ -410,14 +417,6 @@ namespace SyntaxDiff
                         var lastOOpen = lastOItem != null;
                         var lastBOpen = lastBItem != null;
 
-                        if (lastAItem != null && item.a.Item1 != null && lastAItem != item.a.Item1)
-                        {
-
-                        }
-                        else if (lastBItem != null && item.b.Item1 != null && lastBItem != item.b.Item1)
-                        {
-
-                        }
 
                         if ((!aOpen && lastAOpen) || (!bOpen && lastBOpen))
                         {
@@ -455,9 +454,9 @@ namespace SyntaxDiff
                                 merged.Add("}");
                             }
                             if ((bOpen && !lastBOpen))
-                                merged.Add("if() {");
-                            else if(item.Item1 != lastBItem)
-                                merged.Add("}\r\nif() {");
+                                merged.Add("if(" + ((IfStatementSyntax)item.Item1).Condition + ") {");
+                            else if (item.Item1 != lastBItem)
+                                merged.Add("}\r\nif(" + ((IfStatementSyntax)item.Item1).Condition + ") {");
 
 
                             merged.Add(MergeNode(null, null, item.Item2));
@@ -469,23 +468,7 @@ namespace SyntaxDiff
                     }
                     else if (match.chunk.A.Count != 0 && match.chunk.O.Count == 0 && match.chunk.B.Count == 0)
                     {
-                        var merged = new List<string>();
-                        foreach (var item in match.chunk.A)
-                        {
-                            var aOpen = item.Item1 != null;
-                            var lastAOpen = lastAItem != null;
-
-                            if (!aOpen && lastAOpen)
-                            {
-                                merged.Add("}");
-                            }
-                            if (aOpen && !lastAOpen)
-                                merged.Add("if() {");
-
-                            merged.Add(MergeNode(null, null, item.Item2));
-
-                            lastAItem = item.Item1;
-                        }
+                        var merged = NewMethod(ref lastAItem, match);
 
                         output.Add(String.Join("\r\n", merged));
 
@@ -499,108 +482,30 @@ namespace SyntaxDiff
             if (lastAItem != null || lastOItem != null || lastBItem != null)
                 output.Add("}");
 
-/*
-
-        // OLD METHOD. Lets try something new.
-        var aBlocks = originals.A.Where(hasSub).Select(x => new { statement = x, sub = subStatement(x) });
-        var bBlocks = originals.B.Where(hasSub).Select(x => new { statement = x, sub = subStatement(x) });
-
-        var aMatches = aBlocks.Select(x => new { parents = x, chunks = IdentifyChunkRests(originals, x.sub, SubstatementPosition.A) }).ToList();
-        var bMatches = bBlocks.Select(x => new { parents = x, chunks = IdentifyChunkRests(originals, x.sub, SubstatementPosition.B) }).ToList();
-
-        var aStatements = aMatches.SelectMany(x => x.chunks).SelectMany(x => x.chunk.O).ToList();
-        var bStatements = bMatches.SelectMany(x => x.chunks).SelectMany(x => x.chunk.O).ToList();
-
-
-        var overlap = aStatements.Any(x => bStatements.Contains(x));
-
-        if (overlap)
-            throw new Exception("Conflcit");
-
-            
-        var aCnt = 0;
-        var oCnt = 0;
-        var bCnt = 0;
-
-        var chunks = new List<Chunk<StatementSyntax>>();
-
-        var output = new List<String>();
-
-        while (aCnt < originals.A.Count && oCnt < originals.O.Count && bCnt < originals.B.Count)
-        {
-            var aItem = originals.A[aCnt];
-            var oItem = originals.O[oCnt];
-            var bItem = originals.B[bCnt];
-            if (hasSub(aItem))
-            {
-                var match = aMatches.Single(x => x.parents.statement == aItem);
-
-                var newoCnt = oCnt;
-                while(originals.O[newoCnt] != match.chunks.First().chunk.O.First())
-                    newoCnt++;
-
-                var newbCnt = bCnt;
-                while (originals.B[newbCnt] != match.chunks.First().chunk.B.First())
-                    newbCnt++;
-                    
-                var restMerge = MergeChunk(new List<StatementSyntax>(), originals.O.TakeRange(oCnt, newoCnt).ToList(), originals.B.TakeRange(bCnt, newbCnt).ToList());
-                output.Add(restMerge);
-
-                output.Add(getStr(aItem));
-                if (match.parents.sub is BlockSyntax)
-                    output.Add("{");
-                foreach (var chunk in match.chunks)
-                {
-                    var mergeChunk = MergeChunk(chunk);
-                    output.Add(mergeChunk);
-                }
-                if (match.parents.sub is BlockSyntax)
-                    output.Add("}");
-
-                aCnt ++;
-                oCnt = newoCnt + match.chunks.Sum(x => x.chunk.O.Count);
-                bCnt = newbCnt + match.chunks.Sum(x => x.chunk.B.Count);
-            }
-            else if (hasSub(bItem))
-            {
-                var match = bMatches.Single(x => x.parents.statement == bItem);
-
-                var newoCnt = oCnt;
-                while (originals.O[newoCnt] != match.chunks.First().chunk.O.First())
-                    newoCnt++;
-
-                var newaCnt = aCnt;
-                while (originals.A[newaCnt] != match.chunks.First().chunk.A.First())
-                    newaCnt++;
-
-                var restMerge = MergeChunk(originals.A.TakeRange(aCnt, newaCnt).ToList(), originals.O.TakeRange(oCnt, newoCnt).ToList(), new List<StatementSyntax>());
-
-                output.Add(getStr(bItem));
-                if(match.parents.sub is BlockSyntax)
-                    output.Add("{");
-                foreach(var chunk in match.chunks) {
-                    var mergeChunk = MergeChunk(chunk);
-                    output.Add(mergeChunk);
-                }
-                if (match.parents.sub is BlockSyntax)
-                    output.Add("}");
-
-                aCnt += match.chunks.Sum(x => x.chunk.A.Count);
-                oCnt += match.chunks.Sum(x => x.chunk.O.Count);
-                bCnt++;
-            }
-            else
-            {
-                throw new Exception("This should not happen");
-            }
-        }
-
-
-        output.Add(MergeChunk(originals.A.Skip(aCnt).ToList(), originals.O.Skip(oCnt).ToList(), originals.B.Skip(bCnt).ToList()));
-
-        */
             return string.Join("\r\n", output.Where(x => x != null).ToArray());
             //throw new NotImplementedException();
+        }
+
+        private List<string> NewMethod(ref StatementSyntax lastItem, PriorityChunk<Tuple<StatementSyntax, StatementSyntax>> match)
+        {
+            var merged = new List<string>();
+            foreach (var item in match.chunk.A)
+            {
+                var open = item.Item1 != null;
+                var lastopen = lastItem != null;
+
+                if (!open && lastopen)
+                {
+                    merged.Add("}");
+                }
+                if (open && !lastopen)
+                    merged.Add("if(" + ((IfStatementSyntax)item.Item1).Condition + ") {");
+
+                merged.Add(MergeNode(null, null, item.Item2));
+
+                lastItem = item.Item1;
+            }
+            return merged;
         }
 
         public bool Similar(StatementSyntax x, StatementSyntax y)

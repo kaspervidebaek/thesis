@@ -64,19 +64,19 @@ namespace Tests
         [TestCategory("TreeMerge")]
         public void TreeChangeTwoToSame()
         {
-            var right = @"static void ShouldConflict()
+            var right = @"static void TreeChangeTwoToSame()
                         {
                             if(true)
                                 Console.WriteLine(""Hello, new World!"");
                         }
                         ";
-            var bas = @"static void ShouldConflict()
+            var bas = @"static void TreeChangeTwoToSame()
                         {
                             if(false)
                                 Console.WriteLine(""Hello, new World!"");
                         }   
                         ";
-            var left = @"static void ShouldConflict()
+            var left = @"static void TreeChangeTwoToSame()
                         {
                             if(true)
                                 Console.WriteLine(""Hello, right!"");
@@ -96,17 +96,17 @@ namespace Tests
         [TestCategory("TreeMerge")]
         public void TreeChangeAndDeleteSingleInBlock()
         {
-            var right = @"static void ShouldConflict()
+            var right = @"static void TreeChangeAndDeleteSingleInBlock()
                         {
                             Test ();
                         }
                         ";
-            var bas = @"static void ShouldConflict()
+            var bas = @"static void TreeChangeAndDeleteSingleInBlock()
                         {
                             Test();
                         }   
                         ";
-            var left = @"static void ShouldConflict()
+            var left = @"static void TreeChangeAndDeleteSingleInBlock()
                         {
                         }
                         ";
@@ -125,20 +125,20 @@ namespace Tests
         [TestCategory("TreeMerge")]
         public void TreeChangeInsertCall()
         {
-            var right = @"static void ShouldConflict()
+            var right = @"static void TreeChangeInsertCall()
                         {
                             Test();
                             Test2 ();
                             Test();
                         }
                         ";
-            var bas = @"static void ShouldConflict()
+            var bas = @"static void TreeChangeInsertCall()
                         {
                             Test ();
                             Test ();
                         }   
                         ";
-            var left = @"static void ShouldConflict()
+            var left = @"static void TreeChangeInsertCall()
                         {
                             Test  ();
                             Test3  ();
@@ -223,7 +223,7 @@ namespace Tests
         [TestCategory("TreeMerge")]
         public void TreeChangeInsertIfAsBlock()
         {
-            var right = @"static void ShouldConflict()
+            var right = @"static void TreeChangeInsertIfAsBlock()
                         {
                             Test1();
                             Test2();
@@ -233,7 +233,7 @@ namespace Tests
                             Test4();
                         }
                         ";
-            var bas = @"static void ShouldConflict()
+            var bas = @"static void TreeChangeInsertIfAsBlock()
                         {
                             Test1 ();
                             Test2 ();
@@ -241,7 +241,7 @@ namespace Tests
                             Test4 ();
                         }   
                         ";
-            var left = @"static void ShouldConflict()
+            var left = @"static void TreeChangeInsertIfAsBlock()
                         {
                             Test1  ();
                             if(true) {
@@ -270,21 +270,21 @@ namespace Tests
         [TestCategory("TreeMerge")]
         public void TreeChangeInsertIfAsStatement()
         {
-            var right = @"static void ShouldConflict()
+            var right = @"static void TreeChangeInsertIfAsStatement()
                         {
                             Test1();
                             Test2  (1, 2, 2, 19);
                             Test3();
                         }
                         ";
-            var bas = @"static void ShouldConflict()
+            var bas = @"static void TreeChangeInsertIfAsStatement()
                         {
                             Test1 ();
                             Test2 (1, 2, 2, 3);
                             Test3 ();
                         }   
                         ";
-            var left = @"static void ShouldConflict()
+            var left = @"static void TreeChangeInsertIfAsStatement()
                         {
                             Test1  ();
                             if(true)
@@ -311,7 +311,7 @@ namespace Tests
         [TestCategory("TreeMerge")]
         public void TreeChangeIfFromBlockToStatement()
         {
-            var B = @"static void ShouldConflict()
+            var B = @"static void TreeChangeIfFromBlockToStatement()
                         {
                             Test1();
                             if(true) {
@@ -321,7 +321,7 @@ namespace Tests
                             Test3();
                         }
                         ";
-            var O = @"static void ShouldConflict()
+            var O = @"static void TreeChangeIfFromBlockToStatement()
                         {
                             Test1 ();
                             if(true) {
@@ -331,7 +331,7 @@ namespace Tests
                             Test3 ();
                         }   
                         ";
-            var A = @"static void ShouldConflict()
+            var A = @"static void TreeChangeIfFromBlockToStatement()
                         {
                             Test1  ();
                             if(true)
@@ -356,7 +356,7 @@ namespace Tests
         [TestCategory("TreeMerge")]
         public void TreeChangeIfFromBlockToStatementInsertOnTheOutside()
         {
-            var B = @"static void ShouldConflict()
+            var B = @"static void TreeChangeIfFromBlockToStatementInsertOnTheOutside()
                         {
                             Test1();
                             if(true) {
@@ -366,7 +366,7 @@ namespace Tests
                             Test3();
                         }
                         ";
-            var O = @"static void ShouldConflict()
+            var O = @"static void TreeChangeIfFromBlockToStatementInsertOnTheOutside()
                         {
                             Test1 ();
                             if(true) {
@@ -376,7 +376,7 @@ namespace Tests
                             Test3 ();
                         }   
                         ";
-            var A = @"static void ShouldConflict()
+            var A = @"static void TreeChangeIfFromBlockToStatementInsertOnTheOutside()
                         {
                             Test1  ();
                             Teeeest();
@@ -406,7 +406,7 @@ namespace Tests
         [TestCategory("TreeMerge")]
         public void TreeChangeInsertTwoNewIfStatements()
         {
-            var B = @"static void ShouldConflict()
+            var B = @"static void TreeChangeInsertTwoNewIfStatements()
                         {
                             Test1();
                             TestOutside1();
@@ -416,7 +416,7 @@ namespace Tests
                             Test4();   
                         }
                         ";
-            var O = @"static void ShouldConflict()
+            var O = @"static void TreeChangeInsertTwoNewIfStatements()
                         {
                             Test1 ();
                             Test2 ();
@@ -424,7 +424,7 @@ namespace Tests
                             Test4 ();   
                         }   
                         ";
-            var A = @"static void ShouldConflict()
+            var A = @"static void TreeChangeInsertTwoNewIfStatements()
                         {
                             Test1  ();
                             if(true)
@@ -453,7 +453,7 @@ namespace Tests
         [TestCategory("TreeMerge")]
         public void TreeChangeIfFromStatementToBlock()
         {
-            var right = @"static void ShouldConflict()
+            var right = @"static void TreeChangeIfFromStatementToBlock()
                         {
                             Test1();
                             if(true) {
@@ -463,7 +463,7 @@ namespace Tests
                             Test3();
                         }
                         ";
-            var bas = @"static void ShouldConflict()
+            var bas = @"static void TreeChangeIfFromStatementToBlock()
                         {
                             Test1 ();
                             if(true)
@@ -471,7 +471,7 @@ namespace Tests
                             Test3 ();
                         }   
                         ";
-            var left = @"static void ShouldConflict()
+            var left = @"static void TreeChangeIfFromStatementToBlock()
                         {
                             Test1  ();
                             if(true)
@@ -498,17 +498,17 @@ namespace Tests
         [TestCategory("TreeMerge")]
         public void TreeChangeAndDeleteSingleInBlockWithChangeInOther()
         {
-            var right = @"static void ShouldConflict()
+            var right = @"static void TreeChangeAndDeleteSingleInBlockWithChangeInOther()
                         {
                             Test2();
                         }
                         ";
-            var bas = @"static void ShouldConflict()
+            var bas = @"static void TreeChangeAndDeleteSingleInBlockWithChangeInOther()
                         {
                             Test();
                         }   
                         ";
-            var left = @"static void ShouldConflict()
+            var left = @"static void TreeChangeAndDeleteSingleInBlockWithChangeInOther()
                         {
                         }
                         ";

@@ -121,13 +121,8 @@ namespace SyntaxDiff
                             outChunks.Add(new PriorityChunk<T>() { chunk = innerchunk, equalType = ChunkEqualType.NotEqual });
 
                     }
-
-
-
                 }
-
             }
-            
 
             return outChunks;
         }

@@ -12,6 +12,9 @@ namespace SyntaxDiff
         public T O;
         public T B;
 
+        public Diff()
+        {
+        }
         public Diff(Tuple<T, T> Item1, Tuple<T, T> Item2)
         {
             A = Item1 == null ? default(T) : Item1.Item1;

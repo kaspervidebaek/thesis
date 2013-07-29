@@ -451,6 +451,54 @@ namespace Tests
 
         [TestMethod]
         [TestCategory("TreeMerge")]
+        public void TreeChangeIfMoveOutsideBlock()
+        {
+            var right = @"static void TreeChangeIfMoveOutsideBlock()
+                        {
+                            Test1();
+                            if(true) {
+                                Test2 (2, 2, 3);
+                                TestNew (2, 3, 4);
+                            }
+                            Test3();
+                        }
+                        ";
+            var bas = @"static void TreeChangeIfMoveOutsideBlock()
+                        {
+                            Test1 ();
+                            if(true) {
+                                Test2 (2, 2, 3);
+                                TestNew (2, 3, 5);
+                            }
+                            Test3 ();
+                        }   
+                        ";
+            var left = @"static void TreeChangeIfMoveOutsideBlock()
+                        {
+                            Test1  ();
+                            if(true)
+                                Test2 (2, 2, 3);
+                            TestNew (2, 3);
+                            Test3  ();
+                        }
+                        ";
+            var x = new SyntaxNodeSmartDiff();
+
+            var lTree = x.SyntaxFromLines(left);
+            var bTree = x.SyntaxFromLines(bas);
+            var rTree = x.SyntaxFromLines(right);
+
+            var merge = x.MergeNode(lTree, bTree, rTree);
+
+            Console.WriteLine(merge);
+
+            var mTree = x.SyntaxFromLines(merge);
+
+
+        }
+
+        [TestMethod]
+        [TestCategory("TreeMerge")]
         public void TreeChangeIfFromStatementToBlock()
         {
             var right = @"static void TreeChangeIfFromStatementToBlock()

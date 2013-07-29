@@ -317,12 +317,20 @@ namespace SyntaxDiff
             {
                 return null;
             }
-             // Nothing passed in.
+            // Nothing passed in.
             if (A.Count == 0 && O.Count == 0 && B.Count == 0)
                 return null;
 
             throw new NotImplementedException();
 
+        }
+        private ExpressionSyntax GetCondition(StatementSyntax x)
+        {
+            if (x is IfStatementSyntax)
+                return (x as IfStatementSyntax).Condition;
+            if (x is WhileStatementSyntax)
+                return (x as WhileStatementSyntax).Condition;
+            throw new NotImplementedException();
         }
 
         private StatementSyntax substatement(StatementSyntax x)
@@ -330,7 +338,7 @@ namespace SyntaxDiff
             if (x is IfStatementSyntax)
                 return (x as IfStatementSyntax).Statement;
             if (x is WhileStatementSyntax)
-                return (x as IfStatementSyntax).Statement;
+                return (x as WhileStatementSyntax).Statement;
             if (x is BlockSyntax)
                 return x;
             if (x is ExpressionStatementSyntax)
@@ -339,10 +347,34 @@ namespace SyntaxDiff
             throw new NotImplementedException();
         }
 
-        private string getStr(StatementSyntax x)
+        private string GetMerge(StatementSyntax A, StatementSyntax O, StatementSyntax B)
         {
-            if (x is IfStatementSyntax)
-                return "if(" + (x as IfStatementSyntax).Condition.ToString() + ")";
+            var internalItem = "";
+            if (A == null && O == null && B != null)
+            {
+                internalItem = B.ToString();
+            }
+            else if (A != null && O == null && B == null)
+            {
+                internalItem = A.ToString();
+            }
+            else if (A != null && O != null && B == null)
+            {
+                return null;
+            }
+            else if (A == null && O != null && B != null)
+            {
+                return null;
+            }
+            else if (A != null && O != null && B != null)
+            {
+                internalItem = MergeNode(GetCondition(A), GetCondition(O), GetCondition(B));
+            }
+
+            if (A is IfStatementSyntax || O is IfStatementSyntax || B is IfStatementSyntax)
+                return "if(" + internalItem + ")";
+            if (A is WhileStatementSyntax || O is WhileStatementSyntax || B is WhileStatementSyntax)
+                return "while(" + internalItem + ")";
 
             throw new NotImplementedException();
         }
@@ -366,39 +398,57 @@ namespace SyntaxDiff
 
             var flattenedMatch = Diff3<Tuple<StatementSyntax, StatementSyntax>>.ThreeWayDiffPriority(aStatementsFlattened, oStatementsFlattened, bStatementsFlattened, (x, y) => x != null && y != null && Equal(x.Item2, y.Item2), (x, y) => x != null && y != null && Similar(x.Item2, y.Item2));
 
-            StatementSyntax lastAItem = null;
-            StatementSyntax lastOItem = null;
-            StatementSyntax lastBItem = null;
+            Diff<StatementSyntax> lastItem = new Diff<StatementSyntax>();
 
             var output = new List<String>();
+            Func<StatementSyntax, StatementSyntax, StatementSyntax, bool> isBlockSyntax2 = (A, O, B) =>
+            {
+                if (A == null && O == null && B != null && substatement(B) is BlockSyntax)
+                    return true;
+                if (A != null && substatement(A) is BlockSyntax && O == null && B == null)
+                    return true;
+                if (A != null && O != null && B != null)
+                {
+                    if (substatement(A) is ExpressionStatementSyntax && substatement(O) is ExpressionStatementSyntax && substatement(B) is BlockSyntax)
+                        return true;
+                    if (substatement(A) is BlockSyntax && substatement(O) is ExpressionStatementSyntax && substatement(B) is ExpressionStatementSyntax)
+                        return true;
+                }
+
+                return false;
+            };
+
+            Func<Diff<StatementSyntax>, bool> isBlockSyntax = x =>
+            {
+                return isBlockSyntax2(x.A, x.O, x.B);
+            };
 
             foreach (var match in flattenedMatch)
             {
                 //if (new List<StatementSyntax> { lastAItem, lastOItem, lastBItem }.Where(x => x != null).Count() > 1)
-                    //throw new Exception("Conflict");
+                //throw new Exception("Conflict");
 
                 if (match.chunk.stable)
                 {
                     var zipped = from index in Enumerable.Range(0, match.chunk.A.Count)
-                                select new Diff<Tuple<StatementSyntax, StatementSyntax>>
-                                {
-                                    A = match.chunk.A[index],
-                                    O = match.chunk.O[index],
-                                    B = match.chunk.B[index]
-                                }; 
+                                 select new Diff<Tuple<StatementSyntax, StatementSyntax>>
+                                 {
+                                     A = match.chunk.A[index],
+                                     O = match.chunk.O[index],
+                                     B = match.chunk.B[index]
+                                 };
 
 
                     var merged = new List<string>();
                     foreach (var item in zipped)
                     {
-                        var aChanged = lastAItem != item.A.Item1;
-                        var oChanged = lastOItem != item.O.Item1;
-                        var bChanged = lastBItem != item.B.Item1;
+                        var aChanged = lastItem.A != item.A.Item1;
+                        var oChanged = lastItem.O != item.O.Item1;
+                        var bChanged = lastItem.B != item.B.Item1;
 
                         if (aChanged || oChanged || bChanged)
                         {
-                            if ((lastAItem != null && substatement(lastAItem) is BlockSyntax ||
-                                (lastBItem != null  && substatement(lastBItem) is BlockSyntax)))
+                            if (isBlockSyntax(lastItem))
                                 merged.Add("}");
 
                             StatementSyntax openItem = null;
@@ -411,33 +461,33 @@ namespace SyntaxDiff
                             if (item.B.Item1 != null)
                                 openItem = item.B.Item1;
 
-                            if (openItem != null)
+                            if (item.A.Item1 != null || item.O.Item1 != null || item.B.Item1 != null)
                             {
-                                merged.Add(getStr(openItem));
-                                if (substatement(openItem) is BlockSyntax)
+                                merged.Add(GetMerge(item.A.Item1, item.O.Item1, item.B.Item1));
+                                if (isBlockSyntax2(item.A.Item1, item.O.Item1, item.B.Item1))
                                     merged.Add("{");
                             }
                         }
 
                         merged.Add(MergeNode(item.A.Item2, item.O.Item2, item.B.Item2));
 
-                        lastAItem = item.A.Item1;
-                        lastOItem = item.O.Item1;
-                        lastBItem = item.B.Item1;
+                        lastItem.A = item.A.Item1;
+                        lastItem.O = item.O.Item1;
+                        lastItem.B = item.B.Item1;
                     }
 
-                    output.Add(String.Join("\r\n", merged));
+                    output.Add(String.Join("\r\n", merged.Where(x => x != null)));
 
                 }
                 else
                 {
                     if (match.chunk.A.Count == 0 && match.chunk.O.Count == 0 && match.chunk.B.Count != 0)
                     {
-                        output.Add(String.Join("\r\n", NewMethod(ref lastBItem, match, SubstatementPosition.B)));
+                        output.Add(String.Join("\r\n", NewMethod(ref lastItem.B, match, SubstatementPosition.B)));
                     }
                     else if (match.chunk.A.Count != 0 && match.chunk.O.Count == 0 && match.chunk.B.Count == 0)
                     {
-                        output.Add(String.Join("\r\n", NewMethod(ref lastAItem, match, SubstatementPosition.A)));
+                        output.Add(String.Join("\r\n", NewMethod(ref lastItem.A, match, SubstatementPosition.A)));
                     }
                     else if (match.chunk.A.Count == 0 && match.chunk.O.Count != 0 && match.chunk.B.Count == 0) // Deleted in both
                         continue;
@@ -447,11 +497,10 @@ namespace SyntaxDiff
                         continue; // TODO: Conflcit
                     else
                         throw new NotImplementedException();
-                };
+                }
             }
 
-            if ((lastAItem != null && substatement(lastAItem) is BlockSyntax ||
-                (lastBItem != null && substatement(lastBItem) is BlockSyntax)))
+            if (isBlockSyntax(lastItem))
                 output.Add("}");
 
             return string.Join("\r\n", output.Where(x => x != null).ToArray());
@@ -481,7 +530,7 @@ namespace SyntaxDiff
                 if (open && !lastopen)
                 {
                     merged.Add("if(" + ((IfStatementSyntax)item.Item1).Condition + ")");
-                    if(substatement(item.Item1) is BlockSyntax)
+                    if (substatement(item.Item1) is BlockSyntax)
                         merged.Add("}");
 
                 }
@@ -494,7 +543,7 @@ namespace SyntaxDiff
                         merged.Add("{");
                 }
 
-                if(pos == SubstatementPosition.A)
+                if (pos == SubstatementPosition.A)
                     merged.Add(MergeNode(item.Item2, null, null));
                 else if (pos == SubstatementPosition.O)
                     merged.Add(MergeNode(null, item.Item2, null));
@@ -510,7 +559,8 @@ namespace SyntaxDiff
         {
             return Similarity(x, y) > 0.6f;
         }
-        enum SubstatementPosition {
+        enum SubstatementPosition
+        {
             A, O, B
         }
 
@@ -764,7 +814,7 @@ namespace SyntaxDiff
                 }
                 var avg = statementsTotal / statements;
                 //throw new NotImplementedException("We need to tests thissssSSS");
-                                return avg;
+                return avg;
             }
             throw new NotImplementedException();
         }

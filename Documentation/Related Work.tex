@@ -298,13 +298,14 @@ Tree matching will still have a cubic running time on the amount of nodes, howev
 - Choosing Roslyn
 
 
-In this section I will dive into the implementation of the code. The main function of the algorithm looks like this:
+In this section I will dive into the implementation of the code. The main function of the algorithm looks like this. We will focus on two issues:
+
+- Merging functions on a statement-level
+- Merging classes in a structured fashion.
 
 
-
-
-
-
+\subsection{Merging classes}
+Classes, namespaces etc are structures.
 
 file merge(base, left, right)
     if(nodes are unordered)
@@ -336,11 +337,6 @@ file orderedmerge(base, left, right)
     run diff3 algorithm on the source text of base, left, right
     if a conflict happens, do a three-way matching-tree matching on the trees. instead.
     use this three-way match to reconstruct a new tree.
-
-
-
-This leaves us with three questions that are open for discussions.
-
 
 
 
@@ -402,6 +398,17 @@ Observations:
 
 
 \todo{Match default? Forrest or tree? Do we allways know that the root node matches?}
+
+
+
+\subsubsection{Merging statements}
+
+
+-- Equality
+-- Similiarity
+-- Matching blocks and lists
+-- Merging.
+--- Merging inserted blocks.
 
 \clearpage
 \section{Evaluation}

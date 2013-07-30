@@ -15,7 +15,8 @@ namespace ConsoleApp
             x.TestExampleTreeMerge();*/
 
             var x = new Tests.TreeMerge();
-            x.TreeChangeIfMoveOutsideBlock();
+            x.TreeChangeInsertSimpleBlock();
+            //x.TreeChangeIfMoveOutsideBlock();
             //x.TreeChangeInsertIfLikeOnPaper();
 #if true
             //x.TreeChangeIfFromStatementToBlock();

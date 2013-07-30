@@ -375,7 +375,9 @@ namespace SyntaxDiff
                 return "if(" + internalItem + ")";
             if (A is WhileStatementSyntax || O is WhileStatementSyntax || B is WhileStatementSyntax)
                 return "while(" + internalItem + ")";
-
+            if (A is BlockSyntax || O is BlockSyntax || B is BlockSyntax)
+                return null;
+            
             throw new NotImplementedException();
         }
 
@@ -385,7 +387,6 @@ namespace SyntaxDiff
         {
 
             Func<StatementSyntax, bool> hasSub = x => x is IfStatementSyntax || x is BlockSyntax || x is WhileStatementSyntax;
-
 
             var aParent = originals.A.First().Parent;
             var oParent = originals.A.First().Parent;
@@ -442,6 +443,9 @@ namespace SyntaxDiff
                     var merged = new List<string>();
                     foreach (var item in zipped)
                     {
+                        if (lastItem.O == null && (lastItem.A != null && lastItem.B != null))
+                            throw new Exception("Conflict");
+
                         var aChanged = lastItem.A != item.A.Item1;
                         var oChanged = lastItem.O != item.O.Item1;
                         var bChanged = lastItem.B != item.B.Item1;
@@ -450,16 +454,6 @@ namespace SyntaxDiff
                         {
                             if (isBlockSyntax(lastItem))
                                 merged.Add("}");
-
-                            StatementSyntax openItem = null;
-                            if (item.A.Item1 != null)
-                                openItem = item.A.Item1;
-
-                            if (item.O.Item1 != null)
-                                openItem = item.O.Item1;
-
-                            if (item.B.Item1 != null)
-                                openItem = item.B.Item1;
 
                             if (item.A.Item1 != null || item.O.Item1 != null || item.B.Item1 != null)
                             {
@@ -504,7 +498,6 @@ namespace SyntaxDiff
                 output.Add("}");
 
             return string.Join("\r\n", output.Where(x => x != null).ToArray());
-            //throw new NotImplementedException();
         }
 
         private List<string> NewMethod(ref StatementSyntax lastItem, PriorityChunk<Tuple<StatementSyntax, StatementSyntax>> match, SubstatementPosition pos)
@@ -559,11 +552,11 @@ namespace SyntaxDiff
         {
             return Similarity(x, y) > 0.6f;
         }
+
         enum SubstatementPosition
         {
             A, O, B
         }
-
 
         private static List<StatementSyntax> GetSubstatementList(StatementSyntax substatement)
         {

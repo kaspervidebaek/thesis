@@ -449,6 +449,55 @@ namespace Tests
 
         }
 
+
+
+        [TestMethod]
+        [TestCategory("TreeMerge")]
+        public void TreeChangeInsertSimpleBlock()
+        {
+            var B = @"static void TreeChangeInsertTwoNewIfStatements()
+                        {
+                            {
+                            Test1();
+                            Test2();
+                            }
+                            Test3();
+                            Test4();   
+                        }
+                        ";
+            var O = @"static void TreeChangeInsertTwoNewIfStatements()
+                        {
+                            Test1 ();
+                            Test2 ();
+                            Test3 ();
+                            Test4 ();   
+                        }   
+                        ";
+            var A = @"static void TreeChangeInsertTwoNewIfStatements()
+                        {
+                            Test1  ();
+                            {
+                                Test2  ();
+                                Test3  ();
+                            }
+                            Test4  ();   
+                        }
+                        ";
+            var x = new SyntaxNodeSmartDiff();
+
+            var aTree = x.SyntaxFromLines(A);
+            var oTree = x.SyntaxFromLines(O);
+            var bTree = x.SyntaxFromLines(B);
+
+            var merge = x.MergeNode(aTree, oTree, bTree);
+
+            Console.WriteLine(merge);
+
+            var mTree = x.SyntaxFromLines(merge);
+
+
+        }
+
         [TestMethod]
         [TestCategory("TreeMerge")]
         public void TreeChangeIfMoveOutsideBlock()

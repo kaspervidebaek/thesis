@@ -14,8 +14,9 @@ namespace ConsoleApp
             /*var x = new Tests.SmartDiffTests();
             x.TestExampleTreeMerge();*/
 
-            var x = new Tests.TreeMerge();
-            x.TreeChangeInsertSimpleBlock();
+            var x = new Tests.SmartDiffTests();
+            x.TestExampleTreeMerge();
+            //x.TreeChangeInsertSimpleBlock();
             //x.TreeChangeIfMoveOutsideBlock();
             //x.TreeChangeInsertIfLikeOnPaper();
 #if true

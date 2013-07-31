@@ -66,6 +66,10 @@ namespace SyntaxDiff
 
         private string MergeToken(Triplet<SyntaxToken> n)
         {
+            if (n.Select(x => x.Kind).Apply((a, o, b) => a == SyntaxKind.StringLiteralToken && o == SyntaxKind.StringLiteralToken && b == SyntaxKind.StringLiteralToken))
+                return "\"" + StringMerge(n.A.ValueText, n.O.ValueText, n.B.ValueText) + "\"";
+
+
             return StringMerge(n.A.ValueText, n.O.ValueText, n.B.ValueText);
         }
 
@@ -187,6 +191,15 @@ namespace SyntaxDiff
             {
                 return ListMerger<ArgumentListSyntax, ArgumentSyntax>(nodes, x => x.Arguments, ExpressionCost);
             }
+            else if (nodes.Is<ParameterSyntax>())
+            {
+                var i = nodes.Cast<ParameterSyntax>();
+
+                var type = i.Select(x => x.Type).Apply(MergeType);
+                var name = i.Select(x => x.Identifier).Apply(MergeToken);
+
+                return type + " " + name;
+            }
             else if (nodes.Is<BlockSyntax>())
             {
                 var b = nodes.Cast<BlockSyntax>();
@@ -194,23 +207,6 @@ namespace SyntaxDiff
                 var statements = b.Select(x => x.Statements.ToList());
 
                 return "{\r\n" + MergeStatementList(statements.A, statements.O, statements.B) + "\r\n}\r\n";
-            }
-            else if (nodes.Is<ExpressionStatementSyntax, WhileStatementSyntax>())
-            {
-                var n = nodes.Cast<ExpressionStatementSyntax, WhileStatementSyntax>();
-
-                var merge = MergeNode(n.other.Statement, n.bas, n.even);
-
-                return "while(" + n.other.Condition + ")\r\n" + merge;
-
-            }
-            else if (nodes.Is<ExpressionStatementSyntax, IfStatementSyntax>())
-            {
-                var n = nodes.Cast<ExpressionStatementSyntax, IfStatementSyntax>();
-
-                var merge = MergeNode(n.other.Statement, n.bas, n.even);
-
-                return "while(" + n.other.Condition + ")\r\n" + merge;
             }
 
             throw new NotImplementedException();
@@ -827,7 +823,15 @@ namespace SyntaxDiff
                 .Select(x => c(x).ToList());
 
             var matches = SmartDiff<Item>.GetThreeWayUnorderedMatch(l.A, l.O, l.B, cost);
-            var reordered = SmartDiff<Item>.FilterAndMerge(l.A, l.O, l.B, matches, MergeNode);
+            List<Tuple<int, int>> conflicts;
+            var reordered = SmartDiff<Item>.FilterAndMerge(l.A, l.O, l.B, matches, MergeNode, out conflicts);
+
+            conflicts.Select((v, i) => {
+                reordered[v.Item1] = "/* Reordering conflict " + i + " */ " + reordered[v.Item1];
+                reordered[v.Item2] = "/* Reordering conflict " + i + " */ " + reordered[v.Item2];
+                return "";
+            });
+
 
             return string.Join(", ", reordered);
         }
@@ -917,7 +921,8 @@ namespace SyntaxDiff
                 return n.ChildNodes().First().ToString();
             else if (n is NamespaceDeclarationSyntax)
                 return ((NamespaceDeclarationSyntax)n).Name.ToString();
-
+            else if (n is ParameterSyntax)
+                return (n as ParameterSyntax).Identifier.ToString();
             throw new NotImplementedException();
         }
 

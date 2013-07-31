@@ -109,7 +109,8 @@ namespace SyntaxDiff
                     var Oc = i.Children(O);
                     var Bc = i.Children(B);
                     var totalMatch = GetThreeWayUnorderedMatch(Ac, Oc, Bc, merge.cost);
-                    var reordered = FilterAndMerge(Ac, Oc, Bc, totalMatch, Merge);
+                    List<Tuple<int, int>> conflicts;
+                    var reordered = FilterAndMerge(Ac, Oc, Bc, totalMatch, Merge, out conflicts);
 
                     // TODO: Merge all other class identifeirs too.
 
@@ -121,7 +122,7 @@ namespace SyntaxDiff
             throw new NotImplementedException();
         }
 
-        public static List<string> FilterAndMerge(List<T> Ac, List<T> Oc, List<T> Bc, List<Diff<T>> totalMatch, Func<T, T, T, string> merge)
+        public static List<string> FilterAndMerge(List<T> Ac, List<T> Oc, List<T> Bc, List<Diff<T>> totalMatch, Func<T, T, T, string> merge, out List<Tuple<int, int>> oconflicts)
         {
 
             var members = new List<Tuple<Diff<T>, string>>();
@@ -170,8 +171,8 @@ namespace SyntaxDiff
             var newAc = Ac.Select(a => members.SingleOrDefault(x => x.Item1.A == a)).Where(x => x != null).Select(x => x.Item2).ToList(); // TODO: Performance
             var newOc = Oc.Select(o => members.SingleOrDefault(x => x.Item1.O == o)).Where(x => x != null).Select(x => x.Item2).ToList();
             var newBc = Bc.Select(b => members.SingleOrDefault(x => x.Item1.B == b)).Where(x => x != null).Select(x => x.Item2).ToList();
-
-            var reordered = Reorder<string>.OrderLists(newAc, newOc, newBc, conflicts);
+            
+            var reordered = Reorder<string>.OrderLists(newAc, newOc, newBc, out oconflicts, conflicts);
             return reordered;
         }
 

@@ -17,8 +17,11 @@ namespace RoslynPlayGround
 
         static void ReplaceTwoNodes()
         {
-            var tree = SyntaxTree.ParseText("class test { void test1() {} void test2{} }");
-            var members = tree.GetRoot().ChildNodes().First();
+            var tree = SyntaxTree.ParseText("int test = 2 ?? 3;");
+            var members = ((FieldDeclarationSyntax)tree.GetRoot().ChildNodes().First()).Declaration;
+
+            var tree2 = SyntaxTree.ParseText("Nullable<int> test;");
+            var members2 = ((FieldDeclarationSyntax)tree2.GetRoot().ChildNodes().First()).Declaration;
         }
     }
 }

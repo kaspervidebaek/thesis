@@ -19,7 +19,11 @@
 \section{Introduction}
 
 \clearpage 
-\section{Background}
+\section{Theory}
+Several topics, scientific as well as practical, are related to the work that will be done in this thesis.
+
+In this section I will give a brief overview of what areas we will be going through, and what related work has already been done in those areas. In the first subsection we will look into research that already have worked on embedding syntax tree knowledge into version control systems, and in the second section, we will look into tree differencing. In the last section we will look into general knowledge about merging trees.
+
 \subsection{Version control systems}
 The overall goal of version control systems is to support development of documents, by keeping track of changes over time. In the context of software development, version control systems are frequently used to keep track of source code. Two overall groups of version control systems exists: Distributed and centralized. In the context of this thesis, we do not distinguish between these two - but abstract all the different merging-scenarios possible into the simple concept of merging two branches with a common ancestor.\todo[inline]{Skrive mere om process?}
 
@@ -39,13 +43,25 @@ A structured merging approach will clearly be helpful for files that are not str
 
 A conflict can be defined in quite a few ways for line based tools. In the Unix tool diff3, a conflict is a sequence of lines, that is changed in both branches, and is not separated by a single line that is unchanged in both branches. Such a conflict detection scheme is clearly an approximation. It is oblivious to the structure of the data and one could craft input that will output invalid structural data. Further, the  actual meaning of the merged data is not considered at all - even if it is structurally valid, it might semantically be nonsense, even though a conflicts is not produced.
 
+
+\subsection{Automatic merging}
+This can probably attributed to such an approach working relatively well with source code, XML and other files often found in repositories.
+
+Structure matching will most definitely also be a more time consuming task, and given the general use case of some commits, it might not be worth the extra computation time. Further programs are generally undecidable which means it would be impossible to actually decide if a merge will work as intended by the user, without the user assessing it manually.
+
+One very commonly used algorithm for merging is Diff3. \citet{Khanna} investigated it formally by regarding a file as a sequence where each line was an item in the sequence. They set up a number of expectations of what you would expect from a merge, and showed that many of these assumptions does not hold: Conflicts can happen even when only unrelated regions are changed, differencing after a merge does not produce empty output, merging fails when both branches are very different from the ancestor and so forth. Even though this is the case, Diff3 continues to be widely used with few complaints of it shortcomings - it seems that the situations where Diff3 breaks are quite uncommon in version control systems.
+
+Common algorithms for merging are state based. They compare the final state of branches, and creating a series of operations that will transform one document from one state into another. \citet{Lippe} described a different approach, where editing tools instead would remember the operations used to transform the data, and where the merge process will be a matter of applying these transformations in the right order to minimize the amount of conflicts.
+\todo[inline]{Mention whitespace ignoring}
+\todo[inline]{Mention horizontal differincing}
+\todo[inline]{Talk about prettyprinters.}
+\todo[inline]{Point out that merges might not compile.}
+
+
 \subsection{Programming languages}
 Programming languages are abstractions over the calculations computers can perform. They makes it easier for a programmer to express the problems they need to solve, without requiring the programmer to handle intricate details about memory and processors, and they allow the user to write programs as text files, and let the computer handle the process of executing the ideas expressed in the code.
 
 In this section we will look into the process that a program goes through, from source code to execution, to give an overview of which techniques will be used later in the thesis.
-
-\subsubsection{Pre-processing}
--- TODO!
 
 \subsubsection{Grammars}
 The process of turning programs into execution relies on lexers and parsers, generated through token specifications and a context-free grammars.
@@ -134,11 +150,13 @@ statementblock:
 \end{figure}
 
 \subsubsection{Syntax Trees}
-The purpose of parsing source code is often iterating over the elements of it to generate a syntax tree. A syntax tree is a tree representation of the program. The syntax tree representation is quite good for further processing of the program, however at this point a lot of details about the concrete textual representation of the code has also left behind. And example of a syntax tree can be found in Figure \ref{syntaxtree}. 
+The purpose of parsing source code is often iterating over the elements of it to generate a syntax tree. A syntax tree is a tree representation of the program. The syntax tree representation is useful for further processing of the semantics of a program. At this point a lot of details about the concrete textual representation of the code has also left behind. An example of a syntax tree can be found in Figure \ref{syntaxtree}. 
 
-Depending on what kind of choice of syntax tree is done, information of the concrete syntax might be lost. On the syntax tree level it might for example be easier to convert \texttt{int? x;} into the same structure as \texttt{Nullable<int> x;} to not clutter the abstract syntax tree with unnecessary information of syntactic sugar.
+Depending on what kind of choice of syntax tree is done, information of the concrete syntax might be lost. In C, for example, the construct \texttt{a[i]]} is a shorthand for \texttt{*(a + i)} and should produce the same semantic behaviour. Rewriting them both into the same structure in the syntax tree is one way to resolve this. However doing this, also means that given a syntax tree it will be harder, or impossible, to determine what the concrete syntax was.
 
 Even grander structure rewrites could be done in the transformation from a code file to a syntax tree. For example it is possible to fit the grammar from Figure \ref{grammar} into the syntax tree of \ref{syntaxtree} even though no for-loop exists in the tree. This would be done by rewriting it into a while loop construction. Such a rewrite would of course make it quite hard to deconstruct a syntax tree back into the actual concrete code that was used to generate it.
+
+Given the purpose of this thesis, the choice of syntax tree is quite important for us: We will constantly be looking at syntax nodes, and want to generate concrete syntax - which means we will always want a syntax tree that is as closely corresponding to the grammatical constructs of the language.
 
 \begin{figure}
   \caption{An example of a simple syntax tree written as a F\# type.}
@@ -165,42 +183,12 @@ and program =
 \end{verbatim}
 \end{figure}
 
-\subsection{The lost information}
-When looking at the syntax tree quite a lot of information will not be immediately available: Everything from the preprocessing phase, syntactic sugar, whitespace and comments. While this information is not immediately available in the structure of the syntax tree most of this information can be found, by looking at the text that generated each node in the tree. 
-
-- Data outside syntax trees (comments)
-- Data that breaks the syntax tree (preprocesser directives)
-
-\subsection{Undecidability}
 
 
-
-A last point that is important to consider about merging algorithms, is the properties of a program is generally undecidable. 
-
-
-Many different strictness levels exists across the landscape of programming languages, but even the strictest programming language will allow incorrect programs through - simply because 
-
-
-\clearpage 
-\section{Theory}
-Several topics are related to the work that will be done in this thesis. In this section I will give a brief overview of what areas we will be going through, and what related work has already been done in those areas. In the first subsection we will look into research that already have worked on embedding syntax tree knowledge into version control systems, and in the second section, we will look into tree differencing. In the last section we will look into general knowledge about merging trees.
-
+\subsubsection{Pre-processing and comments}
 \todo[inline]{Syntax Trees and Preprocessing??}
 %http://bartho.net/publications/Adding_preprocessor_directives.pdf
-
-
-\subsection{Automatic merging}
-This can probably attributed to such an approach working relatively well with source code, XML and other files often found in repositories.
-
-Structure matching will most definitely also be a more time consuming task, and given the general use case of some commits, it might not be worth the extra computation time. Further programs are generally undecidable which means it would be impossible to actually decide if a merge will work as intended by the user, without the user assessing it manually.
-
-One very commonly used algorithm for merging is Diff3. \citet{Khanna} investigated it formally by regarding a file as a sequence where each line was an item in the sequence. They set up a number of expectations of what you would expect from a merge, and showed that many of these assumptions does not hold: Conflicts can happen even when only unrelated regions are changed, differencing after a merge does not produce empty output, merging fails when both branches are very different from the ancestor and so forth. Even though this is the case, Diff3 continues to be widely used with few complaints of it shortcomings - it seems that the situations where Diff3 breaks are quite uncommon in version control systems.
-
-Common algorithms for merging are state based. They compare the final state of branches, and creating a series of operations that will transform one document from one state into another. \citet{Lippe} described a different approach, where editing tools instead would remember the operations used to transform the data, and where the merge process will be a matter of applying these transformations in the right order to minimize the amount of conflicts.
-\todo[inline]{Mention whitespace ignoring}
-\todo[inline]{Mention horizontal differincing}
-\todo[inline]{Talk about prettyprinters.}
-\todo[inline]{Point out that merges might not compile.}
+When looking at the syntax tree quite a lot of information will not be immediately available: Everything from the preprocessing phase, syntactic sugar, whitespace and comments. While this information is not immediately available in the structure of the syntax tree most of this information can be found, by looking at the text that generated each node in the tree. 
 
 \subsection{Syntax Trees in Version Control}
 There has been several attempts at creating more structure awareness in version control systems with several different goals. \citet{Freese} describes the idea of version control systems that would understand the code in a repository, and also have capabilities of migrating newly committed code automatically when a public API has changed.
@@ -236,22 +224,31 @@ Several people already have looked into structural differencing and merging of s
 
 In this thesis, I will focus on two parts: Overcoming the running time challenge, and further creating an interface into general algorithms, that will make it easier to implement support for new languages.
 
+\todo{Semantisk, eller ikke-semantisk tree merging? Every node behaves differently}
+
+
+\subsection{Merging syntax}
+In a perfect universe, the perfect merge-result would be a merge that produces either no unintended behaviour or a conflict, if the input code has no unintended behaviour. It however not possible to guarantee that a single code file has no unintended behaviour, and as such this goal is not attainable, and certainly not only looking at the syntax tree without much more in-depth semantic analysis. Further, the current tools cannot guarantee this output at all.
+
+
+
+%http://users.soe.ucsc.edu/~ejw/scm12/papers/Hayase-Chapter10.pdf
+
+Many different strictness levels exists across the landscape of programming languages, but even the strictest programming language will allow incorrect programs through - simply because 
+
 
 \subsection{Cross-language interfaces}
 Structured differencing tools will be only for specific languages or structures. This makes such tools impractical in version control systems, since they are designed to integrate with line based tools, and do not discriminate between file types. Some research has been done into making tools that will work with either several languages, or that combines a line based approach with a structured approach.
 
 \subsection{Algorithm}
-While some algorithmic research has been done with regards to approximation algorithms and creating effective exact tree differencing algorithms, they are still prone running times many factors larger than unstructured approaches due to the tree size, counted in nodes, is generally much larger than the amount of lines in a code file. For example, running the \citet{Pawlik} algorithm on a 700 line C\# file \todo{Put this file in an appendix}, yields a syntax tree of 3800 nodes which gives running time for the matching of more than two minutes.
+While some algorithmic research 
+has been done with regards to approximation algorithms and creating effective exact tree differencing algorithms, they are still prone running times many factors larger than unstructured approaches due to the tree size, counted in nodes, is generally much larger than the amount of lines in a code file. For example, running the \citet{Pawlik} algorithm on a 700 line C\# file \todo{Put this file in an appendix}, yields a syntax tree of 3800 nodes which gives running time for the matching of more than two minutes.
 
 \todo[inline]{Adaptiveness solution}
 
 \todo[inline]{Write about assumptions in differencing and about different possible differencing operations}
 \todo[inline]{Write about which situations we can probably avoid}
 
-
-\clearpage
-
-\section{Proposed solution}
 
 \subsection{External interface}
 \todo{write about this}
@@ -293,13 +290,11 @@ Tree matching will still have a cubic running time on the amount of nodes, howev
 \clearpage
 
 \section{Implementation}
+In this section I will dive into the implementation of the code. The main function of the algorithm looks like this. We will focus on two issues:
+
 
 
 - Choosing Roslyn
-
-
-In this section I will dive into the implementation of the code. The main function of the algorithm looks like this. We will focus on two issues:
-
 - Merging functions on a statement-level
 - Merging classes in a structured fashion.
 

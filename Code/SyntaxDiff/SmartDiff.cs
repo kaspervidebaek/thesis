@@ -110,7 +110,14 @@ namespace SyntaxDiff
                     var Bc = i.Children(B);
                     var totalMatch = GetThreeWayUnorderedMatch(Ac, Oc, Bc, merge.cost);
                     List<Tuple<int, int>> conflicts;
-                    var reordered = FilterAndMerge(Ac, Oc, Bc, totalMatch, Merge, out conflicts);
+                    var reordered = FilterReorderMergeContent(Ac, Oc, Bc, totalMatch, Merge, out conflicts);
+
+                    conflicts.Select((v, ind) =>
+                    {
+                        reordered[v.Item1] = "/* Reordering conflict " + ind + " */ " + reordered[v.Item1];
+                        reordered[v.Item2] = "/* Reordering conflict " + ind + " */ " + reordered[v.Item2];
+                        return "";
+                    }).ToList();
 
                     // TODO: Merge all other class identifeirs too.
 
@@ -122,7 +129,7 @@ namespace SyntaxDiff
             throw new NotImplementedException();
         }
 
-        public static List<string> FilterAndMerge(List<T> Ac, List<T> Oc, List<T> Bc, List<Diff<T>> totalMatch, Func<T, T, T, string> merge, out List<Tuple<int, int>> oconflicts)
+        public static List<string> FilterReorderMergeContent(List<T> Ac, List<T> Oc, List<T> Bc, List<Diff<T>> totalMatch, Func<T, T, T, string> merge, out List<Tuple<int, int>> oconflicts)
         {
 
             var members = new List<Tuple<Diff<T>, string>>();

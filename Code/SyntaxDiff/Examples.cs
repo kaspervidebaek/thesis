@@ -32,6 +32,11 @@ namespace SyntaxDiff
                 {
                     class Program
                     {
+                        static void MovedInLeftAndRight()
+                        {
+                            Test(1, 2, 3, 4);
+                        }
+
                         static void WillBeDeletedInLeftConflict()
                         {
                             Test();
@@ -99,6 +104,11 @@ namespace SyntaxDiff
                             Console.Write(""Base"");
                             Console.WriteLine(""BaseInside"");
                         }
+                        static void MovedInLeftAndRight()
+                        {
+                            Test(4, 1, 2, 3);
+                        }
+
                         static void IfInsertion()
                         {
                             Console.Write(""Base"");
@@ -151,6 +161,11 @@ namespace SyntaxDiff
                             if(true)
                                 Console.WriteLine(""BaseInside"");
                         }
+                        static void MovedInLeftAndRight()
+                        {
+                            Test(1, 2, 4, 3);
+                        }
+
                     }
                 }");
 

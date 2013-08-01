@@ -97,7 +97,7 @@ BOOLEAN:
 
 NUMBER:
     {int}         "['0'-'9']+"
-	
+    
 IDENTIFIER:
     {string}     "[a-zA-Z0-9]+"
     
@@ -292,12 +292,20 @@ Tree matching will still have a cubic running time on the amount of nodes, howev
 \section{Implementation}
 In this section I will dive into the implementation of the code. The main function of the algorithm looks like this. We will focus on two issues:
 
-
-
 - Choosing Roslyn
+- 
 - Merging functions on a statement-level
 - Merging classes in a structured fashion.
 
+
+
+\subsection{Utility methods}
+- Reordering
+- Unordered matching of different sized bipartite matching
+- Three-way matching
+- Chunking of three-way matches
+- Prioritymatching
+- Diff3.Merge
 
 \subsection{Merging classes}
 Classes, namespaces etc are structures.
@@ -396,8 +404,117 @@ Observations:
 
 
 
-\subsubsection{Merging statements}
+\subsubsection{Merging functions}
 
+\paragraph{Merging}
+Testtest
+
+\begin{figure}
+  \caption{The main entry point for the Syntax Tree merging}
+  \label{MergeNode}
+\begin{verbatim}
+MergeNode (of method declerations)
+    if A or B has been deleted.
+        if(others havent changed)
+            return nothing;
+        else
+            return conflict;
+    if A or B has been inserted
+        return A or B
+    if(nodes is a simple structural node) (methoddecleration, expressionstatement, invocation, memberaccess, argument)
+        retur merge of each child and own structure
+    if(nodes is a list) (parameterlist, argumentlist)
+        return listmerge of cost function
+    if(node is a content-node) (identifier, literal, parameter)
+        return the appropriate merge appropriately (tokens, types, identifier and so forth
+    if(node is a block) (block, if-block, while-block, for-block)
+        merge conditions
+        StatementListMerge(blocks)
+        
+\end{verbatim}
+\end{figure}
+
+
+\begin{figure}
+  \caption{Merging tokens}
+  \label{MergeToken}
+\begin{verbatim}
+MergeToken(A, O, B)
+    if all equal
+        return value
+    if one has changed
+        return changed value
+    if both has changed 
+        if A != B
+            return conflict
+        return A
+\end{verbatim}
+\end{figure}
+
+\begin{figure}
+  \caption{Merging statement lists}
+  \label{MergeStatementList}
+\begin{verbatim}
+MergeStatementList (A, O, B)
+    try  a textual merge of the statements.
+    If that does not work:
+        Do a prioritydiff of the statements
+        for all chunks
+            if chunk is primaryequal
+                return one of the sides
+            else if chunk is secondary equal
+                chunkmerge!
+            else if one chunk is empty (deletion or insertion)
+                chunkmerge!
+            else 
+                attempt uneven merging
+
+\end{verbatim}
+\end{figure}
+
+\begin{figure}
+  \caption{Merging uneven branches}
+  \label{MergeToken}
+\begin{verbatim}
+MergeUneven (A, O, B)
+    Flatten the three list. Any statement with a subblock, has the statements in this subblock added to it, keeping parent item mapping
+    Prioritydiff the three flattened lists.
+
+    Parentitems = [nil, nil, nil]
+
+    foreach chunk
+        if stable chunk
+            if(lastitem O is null and B and A is not)
+                return conflict
+
+            if(any parentitem has changed since last iteration)
+                if(if last parent item as a block block)
+                    print "}"
+                if(if a current parent item exists)
+                    print(merge(parentitems))
+                    if(currentparentitems merrits block)
+            
+            print merge(child item)
+
+        else 
+            if A or B is insertion
+                add A or B, updating their correspinding parentitem,
+                and adding starting and ending items, as above
+\end{verbatim}
+\end{figure}
+
+\begin{figure}
+  \caption{Merging tokens}
+  \label{MergeToken}
+\begin{verbatim}
+Listmerger (A, O, B, cost)
+    match A, O, B after cost.
+    (merge, conflicts) = FilterReorderMergeContent(a, o, b, match)
+    foreach conflict
+        add the warning to the two conflicts
+
+\end{verbatim}
+\end{figure}
 
 -- Equality
 -- Similiarity

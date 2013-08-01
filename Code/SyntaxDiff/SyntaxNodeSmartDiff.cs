@@ -381,23 +381,8 @@ namespace SyntaxDiff
         // Will also handle how Statements can be chagned into blocks.
         private string MergeTreeUneven(Chunk<StatementSyntax> originals)
         {
-
             Func<StatementSyntax, bool> hasSub = x => x is IfStatementSyntax || x is BlockSyntax || x is WhileStatementSyntax;
 
-            var aParent = originals.A.First().Parent;
-            var oParent = originals.A.First().Parent;
-            var bParent = originals.A.First().Parent;
-
-            // Flatten all substatements out
-            var aStatementsFlattened = originals.A.SelectMany(x => hasSub(x) ? GetSubstatementList(substatement(x)).Select(y => Tuple.Create(x, y)) : new List<Tuple<StatementSyntax, StatementSyntax>> { Tuple.Create((StatementSyntax)null, x) }).ToList();
-            var oStatementsFlattened = originals.O.SelectMany(x => hasSub(x) ? GetSubstatementList(substatement(x)).Select(y => Tuple.Create(x, y)) : new List<Tuple<StatementSyntax, StatementSyntax>> { Tuple.Create((StatementSyntax)null, x) }).ToList();
-            var bStatementsFlattened = originals.B.SelectMany(x => hasSub(x) ? GetSubstatementList(substatement(x)).Select(y => Tuple.Create(x, y)) : new List<Tuple<StatementSyntax, StatementSyntax>> { Tuple.Create((StatementSyntax)null, x) }).ToList();
-
-            var flattenedMatch = Diff3<Tuple<StatementSyntax, StatementSyntax>>.ThreeWayDiffPriority(aStatementsFlattened, oStatementsFlattened, bStatementsFlattened, (x, y) => x != null && y != null && Equal(x.Item2, y.Item2), (x, y) => x != null && y != null && Similar(x.Item2, y.Item2));
-
-            Diff<StatementSyntax> lastItem = new Diff<StatementSyntax>();
-
-            var output = new List<String>();
             Func<StatementSyntax, StatementSyntax, StatementSyntax, bool> isBlockSyntax2 = (A, O, B) =>
             {
                 if (A == null && O == null && B != null && substatement(B) is BlockSyntax)
@@ -420,11 +405,19 @@ namespace SyntaxDiff
                 return isBlockSyntax2(x.A, x.O, x.B);
             };
 
+            // Flatten all substatements out
+            var aStatementsFlattened = originals.A.SelectMany(x => hasSub(x) ? GetSubstatementList(substatement(x)).Select(y => Tuple.Create(x, y)) : new List<Tuple<StatementSyntax, StatementSyntax>> { Tuple.Create((StatementSyntax)null, x) }).ToList();
+            var oStatementsFlattened = originals.O.SelectMany(x => hasSub(x) ? GetSubstatementList(substatement(x)).Select(y => Tuple.Create(x, y)) : new List<Tuple<StatementSyntax, StatementSyntax>> { Tuple.Create((StatementSyntax)null, x) }).ToList();
+            var bStatementsFlattened = originals.B.SelectMany(x => hasSub(x) ? GetSubstatementList(substatement(x)).Select(y => Tuple.Create(x, y)) : new List<Tuple<StatementSyntax, StatementSyntax>> { Tuple.Create((StatementSyntax)null, x) }).ToList();
+
+            var flattenedMatch = Diff3<Tuple<StatementSyntax, StatementSyntax>>.ThreeWayDiffPriority(aStatementsFlattened, oStatementsFlattened, bStatementsFlattened, (x, y) => x != null && y != null && Equal(x.Item2, y.Item2), (x, y) => x != null && y != null && Similar(x.Item2, y.Item2));
+
+            Diff<StatementSyntax> lastItem = new Diff<StatementSyntax>();
+
+            var output = new List<String>();
+
             foreach (var match in flattenedMatch)
             {
-                //if (new List<StatementSyntax> { lastAItem, lastOItem, lastBItem }.Where(x => x != null).Count() > 1)
-                //throw new Exception("Conflict");
-
                 if (match.chunk.stable)
                 {
                     var zipped = from index in Enumerable.Range(0, match.chunk.A.Count)
@@ -824,13 +817,13 @@ namespace SyntaxDiff
 
             var matches = SmartDiff<Item>.GetThreeWayUnorderedMatch(l.A, l.O, l.B, cost);
             List<Tuple<int, int>> conflicts;
-            var reordered = SmartDiff<Item>.FilterAndMerge(l.A, l.O, l.B, matches, MergeNode, out conflicts);
+            var reordered = SmartDiff<Item>.FilterReorderMergeContent(l.A, l.O, l.B, matches, MergeNode, out conflicts);
 
             conflicts.Select((v, i) => {
                 reordered[v.Item1] = "/* Reordering conflict " + i + " */ " + reordered[v.Item1];
                 reordered[v.Item2] = "/* Reordering conflict " + i + " */ " + reordered[v.Item2];
                 return "";
-            });
+            }).ToList();
 
 
             return string.Join(", ", reordered);

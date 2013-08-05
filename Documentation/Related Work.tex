@@ -405,33 +405,62 @@ Observations:
 
 
 \subsubsection{Merging functions}
+Foreach function, write about:
 
-\paragraph{Merging}
-Testtest
+Intended input.
+Purpose of the function.
+Conflict behaviour
+Tricks that are not obvious.
+Intended output.
+
+\paragraph{Merging nodes}
+\texttt{MergeNode} handles merging of single nodes. It will take three input values; A, O and B, and return a syntactically valid string, which is the merge of those three input values. It handles the input as a matching and will conclude insertion or deletion if appropriate. Further it assumes that all input nodes are of the same type.
+
+\begin{itemize}
+	\item If O is null and either A or B is null it treats the input as an insertion, and returns the inserted value.
+	\item If O is not null, and A or B is null it treats the input as a deletion. It will verify that no changes has happened in the other branch and return either a conflict, or empty.
+\end{itemize}
+
+Otherwise it will treat the input as a merge of the two branches A and B. From a concrete syntax perspective, we will have to look into two factors of the current node, to see what to return:
+
+\begin{itemize}
+	\item The concrete syntax that this node emits.
+	\item The concrete syntax that each child of this node emits.
+\end{itemize}
+
+The responsibility of MergeNode is to only return the the exact syntax needed for these specific node. Any work of generating concrete syntax for children will be handled by a recursive call to MergeNode. For example a method invocation will simply generate the opening and closing parenthesis, while the argument list will simply be passed to another invocation, as well as the method-expression. This breakdown makes the merging of most nodes quite trivial.
+
+Some nodes only consists of tokens: A function name, a string literal, an integer, a keyword and so forth. For these kind of nodes, we will simply check if only one of the branch nodes differs, and if this is the case, return that, and otherwise return a conflict, as can be seen in \ref{MergeToken}
+
 
 \begin{figure}
   \caption{The main entry point for the Syntax Tree merging}
   \label{MergeNode}
 \begin{verbatim}
-MergeNode (of method declerations)
+MergeNode (of method declerations and below)
     if A or B has been deleted.
         if(others havent changed)
             return nothing;
         else
             return conflict;
+            
     if A or B has been inserted
         return A or B
-    if(nodes is a simple structural node) (methoddecleration, expressionstatement, invocation, memberaccess, argument)
+        
+    if(nodes is fixed structural node)
         retur merge of each child and own structure
+    if(node is a content-node) 
+        return the token merge
     if(nodes is a list) (parameterlist, argumentlist)
         return listmerge of cost function
-    if(node is a content-node) (identifier, literal, parameter)
-        return the appropriate merge appropriately (tokens, types, identifier and so forth
-    if(node is a block) (block, if-block, while-block, for-block)
-        merge conditions
-        StatementListMerge(blocks)
+    if(node is a block)
+        Merge conditions if they exist.
+        Merge Substatemnetlists.
+        return the two merges.
         
+
 \end{verbatim}
+\caption{A fixed structural node is nodes that has a fixed number of children, that are easily merged - like methods declerations, expressionsstatements, invocations, memberaccesses, single arguments. A content node is a node which is generated from a single token.}
 \end{figure}
 
 
@@ -450,6 +479,49 @@ MergeToken(A, O, B)
         return A
 \end{verbatim}
 \end{figure}
+
+\paragraph{Merging lists}
+There are primarily two types of list that we want to merge: ParameterLists and ArgumentLists. Parameterlists are the pair of types and identifiers found in method declarations, where argument-lists are expressions found in invocations of methods. Modification of these two properties 
+
+\begin{itemize}
+	\item Modifications of parameter-lists can be reorderings with no semantic meaning. Further it can be additions or removals of a parameter. These will often also be accompanied by some change in the behaviour of a method.
+	\item Modifications of argument-lists can be done as a consequence of change in a parameter list other places in the syntax-tree. They can also be done simply because another expression or value needs to be passed into a function, or because the user intends to call another overload of the method.
+\end{itemize}
+
+The first part is solved the same way that we reorderings were solved in section \todo{page number}. We will do an unordered matching of them, and then do a reordering, and filtering of the output. The returned list is a list that tries to preserve any reordering, and that has filtered items in the sequence that did not exist in either of the two branches. This will hopefully ensure that:
+
+\begin{itemize}
+	\item Since the reordering uses the exact same algorithm a merge of parameter- and argument-lists will produce compatible output, given that the cost function matches in the same way on both branches.
+	\item All items that existed in the branches will exist in the output of this function. 
+	\item Conflicts can be marked easily for the user.
+\end{itemize}
+
+The cost between a pair of parameters can be boiled down the question of how similar the type of the parameter is, and how similar the name is. Similarity of type can be measured as closeness in the class hierarchy. String similarity can be measured in quite a few ways. In our case we will want to keep the runtime low and as such we will keep to a simple and exact scheme of similarity of both.
+
+The cost of the argument-lists is much harder to define. An argument is an expression, so the obvious thought would be to look into what type that expression will have. This information, however, is not available to us, unless we want to build and link all branches of the project that we are trying to merge. Instead we will simply look into the actual string value of these expressions, compare this to be equal or not, and if it is, we will give them a lower cost than if not.
+\todo{asdasd}
+The first item in the above list, depends on the property of a cost function is not quite as easily attainable. 
+
+\todo{example}
+
+\begin{figure}
+  \caption{Merging tokens}
+  \label{MergeToken}
+\begin{verbatim}
+Listmerger (A, O, B, cost)
+    match A, O, B after cost.
+    (merge, conflicts) = FilterReorderMergeContent(a, o, b, match)
+    foreach conflict
+        add the warning to the two conflicts
+
+\end{verbatim}
+\end{figure}
+
+\paragraph{Merging blocks}
+erging blocks and 
+
+
+What are the right properties of a merge?
 
 \begin{figure}
   \caption{Merging statement lists}
@@ -503,18 +575,7 @@ MergeUneven (A, O, B)
 \end{verbatim}
 \end{figure}
 
-\begin{figure}
-  \caption{Merging tokens}
-  \label{MergeToken}
-\begin{verbatim}
-Listmerger (A, O, B, cost)
-    match A, O, B after cost.
-    (merge, conflicts) = FilterReorderMergeContent(a, o, b, match)
-    foreach conflict
-        add the warning to the two conflicts
 
-\end{verbatim}
-\end{figure}
 
 -- Equality
 -- Similiarity

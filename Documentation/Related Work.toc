@@ -22,6 +22,8 @@
 \contentsline {subsubsection}{\numberline {4.2.2}Function similarity measure}{17}{subsubsection.4.2.2}
 \contentsline {subsubsection}{\numberline {4.2.3}Ordering of outputted class members}{17}{subsubsection.4.2.3}
 \contentsline {subsubsection}{\numberline {4.2.4}Merging functions}{18}{subsubsection.4.2.4}
-\contentsline {paragraph}{Merging}{18}{section*.22}
-\contentsline {section}{\numberline {5}Evaluation}{22}{section.5}
-\contentsline {section}{\numberline {6}Conclusion}{23}{section.6}
+\contentsline {paragraph}{Merging nodes}{18}{section*.22}
+\contentsline {paragraph}{Merging lists}{19}{section*.23}
+\contentsline {paragraph}{Merging blocks}{21}{section*.26}
+\contentsline {section}{\numberline {5}Evaluation}{24}{section.5}
+\contentsline {section}{\numberline {6}Conclusion}{25}{section.6}

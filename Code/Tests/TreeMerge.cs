@@ -96,7 +96,7 @@ namespace Tests
         [TestCategory("TreeMerge")]
         public void TreeChangeParameterOrder()
         {
-            var right = @"static void TreeChangeTwoToSame(int a)
+            var right = @"static void TreeChangeTwoToSame(int a, string b)
                         {
                             Console.WriteLine(1, 2, 4, 3, 5);
                         }
@@ -111,6 +111,37 @@ namespace Tests
                             Console.WriteLine(4, 1, 2, 3, 5);
                         }
                         ";
+            var x = new SyntaxNodeSmartDiff();
+
+            var lTree = x.SyntaxFromLines(left);
+            var bTree = x.SyntaxFromLines(bas);
+            var rTree = x.SyntaxFromLines(right);
+
+            var merge = x.MergeNode(lTree, bTree, rTree);
+            Console.WriteLine(merge);
+        }
+
+
+
+        [TestMethod]
+        [TestCategory("TreeMerge")]
+        public void TreeChangeParameterOrderAndType()
+        {
+            var right = @"static void TreeChangeTwoToSame(string b, int a)
+                        {
+                            TreeChangeTwoToSame('test2', 1);
+                        }
+                        ".Replace('\'', '"'); ;
+            var bas = @"static void TreeChangeTwoToSame(int a, string b)
+                        {
+                            TreeChangeTwoToSame(1, 'test');
+                        }   
+                        ".Replace('\'', '"'); ;
+            var left = @"static void TreeChangeTwoToSame(int a, string b, int newInt)
+                        {
+                            TreeChangeTwoToSame(1, 'test', 2);
+                        }
+                        ".Replace('\'', '"'); ;
             var x = new SyntaxNodeSmartDiff();
 
             var lTree = x.SyntaxFromLines(left);

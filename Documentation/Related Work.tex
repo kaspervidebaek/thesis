@@ -650,26 +650,24 @@ MergeToken(A, O, B)
 \end{figure}
 
 \paragraph{Merging lists}
-There are primarily two types of list that we want to merge: ParameterLists and ArgumentLists. Parameterlists are the pair of types and identifiers found in method declarations, where argument-lists are expressions found in invocations of methods. Modification of these two properties 
+There are primarily two types of list that we want to merge: ParameterLists and ArgumentLists. Parameterlists are the pair of types and identifiers found in method declarations, where argument-lists are expressions found in invocations of methods. Modification of these can be for several reasons.
 
 \begin{itemize}
 	\item Modifications of parameter-lists can be reorderings with no semantic meaning. Further it can be additions or removals of a parameter. These will often also be accompanied by some change in the behaviour of a method.
 	\item Modifications of argument-lists can be done as a consequence of change in a parameter list other places in the syntax-tree. They can also be done simply because another expression or value needs to be passed into a function, or because the user intends to call another overload of the method.
 \end{itemize}
 
-The first part is solved the same way that we reorderings were solved in section \todo{page number}. We will do an unordered matching of them, and then do a reordering, and filtering of the output. The returned list is a list that tries to preserve any reordering, and that has filtered items in the sequence that did not exist in either of the two branches. This will hopefully ensure that:
+We will do an unordered matching of the lists, and then do a reordering, and filtering of the output. The returned list is a list that tries to preserve any reordering, and that has filtered items in the sequence that did not exist in either of the two branches. This will hopefully ensure that:
 
 \begin{itemize}
-	\item Since the reordering uses the exact same algorithm a merge of parameter- and argument-lists will produce compatible output, given that the cost function matches in the same way on both branches.
+	\item Since the reordering uses the exact same algorithm a merge of parameter- and argument-lists will produce compatible output, provided that the cost function matches in the same way on both branches.
 	\item All items that existed in the branches will exist in the output of this function. 
 	\item Conflicts can be marked easily for the user.
 \end{itemize}
 
 The cost between a pair of parameters can be boiled down the question of how similar the type of the parameter is, and how similar the name is. Similarity of type can be measured as closeness in the class hierarchy. String similarity can be measured in quite a few ways. In our case we will want to keep the runtime low and as such we will keep to a simple and exact scheme of similarity of both.
 
-The cost of the argument-lists is much harder to define. An argument is an expression, so the obvious thought would be to look into what type that expression will have. This information, however, is not available to us, unless we want to build and link all branches of the project that we are trying to merge. Instead we will simply look into the actual string value of these expressions, compare this to be equal or not, and if it is, we will give them a lower cost than if not.
-\todo{asdasd}
-The first item in the above list, depends on the property of a cost function is not quite as easily attainable. 
+The cost of the argument-lists is much harder to define. An argument is an expression, so the obvious thought would be to look into what type that expression will have. This information, however, is not very often available when looking at a single class. The idea here must be to try to find to find similar matches, and link only the expressions that are most similar. We will therefore use the similarity function as cost function for these. 
 
 \todo{example}
 

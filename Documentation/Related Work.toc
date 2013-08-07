@@ -17,13 +17,18 @@
 \contentsline {subsection}{\numberline {3.6}Running time}{15}{subsection.3.6}
 \contentsline {section}{\numberline {4}Implementation}{16}{section.4}
 \contentsline {subsection}{\numberline {4.1}Utility methods}{16}{subsection.4.1}
-\contentsline {subsection}{\numberline {4.2}Merging classes}{16}{subsection.4.2}
-\contentsline {subsubsection}{\numberline {4.2.1}Three-way cost matching}{16}{subsubsection.4.2.1}
-\contentsline {subsubsection}{\numberline {4.2.2}Function similarity measure}{17}{subsubsection.4.2.2}
-\contentsline {subsubsection}{\numberline {4.2.3}Ordering of outputted class members}{17}{subsubsection.4.2.3}
-\contentsline {subsubsection}{\numberline {4.2.4}Merging functions}{18}{subsubsection.4.2.4}
-\contentsline {paragraph}{Merging nodes}{18}{section*.22}
-\contentsline {paragraph}{Merging lists}{19}{section*.23}
-\contentsline {paragraph}{Merging blocks}{21}{section*.26}
-\contentsline {section}{\numberline {5}Evaluation}{24}{section.5}
-\contentsline {section}{\numberline {6}Conclusion}{25}{section.6}
+\contentsline {subsubsection}{\numberline {4.1.1}Two-way sequence matching}{16}{subsubsection.4.1.1}
+\contentsline {subsubsection}{\numberline {4.1.2}Three-way matching}{16}{subsubsection.4.1.2}
+\contentsline {subsubsection}{\numberline {4.1.3}Reordering}{17}{subsubsection.4.1.3}
+\contentsline {subsubsection}{\numberline {4.1.4}Bi-partite graph matching}{19}{subsubsection.4.1.4}
+\contentsline {subsubsection}{\numberline {4.1.5}Three-way cost matching}{21}{subsubsection.4.1.5}
+\contentsline {subsubsection}{\numberline {4.1.6}TODO}{22}{subsubsection.4.1.6}
+\contentsline {subsection}{\numberline {4.2}Merging classes}{22}{subsection.4.2}
+\contentsline {subsubsection}{\numberline {4.2.1}Function similarity measure}{23}{subsubsection.4.2.1}
+\contentsline {subsubsection}{\numberline {4.2.2}Ordering of outputted class members}{23}{subsubsection.4.2.2}
+\contentsline {subsubsection}{\numberline {4.2.3}Merging functions}{24}{subsubsection.4.2.3}
+\contentsline {paragraph}{Merging nodes}{24}{section*.24}
+\contentsline {paragraph}{Merging lists}{26}{section*.25}
+\contentsline {paragraph}{Merging blocks}{27}{section*.29}
+\contentsline {section}{\numberline {5}Evaluation}{30}{section.5}
+\contentsline {section}{\numberline {6}Conclusion}{31}{section.6}

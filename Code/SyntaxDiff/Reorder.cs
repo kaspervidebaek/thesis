@@ -15,13 +15,7 @@ namespace SyntaxDiff
         }
         public static List<T> OrderLists(List<T> A, List<T> O, List<T> B, out List<Tuple<int, int>> oconflicts, HashSet<object> outerConflicts)
         {
-
-
-            var ao = NeedlemanWunsch<T>.Allignment(A, O, (x, y) => Object.ReferenceEquals(x, y));
-            var bo = NeedlemanWunsch<T>.Allignment(B, O, (x, y) => Object.ReferenceEquals(x, y));
-            
-            var matches = NeedlemanWunsch<Tuple<T, T>>.Allignment(ao, bo, (x, y) => x.Item2 != null && y.Item2 != null && object.ReferenceEquals(x.Item2, y.Item2))
-                .Select(x => new Diff<T>(x.Item1, x.Item2));
+            var matches = Diff3<T>.ThreeWayDiff(A, O, B, (x, y) => Object.ReferenceEquals(x, y));
 
             var alreadyAdded = new Dictionary<T, int>();
 
@@ -43,7 +37,7 @@ namespace SyntaxDiff
             
             foreach (var match in matches)
             {
-                if(match.A == default(T) && match.O == default(T) && match.B != default(T))
+                if(match.A == default(T) && match.O == default(T) && match.B != default(T)) // Insertion from B
                 {
                     var oContained = O.Contains(match.B);
                     var aContained = A.Contains(match.B);
@@ -51,17 +45,27 @@ namespace SyntaxDiff
                     {
                         add(match.B);
                     }
+                    else
+                    {
+
+                    }
                 }
-                else if (match.A != default(T) && match.O == default(T) && match.B == default(T))
+                else if (match.A != default(T) && match.O == default(T) && match.B == default(T)) // Insertion from A
                 {
                     var oContained = O.Contains(match.A);
                     var bContained = B.Contains(match.A);
                     if ((oContained && bContained) || !oContained) // TODO: Performance
+                        // !oContained because that means this is a plain insertion.
+                        // (oContained && bContained) because that means it was not deleted in the A-sequence, and therefore actually should be inserted.
                     {
                         add(match.A);
                     }
+                    else
+                    {
+
+                    }
                 }
-                else if (match.A != default(T) && match.O != default(T) && match.B != default(T))
+                else if (match.A != default(T) && match.O != default(T) && match.B != default(T))  // Exists in all.
                 {
                     add(match.O);
                 }

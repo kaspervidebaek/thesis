@@ -129,7 +129,7 @@ namespace Tests
         {
             var right = @"static void TreeChangeTwoToSame(string b, int a)
                         {
-                            TreeChangeTwoToSame('test2', 1);
+                            TreeChangeTwoToSame('test', 1);
                         }
                         ".Replace('\'', '"'); ;
             var bas = @"static void TreeChangeTwoToSame(int a, string b)
@@ -139,7 +139,7 @@ namespace Tests
                         ".Replace('\'', '"'); ;
             var left = @"static void TreeChangeTwoToSame(int a, string b, int newInt)
                         {
-                            TreeChangeTwoToSame(1, 'test', 2);
+                            TreeChangeTwoToSame(1);
                         }
                         ".Replace('\'', '"'); ;
             var x = new SyntaxNodeSmartDiff();

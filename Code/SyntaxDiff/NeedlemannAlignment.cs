@@ -17,8 +17,8 @@ namespace SyntaxDiff
         {
             return  (i, j) => {
                 if (equal(A[i-1], B[j-1]))
-                    return 1;
-                return -1;
+                    return -1;
+                return 1;
             };
         }
 
@@ -44,7 +44,7 @@ namespace SyntaxDiff
                     var match = F[i - 1, j - 1] + S(i, j);
                     var delete = F[i - 1, j] + d;
                     var insert = F[i, j - 1] + d;
-                    F[i, j] = Math.Max(Math.Max(match, insert), delete);
+                    F[i, j] = Math.Min(Math.Min(match, insert), delete);
                 }
             }
             return F;

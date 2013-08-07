@@ -67,6 +67,24 @@ namespace Tests
         [TestMethod]
         [TestCategory("GraphMatching")]
 
+        public void TestNoLink()
+        {
+            var xs = new List<int?>(new int?[] { 1, 3 });
+            var ys = new List<int?>(new int?[] { 1, 2 });
+            var match = SyntaxDiff.GraphMatching<int?, int?>.Match(xs, ys, (x, y) => x == y || (x == 1 && y == 2) ? 1 : (int?)null);
+
+            Assert.IsTrue(match.Count == 3);
+            var e = match.GetEnumerator();
+            e.MoveNext();
+
+            Assert.IsTrue(e.Current.Item1 == 1 && e.Current.Item2 == 1); e.MoveNext();
+            Assert.IsTrue(e.Current.Item1 == null && e.Current.Item2 == 2); e.MoveNext();
+            Assert.IsTrue(e.Current.Item1 == 3 && e.Current.Item2 == null); 
+            
+        }
+        [TestMethod]
+        [TestCategory("GraphMatching")]
+
         public void TestNoLinks()
         {
             var xs = new List<int?>(new int?[] { 10, 11 });

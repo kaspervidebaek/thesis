@@ -6,10 +6,14 @@
         Kasper Videbæk \\
 }
 \date{\today}
+ \usepackage{amsmath}
+\usepackage{graphicx}
 \usepackage[numbers]{natbib}
 \usepackage{todonotes}
 \usepackage[hidelinks]{hyperref}
-
+\usepackage{epstopdf}
+\usepackage{wrapfig}
+\usepackage{listings}
 \begin{document}
 \maketitle
 
@@ -300,9 +304,189 @@ In this section I will dive into the implementation of the code. The main functi
 
 
 \subsection{Utility methods}
-- Reordering
+
+\subsubsection{Two-way sequence matching}
+Sequence matching in our case will be done through running Needlemann-Wunch. Needlemann-Wunch will allow us to minimize the penalty of alignment between two sequences, given a cost-function and a penalty for gaps in the output. In our case, we do not care about gaps in the output sequence nor do we have very specific costs: We will only be looking into whether two items are equal, or not equal.
+
+As such we will modify the interface of our sequence allignment, such that the algorithm takes only three parameters: Two sequences and a equality function. We will run the Needlemann-Wunch with a gap-penalty at zero and the cost of equality set to -1 and while the cost of inequality is 1.
+
+\todo{Sevaral results possible - can mean alot in threeway matching}
+
+\subsubsection{Three-way matching}
+\begin{wrapfigure}{r}{0.4\textwidth}
+	\label{ThreewayMatching}
+	\includegraphics[scale=0.4]{drawings/eps/threewaymatching.eps}
+	\caption{A run of the Three-way matching-algorithm}
+\end{wrapfigure}
+
+Given three input sequences A, O and B it will often be necessary to match these structure, and output a single sequence of matchings between the three sequences. A match is a data-structure, that contains three elements A, O and B, illustrated as a row in the result of \ref{ThreewayMatching}. An empty result in any of the three columns on each row means that there is no matching from this specific input sequence.
+
+We will run sequence two-way matching two times on the sequence-pairs (A, O) and (O, B). Afterwards we will run a two way-matching on these two results, where equality between two two-way matches is defined as them not having an empty O-item, and having equal O-items. This will in the end giving us a list of matchings.
+
+\begin{figure}
+  \label{ThreeWayMatchingAlgorithm}
+\begin{verbatim}
+ThreeWayMatching(A, O, B, equality)
+    AMatching <- TwoWayAllign(A, O, equality)
+    BMatching <- TwoWayAllign(B, O, equality)
+    return TwoWayAllign(AMatching, BMatching, (x, y) =>
+                    x.O is not empty
+                    y.O is not empty
+                    x.O is equal to y.O
+                )
+
+\end{verbatim}
+\caption{Three-way matching algorithm}
+\end{figure}
+
+\subsubsection{Reordering}
+Several times in this thesis, we will have to resolve the problem where reordering of items in a sequence have happened in different branches. We will define a general three-way sequence-reordering-function, that can be given an original sequence and two reordered sequences, the result will be a single sequence where all elements are outputted in a way that can reasonably be described as a merge of the orders.
+
+Reorderings can conflict. One example could be that the sequence \texttt{(a, b, x, c, d)} has turned into \texttt{(x, a, b, c, d)} in one branch and \texttt{(a, b, c, d, x)}. These three sequences can easily be intepreted as \texttt{x} being been moved different places in the two branches, and a conflict should be produced.
+
+If one branch moves an item and the other branch deletes it, we will simply intepret this as a deletion. The intuition behind this, is that generally unordered sequences in programming languages will be semantically meaningless. Therefore if one user deleted it while another user simply moved it, chances are that the item is not needed anymore, and can simply be deleted.
+
+To do a three-way reordering, the obvious entry point is to identify which items have been moved, and then apply all these moves to the output sequence. This however leads to quite a few non-trivial definitions. What is a move? It might very well be an item of the sequences, but how do we define the place that it should be moved to? Several options are available: Insert after or before a specific item, insert between items or insert at index, and many more. Each of these items, however will also present further complications, like if we choose to insert something after an item, in the output sequence, then do we do that before or after we move that item?
+
+Further, such a move operation is not our input, and it is not clear how to calculate one from our input. Our input is three sequences with a specific order, and given those, many different move operations could be generated. The two sequences \texttt{a, b, c, d} and \texttt{a, b, d, c} can be interpreted as \texttt{c} being moved to after \texttt{d}, as \texttt{d} being placed before \texttt{c}, as \texttt{c} and \texttt{d} swapping places, and many other options. Also, figuring out the correct representation of a move in an algorithmic way can only be an uninformed guess - the users reasoning for doing a reordering might very well be grounded in context that the algorithm is unaware of.
+
+We will look differently at reorderings. Given the input sequences we will do a matching. Such a matching will produce the actual ordering. We have earlier described small weaknesses in this approach, due to sequence alignment having more than one result, but will abstract away from that problem in this section.
+
+A matching will contain some stable elements, and some unstable elements. The stable elements are elements where a match exists in both A, O and B. These elements, we will assume to be items that have not moved in the sequence. If something is not stable, it is either a move, an insertion or a deletion as seen in table \ref{ReorderingTable}.
+
+
+\begin{figure}
+\label{ReorderingTable}
+\centering
+\begin{tabular}{ | l | l | l || r |}
+  \hline                        
+   \textbf{A} & \textbf{O} & \textbf{B} & \textbf{Action by user} \\
+  \hline                        
+  Empty & Value & Value & "Moved from" or deleted in A \\
+  Value & Value & Empty & "Moved from" or deleted in B \\
+  Value & Empty & Empty & Inserted or "moved to" in A \\
+  Empty & Empty & Value & Inserted or "moved to" in B \\
+  Value & Value & Value & Unchanged \\
+  \hline  
+\end{tabular}
+  \caption{How to interpret matchings in the reordering algorithm}
+\end{figure}
+
+We will iterate through each matching, and treat them as such. Distinguishing between a deletion or a "move from" is not important - we will always treat them the same: Not adding them to the output. Distinguishing between insertion and moving is quite important however. Insertions should always be inserted in the output, however moves should only be inserted to the output if they have not been deleted in the opposite branch. 
+
+A conflicting move is a move where two "Moved to" operations exists on each list. Detecting these is a matter of looking into duplicate records in the result list. These will also be returned along with the result, and the callers of the reordering methods have the responsibility of presenting these to the user.
+
+\begin{figure}
+  \label{ThreeWayMatchingAlgorithm}
+\begin{verbatim}
+Reordering(A, O, B)
+	matches <- ThreeWayMatcing(A, O, B, items equal)
+	resultList <- [] // ResultList
+	
+	foreach match in matches
+		if match is insertion
+			add relevant item (A or B) to resultList.
+		if match is move to and has not been deleted in opposite branch
+			add relevant item (A or B) to resultList.
+		if match is unchanged
+			add item O to resultList
+	conflicts = find indexes of duplicate items in resultList
+	return (resultList, conflicts);
+\end{verbatim}
+\caption{Three-way reordering-algorithm}
+\end{figure}
+
+\subsubsection{Bi-partite graph matching}
+Finding a minimum cost bipartite matching of the sets \texttt{x} and \texttt{y} can be solved in cubic time using a maximum flow algorithm as described by \citet{bipartitecost}. A prerequisite of this algorithm is however that the two sets are equal in size. Further, it assumes that the input can generate a perfect matching in the internal graph. We want to modify the bipartite graph algorithm such that it will be able to consume differently sized sets, and such it will generate the best minimum cost matching, even though it might not be a perfect matching.
+
+The \citet{bipartitecost} algorithm starts by generating a weighted undirected graph, $G$. In this graph each item of the set is a node in the graph, and for each pair of nodes an edge is generated with the cost between them as the weight. The algorithm defines a set of prices $p$ for for each node. For $x$-nodes the initial prices are initially 0 and for $y$-nodes the initial prices is equal to the minimum weight of the incoming edges. It then creates an residual graph $G_M$ given a matching. The residual graph contains all the nodes of the original graph $G$, and further a source node $s$, and a sink node$t$. The source node has zero-cost edges to all $x$-nodes not in the matching and each $y$-node has a zero-cost edge towards the sink not in the matching. For each edge in the original graph, we will add an edge in the residual graph - if this specific edge exists in the matching we will add it as an edge from $y$ to $x$, otherwise from $x$ to $y$. The price weight of these edges will be the $price(xnode)+originalgraphweight-price(ynode)$. For each iteration of the algorithm it will update the prices such that the price in the next iteration is the current price and the cost to get from source to this node in the current residual graph.
+
+The pseudocode for the algorithm can be found below.
+
+\begin{figure}
+\begin{lstlisting}[mathescape]
+Generate $G$ from $X$ and $Y$ given a cost function
+Start with $M$ to the empty set
+Define $p(x)$ for $x \in X$, and  $p(y) = \underset{e \; into \; y}{\operatorname{min}} c_e$ for $y \in Y$
+While $M$ is not a perfect matching
+    Find a minimum-cost $s-t$ path $P$ in $G_M$ with prices $p$
+    Augment along $P$ to produce a new matching $M'$
+    Find a set of compatible prices with respect to $M'$
+Endwhile
+return M
+\end{lstlisting}
+\end{figure}
+
+We want to modify this algorithm to have the following properties:
+
+\begin{itemize}
+\item It works for x and y sets of different size. 
+\item It works even though a perfect matching cannot be found in the residual graph.
+\item For any element not matched it should return a matching $(x, \epsilon)$ or $(\epsilon, y)$
+\end{itemize}
+
+The first challenge is relatively easy to overcome. If the sets are not equal in size, we will add nodes, auxiliary nodes, in the smallest of the two sets until the two sets are equal in size. For each auxiliary node we will add an edge to each node in the opposing set with a cost larger than the largest cost between any other pair of nodes. In the final matching, the matchings that contain auxiliary nodes should be considered as not matched; since we chose they have been matched with the highest possible weight for their edges - the rest of the matchings are definitely the minimum cost matching.
+\todo{Forklar det her bedre}
+
+The second challenge is due to the fact that the end-condition in the loop requires a perfect matching. However if any node in any of the two sets does not have a cost defined for any nodes in the opposite set, then a perfect matching is not possible. An example of such a situation could be $X={1, 2}$ and $Y={1, 3}$ with a cost function only defined for elements that are numerically equal. This is demonstrated below.
+
+\begingroup
+    \fontsize{7pt}{10pt}\selectfont
+\begin{tabular}{ p{5.5cm} | p{5.5cm} }
+	\includegraphics[scale=0.3]{drawings/eps/TwoWayCostMatchingNotPerfect/1it0.eps} &
+    \includegraphics[scale=0.3]{drawings/eps/TwoWayCostMatchingNotPerfect/1it1.eps} \\
+	Initial graph for the sets and cost function. &
+    The first residual graph. \\ \\ \hline \\
+
+    \includegraphics[scale=0.3]{drawings/eps/TwoWayCostMatchingNotPerfect/1it2.eps} &
+    \includegraphics[scale=0.3]{drawings/eps/TwoWayCostMatchingNotPerfect/1it3.eps} \\
+	Running dijkstra finds a matching. &
+	In the second residual graph, all possible matchings have been found, but the matching is still not a perfect matching. \\ 
+\end{tabular}
+
+\endgroup
+
+When our algorithm reaches the second iteration, the matching is still not perfect for the entire graph. The problem is that one or more edges have no edges in the initial graph, and as such the solution seems simple: Remove and remember nodes with no costs generated for them. One argument against this being the solution, would be the situation where the X-node 1 actually has a cost for the Y-node two. In the original algorithm, the matching would still not perfect on the graph. However this problem will be solved by auxiliary nodes being inserted on the graph generation.
+
+The algorithm now becomes:
+
+\begin{figure}
+\begin{lstlisting}[mathescape]
+Generate $G$ from $X$ and $Y$ given a cost function.
+	- Inserting auxiliary nodes if the $|X| \neq |Y|$
+	- Store items of $X$ and $Y$ that has no cost.
+	    Do not add them to $G$.
+	    
+Start with $M$ to the empty set.
+Define $p(x)$ for $x \in X$, and  $p(y) = \underset{e \; into \; y}{\operatorname{min}} c_e$ for $y \in Y$
+While $M$ is not a perfect matching
+    Find a minimum-cost $s-t$ path $P$ in $G_M$ with prices $p$
+    Augment along $P$ to produce a new matching $M'$
+    Find a set of compatible prices with respect to $M'$
+Endwhile
+
+Return the union of these three sets:
+    For matchings with an auxiliary node, select $(x, \epsilon)$ or $(\epsilon, y)$
+    For other matchings select the matching.
+    For each item not added to $G$, select $(x, \epsilon)$ or $(\epsilon, y)$
+
+\end{lstlisting}
+\end{figure}
+
+
+
+\subsubsection{Three-way cost matching}
+Matching the members $(l_1, l_2, ..., l_{size(l)})$, $(b_1, b_2, ..., b_{size(b)})$ and $(r_1, r_2, ..., r_{size(r)})$ will be done by making a bipartite matching between the pairs $(b, l)$ and $(b, r)$, and afterwards matching the matching on the base items.
+
+Given the left to base and right to base matching, we will do another unordered matching on the base-items.
+
+\todo[inline]{We could probably just sort them after $b$-items, and then do an ordered matching.}
+
+An over approximation of the running time here will be  $3*max(x, y, z)^3$.
+
+\subsubsection{TODO}
+
 - Unordered matching of different sized bipartite matching
-- Three-way matching
 - Chunking of three-way matches
 - Prioritymatching
 - Diff3.Merge
@@ -342,21 +526,6 @@ file orderedmerge(base, left, right)
     use this three-way match to reconstruct a new tree.
 
 
-
-\subsubsection{Three-way cost matching}
-Matching the members $(l_1, l_2, ..., l_{size(l)})$, $(b_1, b_2, ..., b_{size(b)})$ and $(r_1, r_2, ..., r_{size(r)})$ will be done by making a bipartite matching between the pairs $(b, l)$ and $(b, r)$, and afterwards matching the matching on the base items.
-
-Finding a perfect bipartite matching with minimum costs can be solved in cubic time by \citet{bipartitecost}. This works if one is given equal size sets, and given the assumption that a perfect matching exists.
-
-There will be no guarantee that the different function sets are equal in size, or even that a similarity function will produce an edge between two nodes. This means there will be no guarantee for a possible perfect matching in the input. 
-
-Therefore we will redefine the algorithm such that it only runs as long as a path exists between source and sink in the residual graph. All remaining items not in the matching will generate matching of either $(x, \epsilon)$ or $(\epsilon, y)$ in the output.
-
-Given the left to base and right to base matching, we will do another unordered matching on the base-items.
-
-\todo[inline]{We could probably just sort them after $b$-items, and then do an ordered matching.}
-
-An over approximation of the running time here will be  $3*max(x, y, z)^3$.
 
 \subsubsection{Function similarity measure}
 Doing cost-based matching, means we also will have to define function similarity measures. This function will have to be run for each $(l, b)$ and $(r, b)$-pair, which means it is important to keep the running time low.
@@ -574,7 +743,6 @@ MergeUneven (A, O, B)
                 and adding starting and ending items, as above
 \end{verbatim}
 \end{figure}
-
 
 
 -- Equality

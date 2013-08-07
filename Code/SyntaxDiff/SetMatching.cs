@@ -184,7 +184,7 @@ namespace SyntaxDiff
                     this.ys = ys;
                 }
             }
-            public static BipartiteGraph CreateFromSets(List<X> xs_, List<Y> ys_, Cost cost)
+            public static BipartiteGraph CreateFromSets(List<X> xs_, List<Y> ys_, Cost cost, out List<X> oRestXs, out List<Y> oRestYs)
             {
                 var xs = xs_.Select(x => new xNode(x)).ToList();
                 var ys = ys_.Select(y => new yNode(y)).ToList();
@@ -205,12 +205,21 @@ namespace SyntaxDiff
                     }
                 }
 
-                xs.ForEach(x => graph.AddVertex(x));
-                ys.ForEach(y => graph.AddVertex(y));
+                var restXs = xs.Where(x => !graph.Vertices.Contains(x)).Select(x => x.item).ToList();
+                var restYs = ys.Where(y => !graph.Vertices.Contains(y)).Select(y => y.item).ToList();
 
-                if (xs.Count < ys.Count)
+                Func<int> xCount = () => (xs.Count - restXs.Count);
+                Func<int> yCount = () => ys.Count - restYs.Count;
+
+                oRestXs = restXs;
+                oRestYs = restYs;
+
+                //xs.ForEach(x => graph.AddVertex(x));
+                //ys.ForEach(y => graph.AddVertex(y));
+
+                if (xCount() < yCount())
                 {
-                    while (xs.Count < ys.Count)
+                    while (xCount() < yCount())
                     {
                         var pn = new xNode();
                         extras.Add(pn);
@@ -227,9 +236,9 @@ namespace SyntaxDiff
                     }
                 }
 
-                if (ys.Count < xs.Count)
+                if (yCount() < xCount())
                 {
-                    while (ys.Count < xs.Count)
+                    while (yCount() < xCount())
                     {
                         var pn = new yNode();
                         extras.Add(pn);
@@ -254,7 +263,7 @@ namespace SyntaxDiff
 
             public void RenderToFile(string name, List<Edge> markEdges, Dictionary<Node, int> prices, Matching m)
             {
-                return;
+                //return;
                 var graphviz = new GraphvizAlgorithm<Node, Edge>(this);
 
                 graphviz.FormatEdge += (sender, edge) =>
@@ -276,7 +285,7 @@ namespace SyntaxDiff
                     {
                         try
                         {
-                            edge.EdgeFormatter.Label.Value += " P:" + edge.Edge.TagPrice(prices);
+                            //edge.EdgeFormatter.Label.Value += " P:" + edge.Edge.TagPrice(prices);
                         }
                         catch
                         {
@@ -292,7 +301,7 @@ namespace SyntaxDiff
                         }
                     }
                 };
-                var distanceBetweenPoints = 2;
+                var distanceBetweenPoints = 1;
                 var maxPoints = ys.Count;
                 var maxY = maxPoints * (distanceBetweenPoints);
                 var maxX = xs.Count * (distanceBetweenPoints);
@@ -303,8 +312,8 @@ namespace SyntaxDiff
                 {
                     node.VertexFormatter.Label = node.Vertex.ToString();
                     int p;
-                    if (prices != null && prices.TryGetValue(node.Vertex, out p))
-                        node.VertexFormatter.Label += " P:" + p;
+                    //if (prices != null && prices.TryGetValue(node.Vertex, out p))
+                        //node.VertexFormatter.Label += " P:" + p;
 
                     int x = 0, y = 0;
 
@@ -320,17 +329,17 @@ namespace SyntaxDiff
                         }
                         if (n.Name == "sink")
                         {
-                            x = 12;
+                            x = 7;
                             y = maxY / 2;
                         }
                         if (n is yNode)
                         {
-                            x = 9;
+                            x = 5;
                             y = yCounted++ * distanceBetweenPoints;
                         }
                         if (n is xNode)
                         {
-                            x = 4;
+                            x = 3;
 
                             y = (xCounted++ * distanceBetweenPoints) - (xs.Count - ys.Count) * distanceBetweenPoints / 2;
                         }
@@ -480,8 +489,11 @@ namespace SyntaxDiff
         public static List<Tuple<X, Y>> Match(List<X> xs, List<Y> ys, Cost cost)
         {
             GraphMatching.RunCount++;
+            
+            List<X> restXs;
+            List<Y> restYs;
 
-            var flowgraph = BipartiteGraph.CreateFromSets(xs, ys, cost);
+            var flowgraph = BipartiteGraph.CreateFromSets(xs, ys, cost, out restXs, out restYs);
 
             var M = new Matching();
 
@@ -528,11 +540,11 @@ namespace SyntaxDiff
                 rl.Add(Tuple.Create(x, y));
             }
 
-            var notMatchedXs = xs.Where(x => rl.SingleOrDefault(i => i.Item1 != null && i.Item1.Equals(x)) == null).ToList();
-            var notMatchedYs = ys.Where(y => rl.SingleOrDefault(i => i.Item2 != null && i.Item2.Equals(y)) == null).ToList();
+            /*var notMatchedXs = xs.Where(x => rl.SingleOrDefault(i => i.Item1 != null && i.Item1.Equals(x)) == null).ToList();
+            var notMatchedYs = ys.Where(y => rl.SingleOrDefault(i => i.Item2 != null && i.Item2.Equals(y)) == null).ToList();*/
 
-            notMatchedXs.ForEach(x => rl.Add(Tuple.Create(x, default(Y))));
-            notMatchedYs.ForEach(y => rl.Add(Tuple.Create(default(X), y)));
+            restXs.ForEach(x => rl.Add(Tuple.Create(x, default(Y))));
+            restYs.ForEach(y => rl.Add(Tuple.Create(default(X), y)));
 
             return rl.ToList();
         }

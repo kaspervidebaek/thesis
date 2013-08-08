@@ -294,37 +294,30 @@ Tree matching will still have a cubic running time on the amount of nodes, howev
 \clearpage
 
 \section{Implementation}
-In this section I will dive into the implementation of the code. The main function of the algorithm looks like this. We will focus on two issues:
-
-- Choosing Roslyn
-- 
-- Merging functions on a statement-level
-- Merging classes in a structured fashion.
-
-
+In this section we will dive into algorithms written for the code-merging tool. The first section will list a couple of utility functions that will be needed for the later sections. The second will describe efforts to create merging of how classes, namespaces and other structures of source code are generated, and the last section will focus on merging syntax trees created inside method-definitions.
 
 \subsection{Utility methods}
+In this section we will describe series of utility methods that will be used in the later sections for implementing a merging of the merging algorithms. By themselves they might seem meaningless. In some cases we motivate their existence in this section, but in other cases the motivation might first become clear in the later sections.
 
 \subsubsection{Two-way sequence matching}
 Sequence matching in our case will be done through running Needlemann-Wunch. Needlemann-Wunch will allow us to minimize the penalty of alignment between two sequences, given a cost-function and a penalty for gaps in the output. In our case, we do not care about gaps in the output sequence nor do we have very specific costs: We will only be looking into whether two items are equal, or not equal.
 
+\todo{Running time}
 As such we will modify the interface of our sequence allignment, such that the algorithm takes only three parameters: Two sequences and a equality function. We will run the Needlemann-Wunch with a gap-penalty at zero and the cost of equality set to -1 and while the cost of inequality is 1.
-
 \todo{Sevaral results possible - can mean alot in threeway matching}
 
-\subsubsection{Three-way matching}
+\subsubsection{Three-way sequence matching}
 \begin{wrapfigure}{r}{0.4\textwidth}
-	\label{ThreewayMatching}
-	\includegraphics[scale=0.4]{drawings/eps/threewaymatching.eps}
-	\caption{A run of the Three-way matching-algorithm}
+   \centerline{\includegraphics[scale=0.4]{drawings/eps/threewaymatching.eps}}
+   \caption{A run of the Three-way matching-algorithm}
+   \label{ThreewayMatching}
 \end{wrapfigure}
 
-Given three input sequences A, O and B it will often be necessary to match these structure, and output a single sequence of matchings between the three sequences. A match is a data-structure, that contains three elements A, O and B, illustrated as a row in the result of \ref{ThreewayMatching}. An empty result in any of the three columns on each row means that there is no matching from this specific input sequence.
+Given three input sequences A, O and B it will often be necessary to match these structure, and output a single sequence of matchings between the three sequences. A match is a data-structure, that contains three elements A, O and B, illustrated as a row in the result of Figure \ref{ThreewayMatching}. An empty result in any of the three columns on each row means that there is no matching from this specific input sequence.
 
 We will run sequence two-way matching two times on the sequence-pairs (A, O) and (O, B). Afterwards we will run a two way-matching on these two results, where equality between two two-way matches is defined as them not having an empty O-item, and having equal O-items. This will in the end giving us a list of matchings.
-
+\todo{Running time?}
 \begin{figure}
-  \label{ThreeWayMatchingAlgorithm}
 \begin{verbatim}
 ThreeWayMatching(A, O, B, equality)
     AMatching <- TwoWayAllign(A, O, equality)
@@ -337,67 +330,83 @@ ThreeWayMatching(A, O, B, equality)
 
 \end{verbatim}
 \caption{Three-way matching algorithm}
-\end{figure}
-
-\subsubsection{Reordering}
-Several times in this thesis, we will have to resolve the problem where reordering of items in a sequence have happened in different branches. We will define a general three-way sequence-reordering-function, that can be given an original sequence and two reordered sequences, the result will be a single sequence where all elements are outputted in a way that can reasonably be described as a merge of the orders.
-
-Reorderings can conflict. One example could be that the sequence \texttt{(a, b, x, c, d)} has turned into \texttt{(x, a, b, c, d)} in one branch and \texttt{(a, b, c, d, x)}. These three sequences can easily be intepreted as \texttt{x} being been moved different places in the two branches, and a conflict should be produced.
-
-If one branch moves an item and the other branch deletes it, we will simply intepret this as a deletion. The intuition behind this, is that generally unordered sequences in programming languages will be semantically meaningless. Therefore if one user deleted it while another user simply moved it, chances are that the item is not needed anymore, and can simply be deleted.
-
-To do a three-way reordering, the obvious entry point is to identify which items have been moved, and then apply all these moves to the output sequence. This however leads to quite a few non-trivial definitions. What is a move? It might very well be an item of the sequences, but how do we define the place that it should be moved to? Several options are available: Insert after or before a specific item, insert between items or insert at index, and many more. Each of these items, however will also present further complications, like if we choose to insert something after an item, in the output sequence, then do we do that before or after we move that item?
-
-Further, such a move operation is not our input, and it is not clear how to calculate one from our input. Our input is three sequences with a specific order, and given those, many different move operations could be generated. The two sequences \texttt{a, b, c, d} and \texttt{a, b, d, c} can be interpreted as \texttt{c} being moved to after \texttt{d}, as \texttt{d} being placed before \texttt{c}, as \texttt{c} and \texttt{d} swapping places, and many other options. Also, figuring out the correct representation of a move in an algorithmic way can only be an uninformed guess - the users reasoning for doing a reordering might very well be grounded in context that the algorithm is unaware of.
-
-We will look differently at reorderings. Given the input sequences we will do a matching. Such a matching will produce the actual ordering. We have earlier described small weaknesses in this approach, due to sequence alignment having more than one result, but will abstract away from that problem in this section.
-
-A matching will contain some stable elements, and some unstable elements. The stable elements are elements where a match exists in both A, O and B. These elements, we will assume to be items that have not moved in the sequence. If something is not stable, it is either a move, an insertion or a deletion as seen in table \ref{ReorderingTable}.
-
-
-\begin{figure}
-\label{ReorderingTable}
-\centering
-\begin{tabular}{ | l | l | l || r |}
-  \hline                        
-   \textbf{A} & \textbf{O} & \textbf{B} & \textbf{Action by user} \\
-  \hline                        
-  Empty & Value & Value & "Moved from" or deleted in A \\
-  Value & Value & Empty & "Moved from" or deleted in B \\
-  Value & Empty & Empty & Inserted or "moved to" in A \\
-  Empty & Empty & Value & Inserted or "moved to" in B \\
-  Value & Value & Value & Unchanged \\
-  \hline  
-\end{tabular}
-  \caption{How to interpret matchings in the reordering algorithm}
-\end{figure}
-
-We will iterate through each matching, and treat them as such. Distinguishing between a deletion or a "move from" is not important - we will always treat them the same: Not adding them to the output. Distinguishing between insertion and moving is quite important however. Insertions should always be inserted in the output, however moves should only be inserted to the output if they have not been deleted in the opposite branch. 
-
-A conflicting move is a move where two "Moved to" operations exists on each list. Detecting these is a matter of looking into duplicate records in the result list. These will also be returned along with the result, and the callers of the reordering methods have the responsibility of presenting these to the user.
-
-\begin{figure}
   \label{ThreeWayMatchingAlgorithm}
-\begin{verbatim}
-Reordering(A, O, B)
-	matches <- ThreeWayMatcing(A, O, B, items equal)
-	resultList <- [] // ResultList
-	
-	foreach match in matches
-		if match is insertion
-			add relevant item (A or B) to resultList.
-		if match is move to and has not been deleted in opposite branch
-			add relevant item (A or B) to resultList.
-		if match is unchanged
-			add item O to resultList
-	conflicts = find indexes of duplicate items in resultList
-	return (resultList, conflicts);
-\end{verbatim}
-\caption{Three-way reordering-algorithm}
 \end{figure}
 
-\subsubsection{Bi-partite graph matching}
-Finding a minimum cost bipartite matching of the sets \texttt{x} and \texttt{y} can be solved in cubic time using a maximum flow algorithm as described by \citet{bipartitecost}. A prerequisite of this algorithm is however that the two sets are equal in size. Further, it assumes that the input can generate a perfect matching in the internal graph. We want to modify the bipartite graph algorithm such that it will be able to consume differently sized sets, and such it will generate the best minimum cost matching, even though it might not be a perfect matching.
+\subsubsection{Chunking}
+Given a three-way sequence matching, a single match can be defined as stable or unstable depending on whether or not all items $A$, $O$ and $B$ are present. This notion is quite useful for doing an actual merge. It is reasonable the assume that any stable match, does not not need to be merged.
+
+\begin{wrapfigure}{r}{0.5\textwidth}
+   \centerline{\includegraphics[scale=0.4]{drawings/eps/threewaymatching-chunking.eps}}
+   \caption{Chunking a matching. Grey areas are unstable chunks and white areas are stable.}
+   \label{Chunking}
+\end{wrapfigure}
+
+Another assumption one could make is that an unstable match can be viewed as either a deletion or an insertion. This however leaves us in a situation where all matchings can easily be resolved into a merge. This tells us something is inherently wrong with the approach. The problem lies in the fact that the matching sequence cannot represent the actual sentiment of the changes it is seeing: A deletion followed by an insertion might very well be an update of a single line. If both branches have done an update of the same line, then a conflict should be produced. Because of this we need to introduce chunking.
+
+A chunk is three lists, one for A, one for O and one for B. A chunk can be stable or unstable. Given a sequence matching, we will generate chunks by iterating over every single match. If the first element is stable, then we generate a stable chunk, and add it's three items to the appropriate list. We continue adding all elements until we hit an unstable match. When we hit an unstable match we generate an unstable chunk, and add all non-empty elements from the match to the appropriate list.
+
+The pseudocode for this algorithm is in figure \ref{CunkingAlgorithm}. \footnote{The ChunkBy method used in the algorithm can be found at \url{http://msdn.microsoft.com/en-us/library/cc138361.aspx}}
+
+\begin{figure}
+\begin{verbatim}
+Chunking(matching)
+   cs <- matching.ChunkBy(no in a matching are null);
+   chuncks <- []
+   foreach(c in cs)
+      chunk <- new stable or unstable chunk
+      foreach(match in c.matches)
+            if (m.A != null)
+            chunk.A.Add(m.A);
+         if (m.O != null)
+            chunk.O.Add(m.O);
+         if (m.B != null)
+            chunk.B.Add(m.B);
+
+      chuncks.Add(chunk);
+   return chunks
+\end{verbatim}
+\caption{Chunking algorithm}
+  \label{CunkingAlgorithm}
+\end{figure}
+
+\subsubsection{Priority-differencing}
+Our three-way matching function operates on equality. Yet in some cases we will actually want to use heuristics functions that define equality as a heuristic measure - as a similarity function - and pass this the the matching. This creates the problem that the heuristic equality function will not be able to distinguish between equality and similarity. Yet we want to make sure that completely equal inputs are matched before similarity is used - to get the most accurate results.
+
+The solution to this problem will be Priority-Matching. It will start by doing a matching on the three input sequences using a strict equality function. It will then iterate through all chunks and for unstable chunks it will do another matching using the similarity-function. It will therefore generate three types of chunks:
+
+\begin{itemize}
+	\item Equality-stable items
+	\item Similarity-stable items
+	\item Unstable items
+\end{itemize}
+
+\begin{figure}
+\begin{verbatim}
+PriforityDiff(A, O, B, equal, similar)
+    matches <- ThreeWayMatching(A, O, B, equal)
+    chunks <- Chunking(matches)
+   
+    outChunks <- [];
+    foreach (var chunk in chunks)
+        if (chunk.stable)
+            add chunk to outchunks as an equality-stable chunk
+        else
+            innermatches <- ThreeWayMatching(chunk.A, chunk.O, chunk.B, similar);
+            innerchunks <- Chunking(innermatches, comparer2);
+            foreach (var innerchunk in innerchunks)
+                if (innerchunk.stable)
+		            add chunk to outchunks as an similar-stable chunk
+                else
+		            add chunk to outchunks as an unstable chunk
+    return outChunks;
+\end{verbatim}
+\caption{The algorithm for priority-differencing}
+  \label{PriorityMatching}
+\end{figure}
+
+\subsubsection{Two-way set matching with costs}
+Finding a minimum cost matching of the bipartite sets \texttt{x} and \texttt{y} can be solved in cubic time using a maximum flow algorithm as described by \citet{bipartitecost}. A prerequisite of this algorithm is however that the two sets are equal in size. Further, it assumes that the input can generate a perfect matching in the internal graph. We want to modify the bipartite graph algorithm such that it will be able to consume differently sized sets, and such it will generate the best minimum cost matching, even though it might not be a perfect matching.
 
 The \citet{bipartitecost} algorithm starts by generating a weighted undirected graph, $G$. In this graph each item of the set is a node in the graph, and for each pair of nodes an edge is generated with the cost between them as the weight. The algorithm defines a set of prices $p$ for for each node. For $x$-nodes the initial prices are initially 0 and for $y$-nodes the initial prices is equal to the minimum weight of the incoming edges. It then creates an residual graph $G_M$ given a matching. The residual graph contains all the nodes of the original graph $G$, and further a source node $s$, and a sink node$t$. The source node has zero-cost edges to all $x$-nodes not in the matching and each $y$-node has a zero-cost edge towards the sink not in the matching. For each edge in the original graph, we will add an edge in the residual graph - if this specific edge exists in the matching we will add it as an edge from $y$ to $x$, otherwise from $x$ to $y$. The price weight of these edges will be the $price(xnode)+originalgraphweight-price(ynode)$. For each iteration of the algorithm it will update the prices such that the price in the next iteration is the current price and the cost to get from source to this node in the current residual graph.
 
@@ -428,35 +437,55 @@ We want to modify this algorithm to have the following properties:
 The first challenge is relatively easy to overcome. If the sets are not equal in size, we will add nodes, auxiliary nodes, in the smallest of the two sets until the two sets are equal in size. For each auxiliary node we will add an edge to each node in the opposing set with a cost larger than the largest cost between any other pair of nodes. In the final matching, the matchings that contain auxiliary nodes should be considered as not matched; since we chose they have been matched with the highest possible weight for their edges - the rest of the matchings are definitely the minimum cost matching.
 \todo{Forklar det her bedre}
 
-The second challenge is due to the fact that the end-condition in the loop requires a perfect matching. However if any node in any of the two sets does not have a cost defined for any nodes in the opposite set, then a perfect matching is not possible. An example of such a situation could be $X={1, 2}$ and $Y={1, 3}$ with a cost function only defined for elements that are numerically equal. This is demonstrated below.
+The second challenge is due to the fact that the end-condition in the loop requires a perfect matching. However if any node in any of the two sets does not have a cost defined for a single node in the opposite set, then a perfect matching is not possible. An example of such a situation could be $X={1, 2}$ and $Y={1, 3}$ with a cost function only defined for elements that are numerically equal. This is demonstrated below. \\
 
 \begingroup
     \fontsize{7pt}{10pt}\selectfont
 \begin{tabular}{ p{5.5cm} | p{5.5cm} }
-	\includegraphics[scale=0.3]{drawings/eps/TwoWayCostMatchingNotPerfect/1it0.eps} &
-    \includegraphics[scale=0.3]{drawings/eps/TwoWayCostMatchingNotPerfect/1it1.eps} \\
-	Initial graph for the sets and cost function. &
+   \centerline{\includegraphics[scale=0.3]{drawings/eps/TwoWayCostMatchingNotPerfect/1it0.eps}} &
+    \centerline{\includegraphics[scale=0.3]{drawings/eps/TwoWayCostMatchingNotPerfect/1it1.eps}} \\
+   Initial graph for the sets and cost function. &
     The first residual graph. \\ \\ \hline \\
 
-    \includegraphics[scale=0.3]{drawings/eps/TwoWayCostMatchingNotPerfect/1it2.eps} &
-    \includegraphics[scale=0.3]{drawings/eps/TwoWayCostMatchingNotPerfect/1it3.eps} \\
-	Running dijkstra finds a matching. &
-	In the second residual graph, all possible matchings have been found, but the matching is still not a perfect matching. \\ 
+    \centerline{\includegraphics[scale=0.3]{drawings/eps/TwoWayCostMatchingNotPerfect/1it2.eps}} &
+    \centerline{\includegraphics[scale=0.3]{drawings/eps/TwoWayCostMatchingNotPerfect/1it3.eps}} \\
+   Running dijkstra finds a matching. &
+   In the second residual graph, all possible matchings have been found, but the matching is still not a perfect matching. \\ 
 \end{tabular}
 
 \endgroup
 
-When our algorithm reaches the second iteration, the matching is still not perfect for the entire graph. The problem is that one or more edges have no edges in the initial graph, and as such the solution seems simple: Remove and remember nodes with no costs generated for them. One argument against this being the solution, would be the situation where the X-node 1 actually has a cost for the Y-node two. In the original algorithm, the matching would still not perfect on the graph. However this problem will be solved by auxiliary nodes being inserted on the graph generation.
+When our algorithm reaches the second iteration, the matching is still not perfect for the entire graph. The problem is that one or more edges have no edges in the initial graph. The solution seems to be to not generate node with no costs generated for them, and return them as matchings with an empty opposite. This would obviously be a correct assumption; since they have no costs associated to the other set, they are of course impossible to match.
 
-The algorithm now becomes:
+Looking at the same example, now that the node $(X: 1)$ actually has a cost to the node $(Y: 2)$. For this graph a perfect matching is not possible either. This situation is overcome by the generation auxiliary nodes after nodes with no cost have been deleted. As seen in the right figure below. \\
+
+\begingroup
+    \fontsize{7pt}{10pt}\selectfont
+\begin{tabular}{ p{5.5cm} | p{5.5cm} }
+   \centerline{\includegraphics[scale=0.3]{drawings/eps/TwoWayCostMatchingNotPerfect/NoFakeNode.eps}} &
+    \centerline{\includegraphics[scale=0.3]{drawings/eps/TwoWayCostMatchingNotPerfect/FakeNode.eps}} \\
+   A graph where all nodes have a cost, but where no perfect match is possible. &
+    The same graph, with auxiliary nodes added to make a perfect match possible. \\ 
+\end{tabular}
+
+\endgroup
+
+We now have three sets, that together will be give the final set:
+\begin{itemize}
+   \item The matchings that have an original input item in both ends.
+   \item The matchings that have an auxiliary node in either end.
+   \item The set of $X$- and $Y$-nodes that were never added to the graph.
+\end{itemize}
+
+We will simply union these sets and create matchings with an empty end apprioriately for the last two items in the list. The algorithm becomes:
 
 \begin{figure}
 \begin{lstlisting}[mathescape]
 Generate $G$ from $X$ and $Y$ given a cost function.
-	- Inserting auxiliary nodes if the $|X| \neq |Y|$
-	- Store items of $X$ and $Y$ that has no cost.
-	    Do not add them to $G$.
-	    
+   - Store items of $X$ and $Y$ that has no cost.
+       Do not add them to $G$.
+   - Inserting auxiliary nodes if the $|X| \neq |Y|$
+       
 Start with $M$ to the empty set.
 Define $p(x)$ for $x \in X$, and  $p(y) = \underset{e \; into \; y}{\operatorname{min}} c_e$ for $y \in Y$
 While $M$ is not a perfect matching
@@ -472,26 +501,92 @@ Return the union of these three sets:
 
 \end{lstlisting}
 \end{figure}
+\todo{Running time?}
 
+\subsubsection{Three-way set matching with costs}
+When we are given an original set $O$ and two branched sets $A$ and $B$, three way cost-matching will allow us to decided what items of each set belong together - atleast if we define a decent cost-function. 
 
+It will simply do a two two-way matchings between $A$ and $O$ and between $O$ and $B$, and afterwards do a cost-matchings on these two matchings, where a cost is defined between the matchings if the $O$-item of each matching is not, and if they are equal. \todo[inline]{We could probably just sort them after $O$-items, and then do a zipping on most of the lists.}
 
-\subsubsection{Three-way cost matching}
-Matching the members $(l_1, l_2, ..., l_{size(l)})$, $(b_1, b_2, ..., b_{size(b)})$ and $(r_1, r_2, ..., r_{size(r)})$ will be done by making a bipartite matching between the pairs $(b, l)$ and $(b, r)$, and afterwards matching the matching on the base items.
-
-Given the left to base and right to base matching, we will do another unordered matching on the base-items.
-
-\todo[inline]{We could probably just sort them after $b$-items, and then do an ordered matching.}
+\begin{figure}
+\begin{verbatim}
+ThreeWayCostMatching(A, O, B, equality)
+    AMatching <- TwoWayCostMatch(A, O, cost)
+    BMatching <- TwoWayCostMatch(B, O, cost)
+    return TwoWayCostMatch(AMatching, BMatching, (x, y) =>
+                    x.O is not empty
+                    y.O is not empty
+                    x.O is equal to y.O)
+\end{verbatim}
+\caption{Three-way cost-matching algorithm}
+  \label{ThreeWayCostMatchingAlgorithm}
+\end{figure}
 
 An over approximation of the running time here will be  $3*max(x, y, z)^3$.
 
-\subsubsection{TODO}
 
-- Unordered matching of different sized bipartite matching
-- Chunking of three-way matches
-- Prioritymatching
-- Diff3.Merge
+\subsubsection{Reordering}
+Several times in this thesis, we will have to resolve the problem where reordering of items in a sequence have happened in different branches. We will define a general three-way sequence-reordering-function, that can be given an original sequence and two reordered sequences, the result will be a single sequence where all elements are outputted in a way that can reasonably be described as a merge of the orders.
+
+Reorderings can conflict. One example could be that the sequence \texttt{(a, b, x, c, d)} has turned into \texttt{(x, a, b, c, d)} in one branch and \texttt{(a, b, c, d, x)}. These three sequences can easily be intepreted as \texttt{x} being been moved different places in the two branches, and a conflict should be produced.
+
+If one branch moves an item and the other branch deletes it, we will simply intepret this as a deletion. The intuition behind this, is that generally unordered sequences in programming languages will be semantically meaningless. Therefore if one user deleted it while another user simply moved it, chances are that the item is not needed anymore, and can simply be deleted.
+
+To do a three-way reordering, the obvious entry point is to identify which items have been moved, and then apply all these moves to the output sequence. This however leads to quite a few non-trivial definitions. What is a move? It might very well be an item of the sequences, but how do we define the place that it should be moved to? Several options are available: Insert after or before a specific item, insert between items or insert at index, and many more. Each of these items, however will also present further complications, like if we choose to insert something after an item, in the output sequence, then do we do that before or after we move that item?
+
+Further, such a move operation is not our input, and it is not clear how to calculate one from our input. Our input is three sequences with a specific order, and given those, many different move operations could be generated. The two sequences \texttt{a, b, c, d} and \texttt{a, b, d, c} can be interpreted as \texttt{c} being moved to after \texttt{d}, as \texttt{d} being placed before \texttt{c}, as \texttt{c} and \texttt{d} swapping places, and many other options. Also, figuring out the correct representation of a move in an algorithmic way can only be an uninformed guess - the users reasoning for doing a reordering might very well be grounded in context that the algorithm is unaware of.
+
+We will look differently at reorderings. Given the input sequences we will do a matching. Such a matching will produce the actual ordering. We have earlier described small weaknesses in this approach, due to sequence alignment having more than one result, but will abstract away from that problem in this section.
+
+A matching will contain some stable elements, and some unstable elements. The stable elements are elements where a match exists in both A, O and B. These elements, we will assume to be items that have not moved in the sequence. If something is not stable, it is either a move, an insertion or a deletion as seen in Table \ref{ReorderingTable}.
+
+\begin{figure}
+\centering
+\begin{tabular}{ | l | l | l || r |}
+  \hline                        
+   \textbf{A} & \textbf{O} & \textbf{B} & \textbf{Action by user} \\
+  \hline                        
+  Empty & Value & Value & "Moved from" or deleted in A \\
+  Value & Value & Empty & "Moved from" or deleted in B \\
+  Value & Empty & Empty & Inserted or "moved to" in A \\
+  Empty & Empty & Value & Inserted or "moved to" in B \\
+  Value & Value & Value & Unchanged \\
+  \hline  
+\end{tabular}
+  \caption{How to interpret matchings in the reordering algorithm}
+\label{ReorderingTable}
+\end{figure}
+
+We will iterate through each matching, and treat them as such. Distinguishing between a deletion or a "move from" is not important - we will always treat them the same: Not adding them to the output. Distinguishing between insertion and moving is quite important however. Insertions should always be inserted in the output, however moves should only be inserted to the output if they have not been deleted in the opposite branch. 
+
+A conflicting move is a move where two "Moved to" operations exists on each list. Detecting these is a matter of looking into duplicate records in the result list. These will also be returned along with the result, and the callers of the reordering methods have the responsibility of presenting these to the user.
+\todo{Running time?}
+\begin{figure}
+\begin{verbatim}
+Reordering(A, O, B)
+   matches <- ThreeWayMatcing(A, O, B, items equal)
+   resultList <- [] // ResultList
+   
+   foreach match in matches
+      if match is insertion
+         add relevant item (A or B) to resultList.
+      if match is move to and has not been deleted in opposite branch
+         add relevant item (A or B) to resultList.
+      if match is unchanged
+         add item O to resultList
+   conflicts = find indexes of duplicate items in resultList
+   return (resultList, conflicts);
+\end{verbatim}
+\caption{Three-way reordering-algorithm}
+  \label{ThreeWayReorderingAlgorithm}
+\end{figure}
+
 
 \subsection{Merging classes}
+
+
+- Diff3.Merge
+
 Classes, namespaces etc are structures.
 
 file merge(base, left, right)
@@ -573,7 +668,7 @@ Observations:
 
 
 
-\subsubsection{Merging functions}
+\subsection{Merging functions}
 Foreach function, write about:
 
 Intended input.
@@ -582,19 +677,19 @@ Conflict behaviour
 Tricks that are not obvious.
 Intended output.
 
-\paragraph{Merging nodes}
+\subsubsection{Merging nodes}
 \texttt{MergeNode} handles merging of single nodes. It will take three input values; A, O and B, and return a syntactically valid string, which is the merge of those three input values. It handles the input as a matching and will conclude insertion or deletion if appropriate. Further it assumes that all input nodes are of the same type.
 
 \begin{itemize}
-	\item If O is null and either A or B is null it treats the input as an insertion, and returns the inserted value.
-	\item If O is not null, and A or B is null it treats the input as a deletion. It will verify that no changes has happened in the other branch and return either a conflict, or empty.
+   \item If O is null and either A or B is null it treats the input as an insertion, and returns the inserted value.
+   \item If O is not null, and A or B is null it treats the input as a deletion. It will verify that no changes has happened in the other branch and return either a conflict, or empty.
 \end{itemize}
 
 Otherwise it will treat the input as a merge of the two branches A and B. From a concrete syntax perspective, we will have to look into two factors of the current node, to see what to return:
 
 \begin{itemize}
-	\item The concrete syntax that this node emits.
-	\item The concrete syntax that each child of this node emits.
+   \item The concrete syntax that this node emits.
+   \item The concrete syntax that each child of this node emits.
 \end{itemize}
 
 The responsibility of MergeNode is to only return the the exact syntax needed for these specific node. Any work of generating concrete syntax for children will be handled by a recursive call to MergeNode. For example a method invocation will simply generate the opening and closing parenthesis, while the argument list will simply be passed to another invocation, as well as the method-expression. This breakdown makes the merging of most nodes quite trivial.
@@ -626,7 +721,6 @@ MergeNode (of method declerations and below)
         Merge conditions if they exist.
         Merge Substatemnetlists.
         return the two merges.
-        
 
 \end{verbatim}
 \caption{A fixed structural node is nodes that has a fixed number of children, that are easily merged - like methods declerations, expressionsstatements, invocations, memberaccesses, single arguments. A content node is a node which is generated from a single token.}
@@ -649,31 +743,38 @@ MergeToken(A, O, B)
 \end{verbatim}
 \end{figure}
 
-\paragraph{Merging lists}
-There are primarily two types of list that we want to merge: ParameterLists and ArgumentLists. Parameterlists are the pair of types and identifiers found in method declarations, where argument-lists are expressions found in invocations of methods. Modification of these can be for several reasons.
+
+\subsubsection{Equality and similarity}
+-- Equality
+-- Similiarity
+
+\subsubsection{Merging lists}
+There are primarily two types of list that we want to merge: ParameterLists and ArgumentLists. Parameterlists are the pair of types and identifiers found in method declarations, where argument-lists are expressions found in invocations of methods. Modification of these two properties 
 
 \begin{itemize}
-	\item Modifications of parameter-lists can be reorderings with no semantic meaning. Further it can be additions or removals of a parameter. These will often also be accompanied by some change in the behaviour of a method.
-	\item Modifications of argument-lists can be done as a consequence of change in a parameter list other places in the syntax-tree. They can also be done simply because another expression or value needs to be passed into a function, or because the user intends to call another overload of the method.
+   \item Modifications of parameter-lists can be reorderings with no semantic meaning. Further it can be additions or removals of a parameter. These will often also be accompanied by some change in the behaviour of a method.
+   \item Modifications of argument-lists can be done as a consequence of change in a parameter list other places in the syntax-tree. They can also be done simply because another expression or value needs to be passed into a function, or because the user intends to call another overload of the method.
 \end{itemize}
 
-We will do an unordered matching of the lists, and then do a reordering, and filtering of the output. The returned list is a list that tries to preserve any reordering, and that has filtered items in the sequence that did not exist in either of the two branches. This will hopefully ensure that:
+The first part is solved the same way that we reorderings were solved in section \todo{page number}. We will do an unordered matching of them, and then do a reordering, and filtering of the output. The returned list is a list that tries to preserve any reordering, and that has filtered items in the sequence that did not exist in either of the two branches. This will hopefully ensure that:
 
 \begin{itemize}
-	\item Since the reordering uses the exact same algorithm a merge of parameter- and argument-lists will produce compatible output, provided that the cost function matches in the same way on both branches.
-	\item All items that existed in the branches will exist in the output of this function. 
-	\item Conflicts can be marked easily for the user.
+   \item Since the reordering uses the exact same algorithm a merge of parameter- and argument-lists will produce compatible output, given that the cost function matches in the same way on both branches.
+   \item All items that existed in the branches will exist in the output of this function. 
+   \item Conflicts can be marked easily for the user.
 \end{itemize}
 
 The cost between a pair of parameters can be boiled down the question of how similar the type of the parameter is, and how similar the name is. Similarity of type can be measured as closeness in the class hierarchy. String similarity can be measured in quite a few ways. In our case we will want to keep the runtime low and as such we will keep to a simple and exact scheme of similarity of both.
 
-The cost of the argument-lists is much harder to define. An argument is an expression, so the obvious thought would be to look into what type that expression will have. This information, however, is not very often available when looking at a single class. The idea here must be to try to find to find similar matches, and link only the expressions that are most similar. We will therefore use the similarity function as cost function for these. 
+The cost of the argument-lists is much harder to define. An argument is an expression, so the obvious thought would be to look into what type that expression will have. This information, however, is not available to us, unless we want to build and link all branches of the project that we are trying to merge. Instead we will simply look into the actual string value of these expressions, compare this to be equal or not, and if it is, we will give them a lower cost than if not.
+\todo{asdasd}
+The first item in the above list, depends on the property of a cost function is not quite as easily attainable. 
 
 \todo{example}
 
 \begin{figure}
   \caption{Merging tokens}
-  \label{MergeToken}
+  \label{Listmerger}
 \begin{verbatim}
 Listmerger (A, O, B, cost)
     match A, O, B after cost.
@@ -684,7 +785,7 @@ Listmerger (A, O, B, cost)
 \end{verbatim}
 \end{figure}
 
-\paragraph{Merging blocks}
+\subsubsection{Merging blocks}
 erging blocks and 
 
 
@@ -743,8 +844,6 @@ MergeUneven (A, O, B)
 \end{figure}
 
 
--- Equality
--- Similiarity
 -- Matching blocks and lists
 -- Merging.
 --- Merging inserted blocks.

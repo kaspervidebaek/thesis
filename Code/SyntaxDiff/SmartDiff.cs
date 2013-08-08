@@ -185,20 +185,44 @@ namespace SyntaxDiff
 
         public static List<Diff<T>> GetThreeWayUnorderedMatch(List<T> Ac, List<T> Oc, List<T> Bc, GraphMatching<T, T>.Cost cost)
         {
+            //var oWI = Oc.Select((x, i) => Tuple.Create(x, i)).ToList();
+
             var Ma = GraphMatching<T, T>.Match(Ac, Oc, cost);
             var Mb = GraphMatching<T, T>.Match(Bc, Oc, cost);
 
-            var totalMatch = GraphMatching<
-                                        Tuple<T, T>,
-                                        Tuple<T, T>
-                                        >.Match(Ma, Mb,
-                                            (x, y) =>
-                                            {
-                                                if (x.Item2 == y.Item2 && y.Item2 != null)
-                                                    return 1;
-                                                return null;
-                                            }).Select(u => new Diff<T>(u.Item1, u.Item2)).ToList();
-            return totalMatch;
+            /*var sortedMa = Ma.OrderBy(x => x.Item2.Item2).ToList();
+            var sortedMb = Mb.OrderBy(x => x.Item2.Item2).ToList();
+
+            var maxI = Math.Max(sortedMa.Count, sortedMb.Count);
+
+            var returnvalue = new List<Diff<T>>();
+
+            for (int i = 0; i < maxI; i++)
+            {
+                var aItem = sortedMa[i];
+                var bItem = sortedMb[i];
+
+                if (aItem.Item2 != null && bItem.Item2 != null)
+                {
+                    returnvalue.Add(new Diff<T> { A = aItem.Item1, O = aItem.Item2.Item1, B = bItem.Item1 });
+                }
+                else if(aItem.Item2 == null && ) // 
+                {
+
+                }
+            }*/
+
+                var totalMatch = GraphMatching<
+                                            Tuple<T, T>,
+                                            Tuple<T, T>
+                                            >.Match(Ma, Mb,
+                                                (x, y) =>
+                                                {
+                                                    if (x.Item2 == y.Item2 && y.Item2 != null)
+                                                        return 1;
+                                                    return null;
+                                                }).Select(u => new Diff<T>(u.Item1, u.Item2)).ToList();
+                return totalMatch;
         }
 
 

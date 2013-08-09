@@ -24,13 +24,17 @@
 \contentsline {subsubsection}{\numberline {4.1.5}Two-way set matching with costs}{19}{subsubsection.4.1.5}
 \contentsline {subsubsection}{\numberline {4.1.6}Three-way set matching with costs}{23}{subsubsection.4.1.6}
 \contentsline {subsubsection}{\numberline {4.1.7}Reordering}{23}{subsubsection.4.1.7}
-\contentsline {subsection}{\numberline {4.2}Merging classes}{25}{subsection.4.2}
-\contentsline {subsubsection}{\numberline {4.2.1}Function similarity measure}{26}{subsubsection.4.2.1}
-\contentsline {subsubsection}{\numberline {4.2.2}Ordering of outputted class members}{26}{subsubsection.4.2.2}
-\contentsline {subsection}{\numberline {4.3}Merging functions}{27}{subsection.4.3}
-\contentsline {subsubsection}{\numberline {4.3.1}Merging nodes}{27}{subsubsection.4.3.1}
-\contentsline {subsubsection}{\numberline {4.3.2}Equality and similarity}{28}{subsubsection.4.3.2}
-\contentsline {subsubsection}{\numberline {4.3.3}Merging lists}{28}{subsubsection.4.3.3}
-\contentsline {subsubsection}{\numberline {4.3.4}Merging blocks}{30}{subsubsection.4.3.4}
-\contentsline {section}{\numberline {5}Evaluation}{33}{section.5}
-\contentsline {section}{\numberline {6}Conclusion}{34}{section.6}
+\contentsline {subsection}{\numberline {4.2}Merging files}{25}{subsection.4.2}
+\contentsline {subsubsection}{\numberline {4.2.1}Sequence based merging}{25}{subsubsection.4.2.1}
+\contentsline {subsubsection}{\numberline {4.2.2}Mergefile function}{27}{subsubsection.4.2.2}
+\contentsline {subsection}{\numberline {4.3}Syntactic breakdown}{27}{subsection.4.3}
+\contentsline {subsection}{\numberline {4.4}Merging classes}{27}{subsection.4.4}
+\contentsline {subsubsection}{\numberline {4.4.1}Function similarity measure}{28}{subsubsection.4.4.1}
+\contentsline {subsubsection}{\numberline {4.4.2}Ordering of outputted class members}{28}{subsubsection.4.4.2}
+\contentsline {subsection}{\numberline {4.5}Merging functions}{29}{subsection.4.5}
+\contentsline {subsubsection}{\numberline {4.5.1}Merging nodes}{29}{subsubsection.4.5.1}
+\contentsline {subsubsection}{\numberline {4.5.2}Equality and similarity}{30}{subsubsection.4.5.2}
+\contentsline {subsubsection}{\numberline {4.5.3}Merging lists}{30}{subsubsection.4.5.3}
+\contentsline {subsubsection}{\numberline {4.5.4}Merging blocks}{32}{subsubsection.4.5.4}
+\contentsline {section}{\numberline {5}Evaluation}{35}{section.5}
+\contentsline {section}{\numberline {6}Conclusion}{36}{section.6}

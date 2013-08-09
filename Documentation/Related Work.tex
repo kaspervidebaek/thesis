@@ -376,9 +376,9 @@ Our three-way matching function operates on equality. Yet in some cases we will 
 The solution to this problem will be Priority-Matching. It will start by doing a matching on the three input sequences using a strict equality function. It will then iterate through all chunks and for unstable chunks it will do another matching using the similarity-function. It will therefore generate three types of chunks:
 
 \begin{itemize}
-	\item Equality-stable items
-	\item Similarity-stable items
-	\item Unstable items
+   \item Equality-stable items
+   \item Similarity-stable items
+   \item Unstable items
 \end{itemize}
 
 \begin{figure}
@@ -396,9 +396,9 @@ PriforityDiff(A, O, B, equal, similar)
             innerchunks <- Chunking(innermatches, comparer2);
             foreach (var innerchunk in innerchunks)
                 if (innerchunk.stable)
-		            add chunk to outchunks as an similar-stable chunk
+                  add chunk to outchunks as an similar-stable chunk
                 else
-		            add chunk to outchunks as an unstable chunk
+                  add chunk to outchunks as an unstable chunk
     return outChunks;
 \end{verbatim}
 \caption{The algorithm for priority-differencing}
@@ -581,19 +581,89 @@ Reordering(A, O, B)
   \label{ThreeWayReorderingAlgorithm}
 \end{figure}
 
+\subsection{Merging files}
+Merging files will initially be done using a normal line-based approach, and when a conflict is detected, we will start breaking down the syntax tree and use this instead. In this section I will briefly describe our algorithms for the line based approach and for conflict detection and resolving.
+
+\subsubsection{Sequence based merging}
+The sequence based merging algorithm in figure \ref{Genericmergingalgorithm} is based on the description found of the original diff3 algorithm in \citet{Khanna}. Conflict Handling is delegated to an input function, to allow different handling in different situations. We pass the list of current merged text, and the currently unmerged chunk. The Merged list can be arbitrarily modified inside the conflict handler. Also, We allow the conflicthandler to break out of the entire loop. This gives allows for two essential use-cases:
+
+\begin{itemize}
+   \item Output the three items of the chunk, indicating that these are conflicting.
+   \item Clear the merged list inside the conflicthandler, and start over with a different merging algorithm.
+\end{itemize}
+
+
+\begin{figure}
+\begin{verbatim}
+Merge(A, O, B, equality, conflicthandler)
+   match  <- ThreeWayMatch(A, O, B, equality);
+   chunks <- Chunk<T>.getChunks(match, comparer);
+    merged <- []
+
+    foreach (chunk in chunks)
+        if (chunk.stable)
+            add line of chunk.O to merged
+            continue to next iteration
+
+        if chunk is added in A or B
+            add lines of chunk to merged
+        else
+            if O is equal with one branch, but not the other
+               add lines of changed branch
+            else
+                if the two branches are equal
+                   add either of them to merged
+                else
+                   conflicthandler(merged, chunk)
+                   if(conflicthandler indicates termination)
+                      break;
+    return merged;
+\end{verbatim}
+\caption{Generic merging algorithm}
+  \label{Genericmergingalgorithm}
+\end{figure}
+
+\subsubsection{Mergefile function}
+This $MergeFile$-function in Figure \ref{Mainmerge} will to do a line-based merge. It will do a syntactic merge if a conflict is detected in the file.
+
+The main merging function of this thesis consists of a conflict-handler function and a general merge function. The merge function is passed in three lists of strings. Each item in this list represents a line in the code-files we want to merge. It will pass these lists to the to the sequence merging algorithm, and if this algorithm encounters a conflict, the conflicthandler will be called. The conflict-handler will empty the output, and launch the Syntax-aware merging, and add this as output instead. Then it will indicate to merging algorithm that this should return immediately.
+
+
+\begin{figure}
+\begin{verbatim}
+MergeFile(A, O, B)
+   Conflicthandler(output, chunk) = 
+      clear output.
+      let output be the result of MergeSyntax(A, O, B)
+      terminate outer merge function
+
+    equality = (x, y) => x == y;
+    return Merge(A, O, B, equality, conflicthandler)
+\end{verbatim}
+\caption{The main entry point for merging files. MergeSyntax is defined in section \ref{mergingclasses}}
+  \label{Mainmerge}
+\end{figure}
+
+\subsection{Syntactic breakdown}
+At some point we will have to break down the files from text to syntax trees. To do this we'll use Microsofts Roslyn Compiler. It has implemented a C\# syntax tree as a .NET class hierarchy, and with a single function call it is possible to get a syntax tree produced from a code file. This syntax tree seems to be very close corresponding to the actual grammatical rules set up by it's languages.
+
+
+
+\todo{Write more about this}
+\todo{Why C\#?}
 
 \subsection{Merging classes}
+The top level of a C\# file contains an optional sequence of using-statements followed by a sequence of namespaces or type-declaration. A type-deceleration is a struct, a class, an enum, a delegate or an interface.
 
 
-- Diff3.Merge
 
-Classes, namespaces etc are structures.
 
-file merge(base, left, right)
+\label{mergingclasses}
+Merge(base, left, right)
     if(nodes are unordered)
         unorderedmatch(base, left, right)
     else if(nodes are ordered)
-        orderedmatch(base, left, right);
+        orderedmatch(base, left, righ t);
 
 file unorderedmerge(base, left, right)
     var bl = match B and Ls children given cost-function

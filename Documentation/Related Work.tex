@@ -653,42 +653,48 @@ At some point we will have to break down the files from text to syntax trees. To
 \todo{Why C\#?}
 
 \subsection{Merging classes}
-The top level of a C\# file contains an optional sequence of using-statements followed by a sequence of namespaces or type-declaration. A type-deceleration is a struct, a class, an enum, a delegate or an interface.
-
-
-
-
 \label{mergingclasses}
-Merge(base, left, right)
-    if(nodes are unordered)
-        unorderedmatch(base, left, right)
-    else if(nodes are ordered)
-        orderedmatch(base, left, righ t);
+The top level of a C\# file contains an optional sequence of using-statements followed by a sequence of namespaces or type-declaration. A type-deceleration is a struct, a class, an enum, a delegate or an interface. Classes, structs and namespaces can be nested in eachother.
 
-file unorderedmerge(base, left, right)
-    var bl = match B and Ls children given cost-function
-    var br = match B and Rs children given cost-function
-    var zip = match bl and br on same base object.
+This structure in itself can lead to many potential merge scenarios. Members of types can be moved back and forth, and types can be nested in different way. We will look aside most of these issues and focus on merging purely inside classes. This means that a move of a class member simply will look like a deletion at one place, and an insertion at another place. As a consequence, a change in a function that is also moved moved between structures will therefore produce a conflict.
 
-    var members = [];
+The general idea of this algorithm is to do an unordered match between the three input files and merge items that, given a heuristic, are deemed equal. For any structure, in the bottom of the tree, we will:
 
-    foreach(match in zip)
-        if(match exists in all)
-            member.add(m, merge(base, left, right));
-        if(match was inserted in B)
-            member.add(m, m.B);
-        if(match was inserted in A)
-            member.add(m, m.A);
+\begin{itemize}
+   \item Match similar namespaces together and merge these.
+   \item Match similar classes together and merge these.
+   \item Match similar class-members merge these.
+\end{itemize}
+
+The input for the algorithm in \ref{TreeMergeAlgorithm} is a syntax tree generated from the input files. 
+
+\begin{figure}
+\begin{verbatim}
+MergeSyntax(A, O, B)
+    if(nodes are namespaces or a classes)
+       AO  <- match O and B children given cost-function
+       BO  <- match O and A children given cost-function
+       zip <- match AO and BO on same O-item.
+      members <- [];
+      foreach(match in zip)
+           if(match exists in all)
+               member.add(match, MergeSyntax(A, O, B));
+           if(match was inserted in B)
+               member.add(match, match.B);
+           if(match was inserted in A)
+               member.add(match, match.A);
     
-    members = mergeorder(l, b, r, members);
+       members = mergeorder(l, b, r, members);
 
-    return recreate(b, l, r, members);
-    
-
-file orderedmerge(base, left, right)
-    run diff3 algorithm on the source text of base, left, right
-    if a conflict happens, do a three-way matching-tree matching on the trees. instead.
-    use this three-way match to reconstruct a new tree.
+       return recreate(b, l, r, members);        
+    else if(nodes are classmembers)
+       run diff3 algorithm on the source text of base, left, right
+       if a conflict happens, do a three-way matching-tree matching on the trees. instead.
+       use this three-way match to reconstruct a new tree.
+\end{verbatim}
+\caption{???}
+\label{TreeMergeAlgorithm}
+\end{figure}
 
 
 

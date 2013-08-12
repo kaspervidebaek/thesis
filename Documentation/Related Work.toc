@@ -29,12 +29,11 @@
 \contentsline {subsubsection}{\numberline {4.2.2}Mergefile function}{27}{subsubsection.4.2.2}
 \contentsline {subsection}{\numberline {4.3}Syntactic breakdown}{27}{subsection.4.3}
 \contentsline {subsection}{\numberline {4.4}Merging classes}{27}{subsection.4.4}
-\contentsline {subsubsection}{\numberline {4.4.1}Function similarity measure}{28}{subsubsection.4.4.1}
-\contentsline {subsubsection}{\numberline {4.4.2}Ordering of outputted class members}{30}{subsubsection.4.4.2}
+\contentsline {subsubsection}{\numberline {4.4.1}Cost-functions}{30}{subsubsection.4.4.1}
 \contentsline {subsection}{\numberline {4.5}Merging functions}{30}{subsection.4.5}
-\contentsline {subsubsection}{\numberline {4.5.1}Merging nodes}{30}{subsubsection.4.5.1}
+\contentsline {subsubsection}{\numberline {4.5.1}Merging nodes}{31}{subsubsection.4.5.1}
 \contentsline {subsubsection}{\numberline {4.5.2}Equality and similarity}{31}{subsubsection.4.5.2}
-\contentsline {subsubsection}{\numberline {4.5.3}Merging lists}{31}{subsubsection.4.5.3}
+\contentsline {subsubsection}{\numberline {4.5.3}Merging lists}{33}{subsubsection.4.5.3}
 \contentsline {subsubsection}{\numberline {4.5.4}Merging blocks}{34}{subsubsection.4.5.4}
-\contentsline {section}{\numberline {5}Evaluation}{36}{section.5}
-\contentsline {section}{\numberline {6}Conclusion}{37}{section.6}
+\contentsline {section}{\numberline {5}Evaluation}{37}{section.5}
+\contentsline {section}{\numberline {6}Conclusion}{38}{section.6}

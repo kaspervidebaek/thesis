@@ -526,6 +526,7 @@ An over approximation of the running time here will be  $3*max(x, y, z)^3$.
 
 
 \subsubsection{Reordering}
+\label{ThreeWayReorderingAlgorithmSec}
 Several times in this thesis, we will have to resolve the problem where reordering of items in a sequence have happened in different branches. We will define a general three-way sequence-reordering-function, that can be given an original sequence and two reordered sequences, the result will be a single sequence where all elements are outputted in a way that can reasonably be described as a merge of the orders.
 
 Reorderings can conflict. One example could be that the sequence \texttt{(a, b, x, c, d)} has turned into \texttt{(x, a, b, c, d)} in one branch and \texttt{(a, b, c, d, x)}. These three sequences can easily be intepreted as \texttt{x} being been moved different places in the two branches, and a conflict should be produced.
@@ -648,7 +649,6 @@ MergeFile(A, O, B)
 At some point we will have to break down the files from text to syntax trees. To do this we'll use Microsofts Roslyn Compiler. It has implemented a C\# syntax tree as a .NET class hierarchy, and with a single function call it is possible to get a syntax tree produced from a code file. This syntax tree seems to be very close corresponding to the actual grammatical rules set up by it's languages.
 
 
-
 \todo{Write more about this}
 \todo{Why C\#?}
 
@@ -656,102 +656,75 @@ At some point we will have to break down the files from text to syntax trees. To
 \label{mergingclasses}
 The top level of a C\# file contains an optional sequence of using-statements followed by a sequence of namespaces or type-declaration. A type-deceleration is a struct, a class, an enum, a delegate or an interface. Classes, structs and namespaces can be nested in eachother.
 
-This structure in itself can lead to many potential merge scenarios. Members of types can be moved back and forth, and types can be nested in different way. We will look aside most of these issues and focus on merging purely inside classes. This means that a move of a class member simply will look like a deletion at one place, and an insertion at another place. As a consequence, a change in a function that is also moved moved between structures will therefore produce a conflict.
+This structure in itself can lead to many potential merge scenarios; members of types can be moved and types can be nested in different way. We will look aside most of these issues and focus on merging purely inside classes. This means that a move of a class member simply will look like a deletion at one place, and an insertion at another place. As a consequence, a change in a function that is also moved moved between structures will therefore produce a conflict.
 
-The general idea of this algorithm is to do an unordered match between the three input files and merge items that, given a heuristic, are deemed equal. For any structure, in the bottom of the tree, we will:
+We do an unordered match between the the base file, and the two input brances using heuristics to determine the match. Nodes that are matched in the syntax trees are merged together. The overall process will be:
 
 \begin{itemize}
    \item Match similar namespaces together and merge these.
-   \item Match similar classes together and merge these.
-   \item Match similar class-members merge these.
+   \item During a merge of namespaces, match similar classes together and merge these.
+   \item During the merge of classes, match similar class-members merge these.
 \end{itemize}
 
-The input for the algorithm in \ref{TreeMergeAlgorithm} is a syntax tree generated from the input files. 
+The input for the algorithm in \ref{TreeMergeAlgorithm} is three syntax tree generated from the input files. The output is a text string with the concrete syntax of the merge. Whenever the function encounters a namespace or a class, we will do an unordered matching on these, and recursively call itself for each match. Whenever a class-member is hit in the recursive call, we will try a line-based merge. If a conflict happens during this merge, we will launch a syntax based merge of the specific class-member. The effect of this is, that class-members will be only be doing expensive syntax merge as a last resort.
+
+After creating the merge of all children for a class or a namespace, we need to create the ordered sequence of the merged items, that can be used to generate the entire merged node. We store all matches are in a list, along with their merge-result. From this list we will generate three new sequences for each input sequence. These lists will be feeded into the reordering function seen in section \ref{ThreeWayReorderingAlgorithmSec}.
+
+One extra detail is needed however. Items that are deleted in one branch, and modified in another branch, should generate a conflict. The reordering function assumes equality between the items in the sequences, and therefore cannot consider a deletion to be a possible conflict. Therefore we will have to detect conflicts during merging and pass a set of these to a modified Reordering function, that will only delete items, if they are not a part of this set.
 
 \begin{figure}
 \begin{verbatim}
 MergeSyntax(A, O, B)
-    if(nodes are namespaces or a classes)
-       AO  <- match O and B children given cost-function
-       BO  <- match O and A children given cost-function
-       zip <- match AO and BO on same O-item.
-      members <- [];
-      foreach(match in zip)
+    if(nodes are roots, namespaces or classes)
+        AO  <- match O and B children given cost-function
+        BO  <- match O and A children given cost-function
+        zip <- match AO and BO on same O-item.
+        members <- [];
+        deletionconflicts <- []
+        foreach(match in zip)
            if(match exists in all)
                member.add(match, MergeSyntax(A, O, B));
-           if(match was inserted in B)
-               member.add(match, match.B);
-           if(match was inserted in A)
-               member.add(match, match.A);
-    
-       members = mergeorder(l, b, r, members);
-
+           else if(match was inserted in A or B)
+               member.add(match, (A or B item));
+           else if(match was deleted in A or B and changed in opposite branch)
+               member.add(match, (A or B item));
+               deletionconflicts.add(A or B item)
+         reorderLists <- map each item in each list (A, O, B) to their merged result.
+         members = Reorder(A, O, B, conflicts);
        return recreate(b, l, r, members);        
     else if(nodes are classmembers)
-       run diff3 algorithm on the source text of base, left, right
-       if a conflict happens, do a three-way matching-tree matching on the trees. instead.
-       use this three-way match to reconstruct a new tree.
+       run diff3 algorithm on the source text of A, O, B
+       if a conflict happens merge the nodes syntaticly
 \end{verbatim}
-\caption{???}
+\caption{The entry point for syntactic merge}
 \label{TreeMergeAlgorithm}
 \end{figure}
 
+\subsubsection{Cost-functions}
+We will have to define the cost-functions for namespaces, classes and class-members. For each level, these functions will be called for each pair of items possible in $(A, O)$ and $(O, B)$. As a consequence, it we will have to keep the runtime cost of calculating a cost of two items relatively low.
 
+For classes and namespaces we will simply define functions that assign low cost to nodes with similar identifiers, and a higher cost to all other nodes of the same type on the same structural level. This approach has the benefit of being quite fast. Further, renaming a class on the same structural level, will have no consequence, since it will be just be matched to another node of the same type, which is actually the rename. A drawback, however, is that given this heuristic, we have no way to know what to do if a node has been renamed and another node inserted at the same time: All possible matchings in this scenario are valid has the same cost. A better heuristic for namespaces and classes, would probably be to also include the different members of namespaces and classes as a part of the cost-function, however we decided not pursue this approach further.
 
-\subsubsection{Function similarity measure}
-Doing cost-based matching, means we also will have to define function similarity measures. This function will have to be run for each $(l, b)$ and $(r, b)$-pair, which means it is important to keep the running time low.
+One obvious function to use to assign the cost between two functions, would be the similarity function defined in section \ref{FunctionSimilarity}. However this function is quite intensive computation-wise, which would lead to quite the explosion in computation time for the overall matching algorithm\todo{Running time}. Instead we will limit our matching to the signature of a method:
 
-Four overall parameters are obvious as similarity measures:
-
-\begin{enumerate}
-    \item The identifier of a class member.
-    \item The parameters of a class member.
-    \item The modifiers of a class member.
-    \item The body of a class member.
-\end{enumerate}
+\begin{itemize}
+    \item The return type.
+    \item The modifiers.
+    \item The identifier.
+    \item The type and identifier for each parameter.
+\end{itemize}
 
 For identifiers equal strings will of course have to be the lowest cost. Besides that, one could think up different string similarity measures that would allow different renames of a member to have lower costs than others.
 \todo[inline]{Needs to elaborate alot}
 
-\subsubsection{Ordering of outputted class members}
-The end result of the matching algorithm will be a set of merged class members. 
-
-Conflicts might exists if two users have moved the same function into different places in the left and right branches, but that is the only case where user intervention should be needed. However there are quite a few cases of reordering operations, where the answer of where to actual position a function in the output is simply undefined. 
-
-For example:
-
-A = { a, b, d, c }
-O = { a, b, c, d }
-B = { a, c, d, b }
-
-
-Reordering items 
-
-First we do a three-way sequence matching of base, left and right. 
-
-A deletion is a matching from an item in base to null.
-An insertion is a matching from null to an item in left.
-In a matching, a move will simply be represented as an insertion and a deletion.
-
-
-
-Observations:
-- If a node is deleted in either left or right, it should be deleted even if it has been reordered. (However conflict if the content has been modified)
-- If a deletion happens 
-
-
-\todo{Match default? Forrest or tree? Do we allways know that the root node matches?}
-
-
-
 \subsection{Merging functions}
-Foreach function, write about:
+\todo{Foreach function, write about:
 
 Intended input.
 Purpose of the function.
 Conflict behaviour
 Tricks that are not obvious.
-Intended output.
+Intended output.}
 
 \subsubsection{Merging nodes}
 \texttt{MergeNode} handles merging of single nodes. It will take three input values; A, O and B, and return a syntactically valid string, which is the merge of those three input values. It handles the input as a matching and will conclude insertion or deletion if appropriate. Further it assumes that all input nodes are of the same type.
@@ -821,6 +794,8 @@ MergeToken(A, O, B)
 
 
 \subsubsection{Equality and similarity}
+\label{FunctionSimilarity}
+
 -- Equality
 -- Similiarity
 

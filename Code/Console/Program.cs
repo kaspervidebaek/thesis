@@ -11,9 +11,11 @@ namespace ConsoleApp
     {
         static void Main(string[] args)
         {
-            /*var x = new Tests.SmartDiffTests();
-            x.TestExampleTreeMerge();*/
+            var z = new Tests.SmartDiffTests();
+            z.TestExampleTreeMerge();
 
+            Console.ReadLine();
+            return;
             var y = new Tests.ReorderingTests();
             y.TestDeleteInsert();
 

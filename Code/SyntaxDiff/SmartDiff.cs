@@ -23,7 +23,7 @@ namespace SyntaxDiff
             {
                 var aC = i.SyntaxFromLines(A);
                 var oC = i.SyntaxFromLines(O);
-                var bC = i.SyntaxFromLines(B);
+                var bC = i.SyntaxFromLines(B); 
 
                 output.Clear();
                 output.AddRange(Merge(aC, oC, bC).Split('\n'));

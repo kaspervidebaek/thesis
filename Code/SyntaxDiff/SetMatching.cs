@@ -263,7 +263,7 @@ namespace SyntaxDiff
 
             public void RenderToFile(string name, List<Edge> markEdges, Dictionary<Node, int> prices, Matching m)
             {
-                //return;
+                return;
                 var graphviz = new GraphvizAlgorithm<Node, Edge>(this);
 
                 graphviz.FormatEdge += (sender, edge) =>
@@ -559,7 +559,7 @@ namespace SyntaxDiff
                 {
                     p_.Add(kvp.Key, kvp.Value + path.Sum(x => x.TagPrice(p)));
                 }
-                //else throw new Exception("shit!");
+                //else throw new Exception("shit!"); 
             }
 
             return p_;

@@ -24,8 +24,7 @@ namespace SyntaxDiff
 
             treerewrites = new List<SyntaxRewriter<SyntaxNode>> {
                 new SyntaxRewriter<SyntaxNode>(CompilationUnit, CompilationUnit, CompilationUnit,                   (a, o, b, children) => children),
-                new SyntaxRewriter<SyntaxNode>(NamespaceDeclaration, NamespaceDeclaration, NamespaceDeclaration,    (a, o, b, children) =>  children),
-                new SyntaxRewriter<SyntaxNode>(NamespaceDeclaration, NamespaceDeclaration, NamespaceDeclaration,    (a, o, b, children) => children)
+                new SyntaxRewriter<SyntaxNode>(NamespaceDeclaration, NamespaceDeclaration, NamespaceDeclaration,    (a, o, b, children) =>  children)
             };
         }
 
@@ -373,7 +372,7 @@ namespace SyntaxDiff
                 return "while(" + internalItem + ")";
             if (A is BlockSyntax || O is BlockSyntax || B is BlockSyntax)
                 return null;
-            
+
             throw new NotImplementedException();
         }
 
@@ -819,7 +818,8 @@ namespace SyntaxDiff
             List<Tuple<int, int>> conflicts;
             var reordered = SmartDiff<Item>.FilterReorderMergeContent(l.A, l.O, l.B, matches, MergeNode, out conflicts);
 
-            conflicts.Select((v, i) => {
+            conflicts.Select((v, i) =>
+            {
                 reordered[v.Item1] = "/* Reordering conflict " + i + " */ " + reordered[v.Item1];
                 reordered[v.Item2] = "/* Reordering conflict " + i + " */ " + reordered[v.Item2];
                 return "";
@@ -872,18 +872,67 @@ namespace SyntaxDiff
 
         public int? ClassMemberCost(SyntaxNode x, SyntaxNode y)
         {
-            int cost = 4;
+            if (x is MethodDeclarationSyntax && y is MethodDeclarationSyntax)
+            {
+                var xm = x as MethodDeclarationSyntax;
+                var ym = y as MethodDeclarationSyntax;
 
-            /*if (x.GetType() == y.GetType())
-                cost--;*/
+                var identifierEquals = xm.Identifier.ToString() == ym.Identifier.ToString();
+                var returntypeEquals = xm.ReturnType.ToString() == ym.ReturnType.ToString();
 
-            if (getIdentifier(x) == getIdentifier(y))
-                cost -= 2;
+                double ParameterSimilarity;
+                if (xm.ParameterList.Parameters.Count == 0 && ym.ParameterList.Parameters.Count == 0)
+                    ParameterSimilarity = 0.0f;
+                else
+                {
+                    var parameterMatching = GraphMatching<ParameterSyntax, ParameterSyntax>.Match(
+                            xm.ParameterList.Parameters.ToList(),
+                            ym.ParameterList.Parameters.ToList(),
+                            (xp, yp) =>
+                            {
+                                var icost = 4;
+                                if (xp.Type.ToString() == yp.Type.ToString())
+                                    icost -= 2;
+                                if (xp.Identifier.ToString() == yp.Identifier.ToString())
+                                    icost -= 2;
+                                if (icost == 4)
+                                    return null;
+                                return icost;
+                            }
+                        );
+                    ParameterSimilarity = parameterMatching.Select((i) => {
+                        if(i.Item1 == null || i.Item2 == null)
+                            return 0.0d;
+                        return i.Item1.Identifier.ToString() == i.Item2.Identifier.ToString() ? 0.0d : 0.5d +
+                                    i.Item1.Type.ToString() == i.Item2.ToString() ? 0.0d : 0.5d;
+                    }).Average();
+                }
+                int cost = 8;
+                if (returntypeEquals)
+                    cost -= 2;
+                if (identifierEquals)
+                    cost -= 3;
+                cost -= (int)Math.Round(ParameterSimilarity * 3.0d);
 
-            if (cost == 4)
-                return null;
+                if (cost > 4)
+                    return null;
+                return cost;
 
-            return cost;
+            }
+            else
+            {
+
+                throw new NotImplementedException();
+                int cost = 4;
+
+                if (getIdentifier(x) == getIdentifier(y))
+                    cost -= 2;
+
+                if (cost == 4)
+                    return null;
+
+                return cost;
+            }
         }
 
         public int? NamespaceMemberCost(SyntaxNode x, SyntaxNode y)

@@ -703,28 +703,62 @@ MergeSyntax(A, O, B)
 \subsubsection{Cost-functions}
 We will have to define the cost-functions for namespaces, classes and class-members. For each level, these functions will be called for each pair of items possible in $(A, O)$ and $(O, B)$. As a consequence, it we will have to keep the runtime cost of calculating a cost of two items relatively low.
 
-For classes and namespaces we will simply define functions that assign low cost to nodes with similar identifiers, and a higher cost to all other nodes of the same type on the same structural level. This approach has the benefit of being quite fast. Further, renaming a class on the same structural level, will have no consequence, since it will be just be matched to another node of the same type, which is actually the rename. A drawback, however, is that given this heuristic, we have no way to know what to do if a node has been renamed and another node inserted at the same time: All possible matchings in this scenario are valid has the same cost. A better heuristic for namespaces and classes, would probably be to also include the different members of namespaces and classes as a part of the cost-function, however we decided not pursue this approach further.
+For classes and namespaces we will define functions that assign low cost to nodes with similar identifiers, and a higher cost to all other nodes of the same type on the same structural level. This approach has the benefit of being quite fast. Further, renaming a class on the same structural level, will have no consequence, since it will be just be matched to another node of the same type. A drawback, however, is that given this heuristic, we have no way to know what to do if a node has been renamed and another node inserted at the same time: All possible matchings in such case are valid and has the same cost. A better heuristic for namespaces and classes, would probably be to also include the different members of namespaces and classes as a part of the cost-function, however we decided not pursue this approach further.
 
-One obvious function to use to assign the cost between two functions, would be the similarity function defined in section \ref{FunctionSimilarity}. However this function is quite intensive computation-wise, which would lead to quite the explosion in computation time for the overall matching algorithm\todo{Running time}. Instead we will limit our matching to the signature of a method:
+One obvious function to use to assign the cost between two functions, would be the similarity function defined in section \ref{FunctionSimilarity}. However this function is quite intensive computation-wise, since it walks through the entire susbtree. This would lead to an explosion in computation time for the overall matching algorithm\todo{Running time}, since it is done for every possible pair. Instead we will limit our matching to the signature of a method:
 
 \begin{itemize}
     \item The return type.
-    \item The modifiers.
     \item The identifier.
     \item The type and identifier for each parameter.
 \end{itemize}
 
-For identifiers equal strings will of course have to be the lowest cost. Besides that, one could think up different string similarity measures that would allow different renames of a member to have lower costs than others.
-\todo[inline]{Needs to elaborate alot}
+The more of these factors that are similar, the lower a cost two functions should have. Matching functions that are very dissimilar in their method body might produce unproductively amounts of conflicts, and because of this it's a goal of this heuristic to not match things together too greedily.
+
+Equal identifiers is a clear sign of similarity, and one that should weight heigh for this scale. Parameters are also important, we need to match different overloads of a function to the same overload in another branch, to avoid too bad conflicts. Given these two criterias we should be able to match any unchanged function completely. If the name has changed, however it gets a little more unclear what to do.
+
+If we are looking at two functions with dissimilar names, equal return types and no parameterlist, it is not quite obvious how to define if they are similar or not. For this reason we will define it as not similar. However with several parameters similar, the likelihood of the functions actually being the same increases. 
+
+With that said, we will use the following cost-function:
+\begin{verbatim}
+
+def FunctionCost(x, y)
+   parametersimilarity <- 0;
+   if(parameterlists of x and y are not empty
+      match parameters after having either identifier or type equal.
+      foreach match
+         select 1 if both name and type are equal
+         select 0.5 if either name or type are equal
+         select 0 if there is no matching item
+      parametersimilarity <- 4*the averager of above match value
+      cost <- 9
+      if (equal return type of x and y)
+         cost -= 1
+      if (equal identifiers)
+         cost -= 4
+      cost -= parametersimilarity;
+      if (cost >= 4)
+            return no link;
+      return cost;
+\end{verbatim}
+
+This function has some properties that are helpful, given the above considerations:
+
+\begin{enumerate}
+\item If the name of a function is equal, a possible match will be produced.
+\item Higher similarity between parameters gives better costs.
+\item Renamed functions can be matched if they match completely in the parameterslist, or if some of the parameterlist is similar and it has the same return type.
+\end{enumerate}
+
 
 \subsection{Merging functions}
-\todo{Foreach function, write about:
+\todo[inline]{Foreach function, write about:
 
-Intended input.
-Purpose of the function.
-Conflict behaviour
-Tricks that are not obvious.
-Intended output.}
+- Intended input. \\
+- Purpose of the function.\\
+- Conflict behaviour\\
+- Tricks that are not obvious.\\
+- Intended output.\\}
 
 \subsubsection{Merging nodes}
 \texttt{MergeNode} handles merging of single nodes. It will take three input values; A, O and B, and return a syntactically valid string, which is the merge of those three input values. It handles the input as a matching and will conclude insertion or deletion if appropriate. Further it assumes that all input nodes are of the same type.
@@ -795,9 +829,7 @@ MergeToken(A, O, B)
 
 \subsubsection{Equality and similarity}
 \label{FunctionSimilarity}
-
--- Equality
--- Similiarity
+\todo[inline]{Talk about similarity and equality functions}
 
 \subsubsection{Merging lists}
 There are primarily two types of list that we want to merge: ParameterLists and ArgumentLists. Parameterlists are the pair of types and identifiers found in method declarations, where argument-lists are expressions found in invocations of methods. Modification of these two properties 
@@ -817,11 +849,9 @@ The first part is solved the same way that we reorderings were solved in section
 
 The cost between a pair of parameters can be boiled down the question of how similar the type of the parameter is, and how similar the name is. Similarity of type can be measured as closeness in the class hierarchy. String similarity can be measured in quite a few ways. In our case we will want to keep the runtime low and as such we will keep to a simple and exact scheme of similarity of both.
 
-The cost of the argument-lists is much harder to define. An argument is an expression, so the obvious thought would be to look into what type that expression will have. This information, however, is not available to us, unless we want to build and link all branches of the project that we are trying to merge. Instead we will simply look into the actual string value of these expressions, compare this to be equal or not, and if it is, we will give them a lower cost than if not.
-\todo{asdasd}
-The first item in the above list, depends on the property of a cost function is not quite as easily attainable. 
+The cost of the argument-lists is much harder to define. An argument is an expression, so the obvious thought would be to look into what type that expression will have. This information, however, is not available to us. Instead we will simply look into the string value of the nodes and compare these for equality or not. Lower equality means lower cost. This cost-function makes will produce matching of items that have not been changed, but have been reordered, and items that have changed will not be matched, and therefore be treated as insertions, deletions or moves.
 
-\todo{example}
+The first item in the above list, depends on the matchings in both parameterlists and argumentlists to match the same items. This is not generally true for for the two matching functions that we provide, but it will be true in cases where reordering have happened without changing the expressions of each parameter.
 
 \begin{figure}
   \caption{Merging tokens}
@@ -837,10 +867,7 @@ Listmerger (A, O, B, cost)
 \end{figure}
 
 \subsubsection{Merging blocks}
-erging blocks and 
-
-
-What are the right properties of a merge?
+\todo[inline]{Write this}
 
 \begin{figure}
   \caption{Merging statement lists}
@@ -848,7 +875,7 @@ What are the right properties of a merge?
 \begin{verbatim}
 MergeStatementList (A, O, B)
     try  a textual merge of the statements.
-    If that does not work:
+    If that does not work
         Do a prioritydiff of the statements
         for all chunks
             if chunk is primaryequal
@@ -859,9 +886,11 @@ MergeStatementList (A, O, B)
                 chunkmerge!
             else 
                 attempt uneven merging
-
 \end{verbatim}
 \end{figure}
+
+\subsection{Merging uneven trees}
+\todo[inline]{Write this}
 
 \begin{figure}
   \caption{Merging uneven branches}
@@ -894,10 +923,6 @@ MergeUneven (A, O, B)
 \end{verbatim}
 \end{figure}
 
-
--- Matching blocks and lists
--- Merging.
---- Merging inserted blocks.
 
 \clearpage
 \section{Evaluation}

@@ -20,21 +20,21 @@
 \contentsline {subsubsection}{\numberline {4.1.1}Two-way sequence matching}{16}{subsubsection.4.1.1}
 \contentsline {subsubsection}{\numberline {4.1.2}Three-way sequence matching}{16}{subsubsection.4.1.2}
 \contentsline {subsubsection}{\numberline {4.1.3}Chunking}{17}{subsubsection.4.1.3}
-\contentsline {subsubsection}{\numberline {4.1.4}Priority-differencing}{18}{subsubsection.4.1.4}
+\contentsline {subsubsection}{\numberline {4.1.4}Priority-chunking}{18}{subsubsection.4.1.4}
 \contentsline {subsubsection}{\numberline {4.1.5}Two-way set matching with costs}{19}{subsubsection.4.1.5}
-\contentsline {subsubsection}{\numberline {4.1.6}Three-way set matching with costs}{23}{subsubsection.4.1.6}
+\contentsline {subsubsection}{\numberline {4.1.6}Three-way set matching with costs}{22}{subsubsection.4.1.6}
 \contentsline {subsubsection}{\numberline {4.1.7}Reordering}{23}{subsubsection.4.1.7}
 \contentsline {subsection}{\numberline {4.2}Merging files}{25}{subsection.4.2}
 \contentsline {subsubsection}{\numberline {4.2.1}Sequence based merging}{25}{subsubsection.4.2.1}
-\contentsline {subsubsection}{\numberline {4.2.2}Mergefile function}{27}{subsubsection.4.2.2}
+\contentsline {subsubsection}{\numberline {4.2.2}Mergefile function}{26}{subsubsection.4.2.2}
 \contentsline {subsection}{\numberline {4.3}Syntactic breakdown}{27}{subsection.4.3}
 \contentsline {subsection}{\numberline {4.4}Merging classes}{27}{subsection.4.4}
-\contentsline {subsubsection}{\numberline {4.4.1}Cost-functions}{30}{subsubsection.4.4.1}
-\contentsline {subsection}{\numberline {4.5}Merging functions}{32}{subsection.4.5}
-\contentsline {subsubsection}{\numberline {4.5.1}Merging nodes}{32}{subsubsection.4.5.1}
-\contentsline {subsubsection}{\numberline {4.5.2}Equality and similarity}{34}{subsubsection.4.5.2}
-\contentsline {subsubsection}{\numberline {4.5.3}Merging lists}{34}{subsubsection.4.5.3}
+\contentsline {subsubsection}{\numberline {4.4.1}Cost-functions}{28}{subsubsection.4.4.1}
+\contentsline {subsection}{\numberline {4.5}Merging functions}{31}{subsection.4.5}
+\contentsline {subsubsection}{\numberline {4.5.1}Merging nodes}{31}{subsubsection.4.5.1}
+\contentsline {subsubsection}{\numberline {4.5.2}Equality and similarity}{32}{subsubsection.4.5.2}
+\contentsline {subsubsection}{\numberline {4.5.3}Merging lists}{32}{subsubsection.4.5.3}
 \contentsline {subsubsection}{\numberline {4.5.4}Merging blocks}{35}{subsubsection.4.5.4}
-\contentsline {subsection}{\numberline {4.6}Merging uneven trees}{36}{subsection.4.6}
+\contentsline {subsection}{\numberline {4.6}Merging uneven trees}{35}{subsection.4.6}
 \contentsline {section}{\numberline {5}Evaluation}{38}{section.5}
 \contentsline {section}{\numberline {6}Conclusion}{39}{section.6}

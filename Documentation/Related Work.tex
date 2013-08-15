@@ -924,7 +924,7 @@ Listmerger (A, O, B, cost)
 \end{figure}
 
 \subsubsection{Merging blocks}
-A block-node is hit by the MergeNode algorithm often. They are the body of methods, if-statements, while-loops, using-statements and more. We need to merge content inside in each branch and the base. We will first try to do a textual merge of the content of the block. If this fails, we will do a priority-differencing as described in section \ref{PriorityDiff}, with the equality and and similarity function defined in \ref{FunctionSimilarity}.
+A block-node is hit by the MergeNode algorithm often. They are the body of methods, if-statements, while-loops, using-statements and more. We need to merge content inside in each branch and the base. We will first try to do a textual merge of the content of the block. If this fails, we will do a priority-differencing as described in section \ref{PriorityDiff}, with the equality and and similarity function defined in Algorithm \ref{FunctionSimilarity}.
 
 Given these chunks we will handle them in three different ways: 
 
@@ -935,62 +935,71 @@ Given these chunks we will handle them in three different ways:
 	\item Otherwise try to do an uneven merge as described later.
 \end{itemize}
 
-\begin{figure}
+\begin{algorithm}
   \caption{Merging statement lists}
   \label{MergeStatementList}
-\begin{verbatim}
-MergeStatementList (A, O, B)
-    try  a textual merge of the statements.
-    If that does not work
-        chunk <- PriorityDiff(A, O, B, equality, similarity)
-        for all chunks
-            if chunk is primaryequal
-                return chunk.O
-            else if chunk is secondary equal
-                for each line, return MergeNode(A, O, B)
-            else if either A and O or O and B are equal.
-                add the opposite chunk.
-            else 
-                attempt uneven merging
-\end{verbatim}
-\end{figure}
+\begin{algorithmic}
+\Function{MergeStatementList}{A, O, B}
+    \State try  a textual merge of the statements.
+    \If{that does not work}
+        \State $chunk \gets PriorityDiff(A, O, B, equality, similarity)$
+        \ForAll{chunks}
+            \If{chunk is primaryequal}
+                \State \Return $chunk.O$
+            \ElsIf{chunk is secondary equal}
+                \State for each line \Return $MergeNode(A, O, B)$
+            \ElsIf{either A and O or O and B are equal}
+                \State add the opposite chunk.
+            \Else
+                \State attempt uneven merging
+            \EndIf
+        \EndFor
+    \EndIf
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
 
 \subsection{Merging uneven trees}
 Generally our merge has been working with structural equality. This means that if one branch moved a chunk of code into a block, and the opposite branch changed something in the chunk of code, we will not be able to merge it.
 
 $MergeUneven$ in Figure \ref{MergeUneven} handles this to some extent. It takes an unstable chunks as input. This unstable chunk contains a sequence of nodes that cannot be matched with the base. The responsibility of MergeUneven is to detect nodes in the chunks that contains blocks wherein it might be possible to make a stable match.
 
+\begin{algorithm}
+\begin{algorithmic}
+\Function{MergeUneven}{A, O, B}
+    \State Flatten the three list. Any statement with a subblock, has the statements in this subblock added to it, keeping parent item mapping
+    \State Prioritydiff the three flattened lists.
 
-\begin{figure}
-\begin{verbatim}
-MergeUneven (A, O, B)
-    Flatten the three list. Any statement with a subblock, has the statements in this subblock added to it, keeping parent item mapping
-    Prioritydiff the three flattened lists.
+    \State Parentitems = [nil, nil, nil]
+    \ForAll{$chunk$ in $chunks$}
+        \If{$chunk$ is stable}
+            \If{lastitem O is null and B and A is not}
+                \State \Return conflict
+			\EndIf
+            \If{any parentitem has changed since last iteration}
+                \If{last parent item as a block block}
+                    \State print "\}"
+                \EndIf
+                \If{a current parent item exists}
+                    \State print(merge(parentitems))
+                    \If{currentparentitems merrits block}
+                    	\State print "\{"
+                    \EndIf
+                \EndIf
+			\EndIf
+            \State print merge(child item)
 
-    Parentitems = [nil, nil, nil]
+        \ElsIf{$A$ or $B$ is insertion}
+                \State add A or B, updating their corresponding parentitem,
+                \State and adding starting and ending items, as above
+        \EndIf
+   \EndFor
 
-    foreach chunk
-        if stable chunk
-            if(lastitem O is null and B and A is not)
-                return conflict
-
-            if(any parentitem has changed since last iteration)
-                if(if last parent item as a block block)
-                    print "}"
-                if(if a current parent item exists)
-                    print(merge(parentitems))
-                    if(currentparentitems merrits block)
-            
-            print merge(child item)
-
-        else 
-            if A or B is insertion
-                add A or B, updating their correspinding parentitem,
-                and adding starting and ending items, as above
-\end{verbatim}
+\EndFunction
+\end{algorithmic}
 \caption{Merging uneven branches}
 \label{MergeUneven}
-\end{figure}
+\end{algorithm}
 
 
 \clearpage

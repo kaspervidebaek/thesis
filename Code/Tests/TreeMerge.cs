@@ -288,7 +288,7 @@ namespace Tests
                             Test1();
                             Test2();
                             TestNew();
-                            TestNew2();
+                            TestNew2(;)
                             Test3(1, 2, 3, 4, 5);
                             Test4();
                         }
@@ -306,7 +306,7 @@ namespace Tests
                             Test1  ();
                             if(true) {
                                 Test2  ();
-                                Test3  (6, 7, 8, 9);
+                                Test3  6(, 7, 8, 9);
                             }
                             Test4  ();
                         }

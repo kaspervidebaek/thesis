@@ -1,0 +1,228 @@
+<html>
+<style>
+
+body>table{
+	border: 1px solid black;
+	display: inline;
+	margin: 5px;
+}
+
+body>table>thead td {
+	text-align: center;
+	
+}
+
+.inputtable>tbody>tr>td {
+	border: 1px solid black;
+	width: 30px;
+	vertical-align: top;
+}
+
+.parenttable>tbody>tr>td {
+	vertical-align: top;
+}
+
+.parenttable>tbody>tr>td table td {
+	border: 1px solid black;
+}
+.parenttable>tbody>tr>td table {
+	border-collapse: collapse;
+	border: 1px solid black;
+	display: block;
+}
+
+.parenttable>tbody>tr>td td {
+	width: 40px;
+	padding: 2px;
+}
+
+.matchingtable {
+	border-collapse: collapse;
+}
+.matchingtable>tbody>tr>td {
+	padding-top: 5px;
+	padding-bottom: 5px;
+	border-top: 1px solid black;
+}
+
+.matchingtable table {
+	border-collapse: collapse;
+	margin: 2px;
+}
+.matchingtable table td {
+	border: 1px solid #BBBBBB;
+	width: 40px;
+	display: block;
+	padding:2px;
+}
+
+
+</style>
+
+<table class=inputtable>
+<thead>
+<tr>
+<td>A</td>
+<td>O</td>
+<td>B</td>
+</tr>
+</thead>
+<tr>
+<td class=list>
+F1<br>
+IfT<br>
+If1<br>
+F4<br>
+F5<br>
+F6<br>
+F7<br>
+</td>
+<td class=list>
+F1<br>
+F2<br>
+F3<br>
+F4<br>
+F99<br>
+F5<br>
+F6<br>
+F7<br>
+</td>
+<td class=list>
+F1<br>
+F2<br>
+F3<br>
+IfF<br>
+F77<br>
+</td>
+</tr>
+</table>
+
+
+<table class=parenttable>
+<thead>
+<tr>
+<td>A</td>
+<td>O</td>
+<td>B</td>
+</tr>
+</thead>
+<tr>
+<td class="list">
+<table>
+<tr><td>	</td><td>F1		</td></tr>
+<tr><td>IfT	</td><td>F2'	</td></tr>
+<tr><td>IfT	</td><td>F78	</td></tr>
+<tr><td>IfT	</td><td>F3		</td></tr>
+<tr><td>If1	</td><td>F55	</td></tr>
+<tr><td>	</td><td>F4		</td></tr>
+<tr><td>	</td><td>F5		</td></tr>
+<tr><td>	</td><td>F6		</td></tr>
+<tr><td>	</td><td>F7		</td></tr>
+</table>
+</td>
+<td class="list">
+<table>
+<tr><td>	</td><td>F1		</td></tr>
+<tr><td>	</td><td>F2		</td></tr>
+<tr><td>	</td><td>F3		</td></tr>
+<tr><td>	</td><td>F4		</td></tr>
+<tr><td>	</td><td>F5		</td></tr>
+<tr><td>	</td><td>F99	</td></tr>
+<tr><td>	</td><td>F6		</td></tr>
+<tr><td>	</td><td>F7		</td></tr>
+</table>
+</td>
+<td class="list">
+<table>
+<tr><td>	</td><td>F1		</td></tr>
+<tr><td>	</td><td>F2		</td></tr>
+<tr><td>	</td><td>F3		</td></tr>
+<tr><td>IfF </td><td>F4		</td></tr>
+<tr><td>IfF	</td><td>F5		</td></tr>
+<tr><td>IfF	</td><td>F78	</td></tr>
+<tr><td>IfF	</td><td>F6		</td></tr>
+<tr><td>IfF	</td><td>F7		</td></tr>
+<tr><td>	</td><td>F77	</td></tr>
+</table>
+</td>
+</tr>
+</table>
+
+
+<table class=matchingtable>
+<thead>
+<tr>
+<td>A</td>
+<td>O</td>
+<td>B</td>
+</tr>
+</thead>
+<tr>
+<td><table><tr><td>	</td><td>F1		</td></tr></table></td>
+<td><table><tr><td>	</td><td>F1		</td></tr></table></td>
+<td><table><tr><td>	</td><td>F1		</td></tr></table></td>
+</tr>	
+
+<tr>
+<td><table><tr><td>IfT	</td><td>F2'		</td></tr></table></td>
+<td><table><tr><td>		</td><td>F2		</td></tr></table></td>
+<td><table><tr><td>		</td><td>F2		</td></tr></table></td>
+</tr>	
+
+<tr>
+<td><table><tr><td>IfT	</td><td>F78		</td></tr></table></td>
+<td></td>
+<td></td>
+</tr>	
+
+<tr>
+<td><table><tr><td>IfT	</td><td>F3		</td></tr></table></td>
+<td><table><tr><td>	</td><td>F3		</td></tr></table></td>
+<td><table><tr><td>	</td><td>F3		</td></tr></table></td>
+</tr>	
+
+<tr>
+<td><table><tr><td>	</td><td>F4		</td></tr></table></td>
+<td><table><tr><td>	</td><td>F4		</td></tr></table></td>
+<td><table><tr><td>IfF	</td><td>F4		</td></tr></table></td>
+</tr>	
+
+<tr>
+<td></td>
+<td><table><tr><td>	</td><td>F99		</td></tr></table></td>
+<td></td>
+</tr>	
+
+<tr>
+<td><table><tr><td>	</td><td>F5		</td></tr></table></td>
+<td><table><tr><td>	</td><td>F5		</td></tr></table></td>
+<td><table><tr><td>IfF	</td><td>F5		</td></tr></table></td>
+</tr>	
+
+<tr>
+<td></td>
+<td></td>
+<td><table><tr><td>IfF	</td><td>F5		</td></tr></table></td>
+</tr>	
+
+
+<tr>
+<td><table><tr><td>	</td><td>F6		</td></tr></table></td>
+<td><table><tr><td>	</td><td>F6		</td></tr></table></td>
+<td><table><tr><td>IfF	</td><td>F6		</td></tr></table></td>
+</tr>	
+<tr>
+<td><table><tr><td>	</td><td>F7		</td></tr></table></td>
+<td><table><tr><td>	</td><td>F7		</td></tr></table></td>
+<td><table><tr><td>IfF	</td><td>F7		</td></tr></table></td>
+</tr>	
+
+<tr>
+<td><table><tr><td>	</td><td>F77		</td></tr></table></td>
+<td><table><tr><td>	</td><td>F77		</td></tr></table></td>
+<td><table><tr><td>	</td><td>F77		</td></tr></table></td>
+</tr>	
+</table>
+
+
+</html>

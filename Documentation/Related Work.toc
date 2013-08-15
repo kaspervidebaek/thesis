@@ -36,5 +36,5 @@
 \contentsline {subsubsection}{\numberline {4.5.3}Merging lists}{32}{subsubsection.4.5.3}
 \contentsline {subsubsection}{\numberline {4.5.4}Merging blocks}{35}{subsubsection.4.5.4}
 \contentsline {subsection}{\numberline {4.6}Merging uneven trees}{35}{subsection.4.6}
-\contentsline {section}{\numberline {5}Evaluation}{38}{section.5}
-\contentsline {section}{\numberline {6}Conclusion}{39}{section.6}
+\contentsline {section}{\numberline {5}Evaluation}{37}{section.5}
+\contentsline {section}{\numberline {6}Conclusion}{38}{section.6}

@@ -13,7 +13,6 @@
 \usepackage[hidelinks]{hyperref}
 \usepackage{epstopdf}
 \usepackage{wrapfig}
-\usepackage{listings}
 \usepackage[noend]{algpseudocode} 
 \usepackage{algorithm}
 \renewcommand{\algorithmicforall}{\textbf{for each}}
@@ -747,7 +746,7 @@ One extra detail is needed however. Items that are deleted in one branch, and mo
        \State \Return $recreate(b, l, r, members)$
     \ElsIf{nodes are classmembers}
        \State Run $MergeFile$ on the source text of A, O, B
-       \State If a conflict happens merge the nodes syntaticly
+       \State If a conflict happens run $MergeNode$ on the nodes.
     \EndIf
 \EndFunction
 \end{algorithmic}
@@ -772,9 +771,10 @@ The more of these factors that are similar, the lower a cost two functions shoul
 
 Equal identifiers is a clear sign of similarity, and one that should weight heigh for this scale. Parameters are also important; we need to match different overloads of a function to the same overload in another branch. Given these two criterias we will match any unchanged function completely.
 
-If we are looking at two functions with dissimilar names, equal return types and no parameterlist, it is not quite obvious how to define if they are similar or not. For this reason we will define it as not similar. However with several parameters similar, the likelihood of the functions actually being the same increases. 
-
-With that said, we will use the following cost-function:
+If we are looking at two functions with dissimilar names, equal return types and no parameterlist, it is not quite obvious how to define if they are similar or not. For this reason we will define it as not similar. However with several parameters similar, the likelihood of the functions actually being the same increases.  The cost-function can be found in Algorithm \ref{MethodCostFunction}.
+\begin{algorithm}
+\caption{The Cost-function for methods}
+\label{MethodCostFunction}
 \begin{algorithmic}
 \Function{FunctionCost}{x, y}
    \State $parametersimilarity \gets 0$
@@ -801,6 +801,7 @@ With that said, we will use the following cost-function:
    \State \Return $cost$
 \EndFunction
 \end{algorithmic}
+\end{algorithm}
 
 This function has some properties that are helpful, given the above considerations:
 
@@ -840,50 +841,58 @@ The responsibility of an invocation of MergeNode is to return the the exact synt
 Some nodes only consists of tokens: A function name, a string literal, an integer, a keyword and so forth. For these kind of nodes, we will simply check if only one of the branch nodes differs, and if this is the case, return that, and otherwise return a conflict, as can be seen in Figure \ref{MergeToken}
 
 
-\begin{figure}
-\begin{verbatim}
-MergeNode (of method declerations and below)
-    if A or B has been deleted.
-        if(others havent changed)
-            return nothing;
-        else
-            return conflict;
-            
-    if A or B has been inserted
-        return A or B
-        
-    if(nodes is fixed structural node)
-        retur merge of each child and own structure
-    if(node is a content-node) 
-        return the token merge
-    if(nodes is a list) (parameterlist, argumentlist)
-        return listmerge of cost function
-    if(node is a block)
-        Merge conditions if they exist.
-        Merge Substatemnetlists.
-        return the two merges.
-
-\end{verbatim}
+\begin{algorithm}
 \caption{A fixed structural node is nodes that has a fixed number of children, that are easily merged - like methods declerations, expressionsstatements, invocations, memberaccesses, single arguments. A content node is a node which is generated from a single token.}
-  \label{MergeNode}
-\end{figure}
+\label{MergeNode}
+\begin{algorithmic}
+\Function{MergeNode}{$A$, $O$, $B$}
+    \If{$A$ or $B$ has been deleted}
+        \If{others havent changed}
+            \State \Return nothing;
+        \Else
+            \State \Return conflict;
+        \EndIf
+    \EndIf
+    \If{$A$ or $B$ has been inserted}
+        \State \Return $A$ or $B$
+    \EndIf
+    \If{nodes are fixed structural nodes}
+        \State \Return merge of each child and own structure
+    \EndIf
+    \If{node is a content-node}
+        \State \Return $TokenMerge(A, O, B)$
+    \EndIf
+    \If{nodes is a list}
+        \State \Return $Listmerger(A, O, B, $ appropriate cost function $)$
+    \EndIf
+    \If{node is a block}
+        \State \Return $MergeStatementList(A.children, O.children, B.children)$
+    \EndIf
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
 
 
-\begin{figure}
-\begin{verbatim}
-MergeToken(A, O, B)
-    if all equal
-        return value
-    if one has changed
-        return changed value
-    if both has changed 
-        if A != B
-            return conflict
-        return A
-\end{verbatim}
+\begin{algorithm}
+\begin{algorithmic}
+\Function{MergeToken}{$A$, $O$, $B$}
+    \If{all equal}
+        \State \Return value
+    \EndIf
+    \If{one has changed}
+        \State \Return changed value
+    \EndIf
+    \If{both has changed}
+        \If{$A \neq B$}
+            \State \Return conflict
+	    \EndIf
+        \State \Return A
+    \EndIf
+\EndFunction
+\end{algorithmic}
   \caption{Merging tokens}
   \label{MergeToken}
-\end{figure}
+\end{algorithm}
 
 \subsubsection{Equality and similarity}
 \label{FunctionSimilarity}
@@ -910,18 +919,18 @@ The cost of the argument-lists is much harder to define. An argument is an expre
 
 The first item in the above list, depends on the matchings in both parameterlists and argumentlists to match the same items. This is not generally true for for the two matching functions that we provide, but it will be true in cases where reordering have happened without changing the expressions of each parameter.
 
-\begin{figure}
-  \caption{Merging tokens}
+\begin{algorithm}
+  \caption{Merging unordered lists}
   \label{Listmerger}
-\begin{verbatim}
+\begin{algorithmic}
 Listmerger (A, O, B, cost)
     match A, O, B after cost.
     (merge, conflicts) = FilterReorderMergeContent(a, o, b, match)
     foreach conflict
         add the warning to the two conflicts
 
-\end{verbatim}
-\end{figure}
+\end{algorithmic}
+\end{algorithm}
 
 \subsubsection{Merging blocks}
 A block-node is hit by the MergeNode algorithm often. They are the body of methods, if-statements, while-loops, using-statements and more. We need to merge content inside in each branch and the base. We will first try to do a textual merge of the content of the block. If this fails, we will do a priority-differencing as described in section \ref{PriorityDiff}, with the equality and and similarity function defined in Algorithm \ref{FunctionSimilarity}.

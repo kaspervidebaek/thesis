@@ -227,12 +227,10 @@ namespace Tests
                                 I1 ();
                                 F2();
                             }
-                            if(1==1)
-                                I2();
                             F3();
-                            I3();
-                            F4(1, 2, 3, 4);
-                            F5();
+                            F4();
+                            I2();
+                            F5(1, 2, 3, 4);
                         }
                         ";
             var O = @"static void TreeChangeInsertIfLikeOnPaper()
@@ -240,21 +238,21 @@ namespace Tests
                             F1 (1, 2, 3);
                             F2 ();
                             F3 ();
-                            F4 (1, 2, 3);
-                            F5 ();
+                            F4 ();
+                            F5 (1, 2, 3);
                         }   
                         ";
             var A = @"static void TreeChangeInsertIfLikeOnPaper()
                         {
                             F1  (1, 2, 3, 4);
                             F2  ();
+                            F3  ();
                             if(false) {
-                                F3  ();
-                                F4  (1, 2, 3);
-                                I4  ();
-                                F5  ();
+                                F4  ();
+                                F5  (1, 2, 3);
+                                I3  ();
                             }
-                            I5  ();
+                            I4  ();
                         }
                         ";
             var x = new SyntaxNodeSmartDiff();

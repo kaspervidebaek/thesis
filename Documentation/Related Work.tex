@@ -971,15 +971,20 @@ Given these chunks we will handle them in three different ways:
 \end{algorithm}
 
 \subsection{Merging uneven trees}
-Generally our merge has been working with structural equality. This means that if one branch moved a chunk of code into a block, and the opposite branch changed something in the chunk of code, we will not be able to merge it.
+Generally our merge has been working with structural equality. This means that if one branch moved a chunk of code into a block, and the opposite branch changed something in the chunk of code, we have no way of handling this..
 
-$MergeUneven$ in Figure \ref{MergeUneven} handles this to some extent. It takes an unstable chunks as input. This unstable chunk contains a sequence of nodes that cannot be matched with the base. The responsibility of MergeUneven is to detect nodes in the chunks that contains blocks wherein it might be possible to make a stable match.
+$MergeUneven$ in Algorithm \ref{MergeUneven} handles this to some extent. It takes an unstable chunks as input. This unstable chunk contains a sequence of nodes that cannot be matched with the base. The responsibility of MergeUneven is to detect nodes in the chunks that contains blocks wherein it might be possible to make a stable match.
 
+\paragraph{Flattening} $MergeUneven$ will start by flatting the input lists, in the sense that for any node found in the input lists that contains a sub-statement or a block, we will bring these statements into the top level - as can be seen in Figure \ref{UeventreeProcess}. During the flattening we will also remember the parent of each node, as can be seen in the left columns of the Flattened.
+
+\paragraph{Matching} Afterwards we will run $PriorityChunking$ on the flattened lists. We will match on the child elements of the lists. This gives us a matching where we can derive opening and closing of blocks by looking at changes in the parent-item: Whenever a parent-item changes this is the end of a sub-block, and whenever it changes into something not empty, we want to start a sub-block.
+
+Further, since the child items are matched, we can merge these together using standard chunk merging.
 
 \begin{figure}
-   \centerline{\includegraphics[scale=0.5]{drawings/html/EditedFlattenedMerge.eps}}
+   \centerline{\includegraphics[scale=0.55]{drawings/html/EditedFlattenedMerge.eps}}
    \caption{Process of merging uneven trees.}
-   \label{ThreewayMatching}
+   \label{UeventreeProcess}
 \end{figure}
 
 \begin{algorithm}

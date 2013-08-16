@@ -975,6 +975,13 @@ Generally our merge has been working with structural equality. This means that i
 
 $MergeUneven$ in Figure \ref{MergeUneven} handles this to some extent. It takes an unstable chunks as input. This unstable chunk contains a sequence of nodes that cannot be matched with the base. The responsibility of MergeUneven is to detect nodes in the chunks that contains blocks wherein it might be possible to make a stable match.
 
+
+\begin{figure}
+   \centerline{\includegraphics[scale=0.5]{drawings/html/EditedFlattenedMerge.eps}}
+   \caption{Process of merging uneven trees.}
+   \label{ThreewayMatching}
+\end{figure}
+
 \begin{algorithm}
 \begin{algorithmic}
 \Function{MergeUneven}{A, O, B}

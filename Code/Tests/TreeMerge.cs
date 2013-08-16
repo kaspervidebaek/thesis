@@ -222,45 +222,39 @@ namespace Tests
         {
             var B = @"static void TreeChangeInsertIfLikeOnPaper()
                         {
-                            Test1();
                             if(true) {
-                                Test2(2, 2, 3, 4);
-                                Test78();
-                                Test3();
+                                F1(1, 2, 3);
+                                I1 ();
+                                F2();
                             }
                             if(1==1)
-                            Test55();
-                            Test4();
-                            Test5();
-                            Test6();
-                            Test7();
+                                I2();
+                            F3();
+                            I3();
+                            F4(1, 2, 3, 4);
+                            F5();
                         }
                         ";
             var O = @"static void TreeChangeInsertIfLikeOnPaper()
                         {
-                            Test1 ();
-                            Test2 (2, 2, 3);
-                            Test3 ();
-                            Test4 ();
-                            Test99();
-                            Test5 ();
-                            Test6 ();
-                            Test7 ();
+                            F1 (1, 2, 3);
+                            F2 ();
+                            F3 ();
+                            F4 (1, 2, 3);
+                            F5 ();
                         }   
                         ";
             var A = @"static void TreeChangeInsertIfLikeOnPaper()
                         {
-                            Test1  ();
-                            Test2  (2, 2, 3);
-                            Test3  ();
+                            F1  (1, 2, 3, 4);
+                            F2  ();
                             if(false) {
-                                Test4  ();
-                                Test5  ();
-                                Test78();
-                                Test6  ();
-                                Test7  ();
+                                F3  ();
+                                F4  (1, 2, 3);
+                                I4  ();
+                                F5  ();
                             }
-                            Test77  ();
+                            I5  ();
                         }
                         ";
             var x = new SyntaxNodeSmartDiff();

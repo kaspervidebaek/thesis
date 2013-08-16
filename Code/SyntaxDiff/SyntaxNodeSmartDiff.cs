@@ -347,11 +347,11 @@ namespace SyntaxDiff
             var internalItem = "";
             if (A == null && O == null && B != null)
             {
-                internalItem = B.ToString();
+                internalItem = GetCondition(B).ToString();
             }
             else if (A != null && O == null && B == null)
             {
-                internalItem = A.ToString();
+                internalItem = GetCondition(A).ToString();
             }
             else if (A != null && O != null && B == null)
             {
@@ -477,6 +477,11 @@ namespace SyntaxDiff
                         continue;
                     else if (match.chunk.A.Count != 0 && match.chunk.O.Count != 0 && match.chunk.B.Count == 0) // Deleted in B
                         continue; // TODO: Conflcit
+                    else if (match.chunk.A.Count != 0 && match.chunk.O.Count == 0 && match.chunk.B.Count != 0) // Added both branches.
+                    {
+                        output.Add(String.Join("\r\n", NewMethod(ref lastItem.A, match, SubstatementPosition.A)));
+                        output.Add(String.Join("\r\n", NewMethod(ref lastItem.B, match, SubstatementPosition.B)));
+                    }
                     else
                         throw new NotImplementedException();
                 }

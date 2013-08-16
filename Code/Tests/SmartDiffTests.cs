@@ -34,7 +34,8 @@ namespace Tests
             var bas = SyntaxDiff.Examples.baseTree;
             var right = SyntaxDiff.Examples.rightTree;
 
-            var diff = new SyntaxDiff.SmartDiff<SyntaxNode>(new SyntaxNodeSmartDiff());
+            var diff = new SyntaxDiff.SmartDiff<SyntaxNode>(new SyntaxNodeSmartDiff())
+                ;
 
             var merge = diff.MergeCodeLines(left, bas, right);
 

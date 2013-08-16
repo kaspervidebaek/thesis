@@ -923,12 +923,14 @@ The first item in the above list, depends on the matchings in both parameterlist
   \caption{Merging unordered lists}
   \label{Listmerger}
 \begin{algorithmic}
-Listmerger (A, O, B, cost)
-    match A, O, B after cost.
-    (merge, conflicts) = FilterReorderMergeContent(a, o, b, match)
-    foreach conflict
-        add the warning to the two conflicts
-
+\Function{Listmerger}{A, O, B, cost}
+    \State $match \gets ThreeWayCostMatching(A, O, B, cost)$
+    \State $(merge, conflicts) \gets FilterReorderMergeContent(a, o, b, match)$
+    \ForAll{conflict}
+        \State Add a warning to the merges.
+    \EndFor
+    \State \Return $merge$
+\EndFunction
 \end{algorithmic}
 \end{algorithm}
 

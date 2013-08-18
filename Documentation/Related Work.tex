@@ -52,13 +52,12 @@ A conflict can be defined in quite a few ways for line based tools. In the Unix 
 
 
 \subsection{Automatic merging}
-This can probably attributed to such an approach working relatively well with source code, XML and other files often found in repositories.
-
-Structure matching will most definitely also be a more time consuming task, and given the general use case of some commits, it might not be worth the extra computation time. Further programs are generally undecidable which means it would be impossible to actually decide if a merge will work as intended by the user, without the user assessing it manually.
+The reason merging tools are still line based, can probably be attributed to such an approach working relatively well with source code, XML and other files often found in repositories. Structure matching will most definitely also be a more time consuming task, and given the general use case of commits in version control, it might not be worth the extra computation time. Further programs are generally undecidable which means it would be impossible to actually decide if a merge will work as intended by the user.
 
 One very commonly used algorithm for merging is Diff3. \citet{Khanna} investigated it formally by regarding a file as a sequence where each line was an item in the sequence. They set up a number of expectations of what you would expect from a merge, and showed that many of these assumptions does not hold: Conflicts can happen even when only unrelated regions are changed, differencing after a merge does not produce empty output, merging fails when both branches are very different from the ancestor and so forth. Even though this is the case, Diff3 continues to be widely used with few complaints of it shortcomings - it seems that the situations where Diff3 breaks are quite uncommon in version control systems.
 
 Common algorithms for merging are state based. They compare the final state of branches, and creating a series of operations that will transform one document from one state into another. \citet{Lippe} described a different approach, where editing tools instead would remember the operations used to transform the data, and where the merge process will be a matter of applying these transformations in the right order to minimize the amount of conflicts.
+
 \todo[inline]{Mention whitespace ignoring}
 \todo[inline]{Mention horizontal differincing}
 \todo[inline]{Talk about prettyprinters.}
@@ -68,129 +67,21 @@ Common algorithms for merging are state based. They compare the final state of b
 \subsection{Programming languages}
 Programming languages are abstractions over the calculations computers can perform. They makes it easier for a programmer to express the problems they need to solve, without requiring the programmer to handle intricate details about memory and processors, and they allow the user to write programs as text files, and let the computer handle the process of executing the ideas expressed in the code.
 
-In this section we will look into the process that a program goes through, from source code to execution, to give an overview of which techniques will be used later in the thesis.
+In this section we will look into the process that a program goes through in the process up until execution, to give a simple overview of how this process gets us to syntax trees, and to look into what kind of consequences a this process has from regenerating concrete syntax when given a syntax tree.
 
 \subsubsection{Grammars}
-The process of turning programs into execution relies on lexers and parsers, generated through token specifications and a context-free grammars.
+The process of turning programs into execution often relies on lexers and parsers. A lexer divides a programs into tokens. A token is any concrete string of text that is legal at any point in the program text. It can be numbers, strings, keywords, parenthesis, and any other character or sequence of characters that is legal at some point in the program text. 
 
-A token is any concrete string of text that is legal at any point in the program text. Figure \ref{token} shows a token specification, for a very simply language, that understands numbers, strings, a couple of keywords and structural tokens like parenthesis. Strings and integers are parsed through regular expressions and 
-
-The context free grammar is the structure that defines which tokens are valid in which sequence in the program text. At any given point of the parsing - it defines whether or not a given token is valid. Given a grammar of a language, we will be able to to parse the syntax of a legal program, or to generate syntax errors for invalid ones. Figure \ref{grammar} defines a grammar relying on the token specification in figure \ref{token}.
-
-In combination they create a very small imperative programming language, that is mostly nonsensical outside of as an example of this section.
-
-\begin{figure}
-  \caption{An example of a simple token specification.}
-  \label{token}
-\begin{verbatim}
-TOKEN:
-    IDENTIFIER
-    KEYWORD
-    BOOLEAN
-    NUMBER
-    IDENTIFIER
-    STRUCTURE
-    
-KEYWORD:
-    IF =          "if"
-    WHILE =       "while"
-    FOR =         "for"
-    ELSE =        "else"
-    INT =         "int"
-    
-BOOLEAN:
-    TRUE          "true"
-    FALSE         "false"
-
-NUMBER:
-    {int}         "['0'-'9']+"
-    
-IDENTIFIER:
-    {string}     "[a-zA-Z0-9]+"
-    
-STRUCTURE:
-    LPAR =        "("
-    RPAR =        ")"
-    LBRACKET =    "{"
-    RBRACKET =    "}"
-    SEMI =        ";"
-    EQUAL =       "="
-    LT =          "<"
-    INC =         "++"
-
-\end{verbatim}
-\end{figure}
-
-\begin{figure}
-  \caption{An example of a simple grammar.}
-  \label{grammar}
-\begin{verbatim}
-start:
-    statement list
-
-statement:
-    expression SEMICOLON
-    ifstatement
-    whilestatement
-    forstatement
-    statementblock
-
-forstatement:
-    FOR LPAR expression SEMI expression SEMI expression SEMI expression LPAR statement
-    
-expression:
-    BOOLEAN
-    identifier INC
-    identifier LT NUM
-    INT identifier EQUALS NUM
-    
-ifstatement:
-    IF LPAR expression RPAR statement
-    IF LPAR expression RPAR statement ELSE statement
-
-whilestatement:
-    while LPAR expression RPAR statement
-    
-statementblock:
-    LBRACKET statement list RBRACKET
-\end{verbatim}
-\end{figure}
+After the lexer has divided the program into tokens, these are passed to the parser. The parser contains a set of rules that are possibly allowed token sequences - it defines whether or not a given token is valid. Given a grammar of a language, we will be able to to parse the syntax of a legal program, or to generate syntax errors for invalid ones. While parsing it will be possible to visit each part of the concrete syntax, making the construction of a syntax tree possible.
 
 \subsubsection{Syntax Trees}
-The purpose of parsing source code is often iterating over the elements of it to generate a syntax tree. A syntax tree is a tree representation of the program. The syntax tree representation is useful for further processing of the semantics of a program. At this point a lot of details about the concrete textual representation of the code has also left behind. An example of a syntax tree can be found in Figure \ref{syntaxtree}. 
+The purpose of parsing source code is often iterating over the elements of it to generate a syntax tree. A syntax tree is a tree representation of the program. The syntax tree representation is useful for further processing of the semantics of a program. At this point a lot of details about the concrete textual representation of the code has also left behind.
 
-Depending on what kind of choice of syntax tree is done, information of the concrete syntax might be lost. In C, for example, the construct \texttt{a[i]]} is a shorthand for \texttt{*(a + i)} and should produce the same semantic behaviour. Rewriting them both into the same structure in the syntax tree is one way to resolve this. However doing this, also means that given a syntax tree it will be harder, or impossible, to determine what the concrete syntax was.
+Depending on what kind of choice of syntax tree is done, information of the concrete syntax might be lost - several grammatical rules might produce the exact same syntax node.
 
-Even grander structure rewrites could be done in the transformation from a code file to a syntax tree. For example it is possible to fit the grammar from Figure \ref{grammar} into the syntax tree of \ref{syntaxtree} even though no for-loop exists in the tree. This would be done by rewriting it into a while loop construction. Such a rewrite would of course make it quite hard to deconstruct a syntax tree back into the actual concrete code that was used to generate it.
+In C, for example, the construct \texttt{a[i]]} is a shorthand for \texttt{*(a + i)} and should produce the same semantic behaviour. Rewriting them both into the same structure in the syntax tree is one way to resolve this. However doing this, also means that given a syntax tree it will be harder, or impossible, to determine what the concrete syntax was.
 
 Given the purpose of this thesis, the choice of syntax tree is quite important for us: We will constantly be looking at syntax nodes, and want to generate concrete syntax - which means we will always want a syntax tree that is as closely corresponding to the grammatical constructs of the language.
-
-\begin{figure}
-  \caption{An example of a simple syntax tree written as a F\# type.}
-  \label{syntaxtree}
-\begin{verbatim}
-
-
-type statement =
-  | EXPR of expression
-  | IF of expression * statement * statement
-  | WHILE of expression * statement
-  | BLOCK of statement list
-
-and expression =
-  | BOOL of bool
-  | INC of string
-  | DEC of string * int
-  | LT of string * int
-
-and program = 
-  | BODY of statement list
-
-
-\end{verbatim}
-\end{figure}
-
-
 
 \subsubsection{Pre-processing and comments}
 \todo[inline]{Syntax Trees and Preprocessing??}
@@ -231,25 +122,22 @@ Several people already have looked into structural differencing and merging of s
 
 In this thesis, I will focus on two parts: Overcoming the running time challenge, and further creating an interface into general algorithms, that will make it easier to implement support for new languages.
 
-\todo{Semantisk, eller ikke-semantisk tree merging? Every node behaves differently}
+\todo[inline]{Semantisk, eller ikke-semantisk tree merging? Every node behaves differently}
 
 
 \subsection{Merging syntax}
-In a perfect universe, the perfect merge-result would be a merge that produces either no unintended behaviour or a conflict, if the input code has no unintended behaviour. It however not possible to guarantee that a single code file has no unintended behaviour, and as such this goal is not attainable, and certainly not only looking at the syntax tree without much more in-depth semantic analysis. Further, the current tools cannot guarantee this output at all.
-
-
+In a perfect universe, the perfect merge-result would be a merge that produces either no unintended behaviour or a conflict, if the input code has no unintended behaviour. It is, however, not possible to guarantee that a single code file has no unintended behaviour - further certainly not only by looking at the syntax tree without much more in-depth semantic analysis. Further, the current tools cannot guarantee this output at all.
 
 %http://users.soe.ucsc.edu/~ejw/scm12/papers/Hayase-Chapter10.pdf
 
-Many different strictness levels exists across the landscape of programming languages, but even the strictest programming language will allow incorrect programs through - simply because 
+\todo[inline]{Write about this}
 
 
 \subsection{Cross-language interfaces}
 Structured differencing tools will be only for specific languages or structures. This makes such tools impractical in version control systems, since they are designed to integrate with line based tools, and do not discriminate between file types. Some research has been done into making tools that will work with either several languages, or that combines a line based approach with a structured approach.
 
 \subsection{Algorithm}
-While some algorithmic research 
-has been done with regards to approximation algorithms and creating effective exact tree differencing algorithms, they are still prone running times many factors larger than unstructured approaches due to the tree size, counted in nodes, is generally much larger than the amount of lines in a code file. For example, running the \citet{Pawlik} algorithm on a 700 line C\# file \todo{Put this file in an appendix}, yields a syntax tree of 3800 nodes which gives running time for the matching of more than two minutes.
+While some algorithmic research has been done with regards to approximation algorithms and creating effective exact tree differencing algorithms, they are still prone running times many factors larger than unstructured approaches due to the tree size, counted in nodes, is generally much larger than the amount of lines in a code file. For example, running the \citet{Pawlik} algorithm on a 700 line C\# file \todo{Put this file in an appendix}, yields a syntax tree of 3800 nodes which gives running time for the matching of more than two minutes.
 
 \todo[inline]{Adaptiveness solution}
 
@@ -257,13 +145,10 @@ has been done with regards to approximation algorithms and creating effective ex
 \todo[inline]{Write about which situations we can probably avoid}
 
 
-\subsection{External interface}
-\todo{write about this}
+\subsection{Algorithm on the higher level}
+\todo[inline]{Write about why we stopped using general tree-matching algorithms (e.g. was impossible to figure out a good representation that allowed top-down construction of the merged syntax - n-ary trees.}
+\todo[inline]{Write about why we stopped using the tree-matching algorithm that worked only on equal structures (e.g. it was impossible to create chunks and trees in a sensible way}
 
-\subsection{Cross-language interfaces}
-\todo{write about this}
-
-\todo[inline]{Preprocessing directives}
 It does not seem plausible to be able to make an algorithm that will make differencing an entire code file as a syntax tree possible in reasonable time.
 
 I will implement a merging algorithm that is generally syntax based, but which also relies heavily on line merging.
@@ -286,6 +171,7 @@ An overall description for the proposed merge:
 \end{enumerate}
 
 \subsection{Running time}
+\todo[inline]{clean up this}
 This approach will most definitely be slower than running a line based merging algorithm, however it will hopefully fast enough to be usable in a version control scenario.
 
 Doing a textual merge on class-member will yield results that are comparable to current merging approaches, so the added running time of this algorithm will be from two factors: Doing a three-way cost matching on class members, and the added tree matching whenever a conflict is encountered.
@@ -896,6 +782,14 @@ Some nodes only consists of tokens: A function name, a string literal, an intege
 
 \subsubsection{Equality and similarity}
 \label{FunctionSimilarity}
+To do a proper matching between trees, we will need to define equality and similarity. Between nodes.
+
+If we view syntax trees as simple n-ary trees with no semantic meeting, this becomes easy. Every node has a label and $n$ children. Given two nodes $x$ and $y$ we need to check if the label is equal, and we need to iterate through each pair of children on the same index. Whenever we encounter something not equal, return false. Otherwise return true.
+
+Similarity is a little harder to define. Is the code $x=(1+2+3)$ similar to $f(1+2+3)$? One is a variable assignment and the other is a function call, which has quite different purposes in most programming languages. Also, they have atleast 5 nodes in common out of 7. The purpose of the similarity function is to do matchings, that will later allow us to merge items later on.
+
+\todo[inline]{Skriv videre her}
+
 \todo[inline]{Talk about similarity and equality functions}
 \todo[inline]{Similarity structure equality needed for for merge-eqaulity}
 
@@ -971,15 +865,13 @@ Given these chunks we will handle them in three different ways:
 \end{algorithm}
 
 \subsection{Merging uneven trees}
-Generally our merge has been working with structural equality. This means that if one branch moved a chunk of code into a block, and the opposite branch changed something in the chunk of code, we have no way of handling this..
+Generally our merge has been working with structural equality. This means that if one branch moved a chunk of code into a block, and the opposite branch changed something in the chunk of code, we have no way of handling this.
 
-$MergeUneven$ in Algorithm \ref{MergeUneven} handles this to some extent. It takes an unstable chunks as input. This unstable chunk contains a sequence of nodes that cannot be matched with the base. The responsibility of MergeUneven is to detect nodes in the chunks that contains blocks wherein it might be possible to make a stable match.
+$MergeUneven$ is called in case of an unsolvable conflict in Algorithm \ref{MergeUneven}, and tries to handle the scenario of inserted sub-block in the code - for example wrapping a couple of lines of code in an if-statement. It takes an unstable chunk as input, that contains a sequence of nodes that cannot be matched. MergeUneven looks for nodes in the chunks that contains sub-blocks which might create a stable match. It works as can be seen in Figure \ref{UeventreeProcess}. Below is a description of each step.
 
-\paragraph{Flattening} $MergeUneven$ will start by flatting the input lists, in the sense that for any node found in the input lists that contains a sub-statement or a block, we will bring these statements into the top level - as can be seen in Figure \ref{UeventreeProcess}. During the flattening we will also remember the parent of each node, as can be seen in the left columns of the Flattened.
+\paragraph{Flattening} $MergeUneven$ will start by flatting the input lists, in the sense that for any node found in the input lists that contains a sub-statement or a block, we will bring these statements into the top level. During the flattening we will also remember the parent of each node, as can be seen in the left columns of the Flattened-item in the figure. Looking at the flattened list of child and parent elements,  it is obvious that chunks of continuous parent items in any of the three lists is a sub-block.
 
-\paragraph{Matching} Afterwards we will run $PriorityChunking$ on the flattened lists. We will match on the child elements of the lists. This gives us a matching where we can derive opening and closing of blocks by looking at changes in the parent-item: Whenever a parent-item changes this is the end of a sub-block, and whenever it changes into something not empty, we want to start a sub-block.
-
-Further, since the child items are matched, we can merge these together using standard chunk merging.
+\paragraph{Matching} Afterwards we will run $PriorityChunking$ on the child elements of the flattened lists. If some statements have been moved to a subscope for these conflicts, this matching will match these statements with the ones in the other branches scope. As mentioned above, a continuous sequence of keys in the three branches means a sub-block. The same will be the case in this matching: For each branch, we will be able to track opening and closing sub-scopes by looking at the change between the last observed parent element, and at the current. This means we will be able to isolate chunks of matches that happen in specific scopes. After isolating these, we can merge the parents, and for each continuous sequence of parent items, we can output a block around them.
 
 \begin{figure}
    \centerline{\includegraphics[scale=0.55]{drawings/html/EditedFlattenedMerge.eps}}

@@ -32,10 +32,12 @@
 \contentsline {subsection}{\numberline {4.5}Merging functions}{28}{subsection.4.5}
 \contentsline {subsubsection}{\numberline {4.5.1}Merging nodes}{28}{subsubsection.4.5.1}
 \contentsline {subsubsection}{\numberline {4.5.2}Equality and similarity}{29}{subsubsection.4.5.2}
-\contentsline {subsubsection}{\numberline {4.5.3}Merging lists}{29}{subsubsection.4.5.3}
-\contentsline {subsubsection}{\numberline {4.5.4}Merging blocks}{32}{subsubsection.4.5.4}
-\contentsline {subsection}{\numberline {4.6}Merging uneven trees}{32}{subsection.4.6}
-\contentsline {paragraph}{Flattening}{33}{section*.37}
-\contentsline {paragraph}{Matching}{33}{section*.38}
-\contentsline {section}{\numberline {5}Evaluation}{35}{section.5}
-\contentsline {section}{\numberline {6}Conclusion}{36}{section.6}
+\contentsline {paragraph}{Equality}{29}{section*.34}
+\contentsline {paragraph}{Similarity}{31}{section*.35}
+\contentsline {subsubsection}{\numberline {4.5.3}Merging lists}{31}{subsubsection.4.5.3}
+\contentsline {subsubsection}{\numberline {4.5.4}Merging blocks}{33}{subsubsection.4.5.4}
+\contentsline {subsection}{\numberline {4.6}Merging uneven trees}{33}{subsection.4.6}
+\contentsline {paragraph}{Flattening}{34}{section*.40}
+\contentsline {paragraph}{Matching}{34}{section*.41}
+\contentsline {section}{\numberline {5}Evaluation}{37}{section.5}
+\contentsline {section}{\numberline {6}Conclusion}{38}{section.6}

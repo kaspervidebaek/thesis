@@ -79,9 +79,9 @@ The purpose of parsing source code is often iterating over the elements of it to
 
 Depending on what kind of choice of syntax tree is done, information of the concrete syntax might be lost - several grammatical rules might produce the exact same syntax node.
 
-In C, for example, the construct \texttt{a[i]]} is a shorthand for \texttt{*(a + i)} and should produce the same semantic behaviour. Rewriting them both into the same structure in the syntax tree is one way to resolve this. However doing this, also means that given a syntax tree it will be harder, or impossible, to determine what the concrete syntax was.
+In C, for example, the construct \texttt{a[i]]} is a shorthand for \texttt{*(a + i)} and should produce the same semantic behaviour. Rewriting them both into the same structure in the syntax tree is one way to resolve this. Doing this also means that given a syntax tree it will be harder, or impossible, to determine what the concrete syntax was.
 
-Given the purpose of this thesis, the choice of syntax tree is quite important for us: We will constantly be looking at syntax nodes, and want to generate concrete syntax - which means we will always want a syntax tree that is as closely corresponding to the grammatical constructs of the language.
+Given the purpose of this thesis, the choice of syntax tree is quite important for us: We will be looking at syntax nodes, and want to generate concrete syntax - which means we will always want a syntax tree that is as closely corresponding to the grammatical constructs of the language.
 
 \subsubsection{Pre-processing and comments}
 \todo[inline]{Syntax Trees and Preprocessing??}
@@ -99,7 +99,7 @@ Syntax tree differencing has generally been used to get overview of changes in v
 
 \citet{Apel} describes the idea of semistructured merge and creates a framework that will be extensible to several languages. They parse programs into unordered trees in which the leaves are functions that contain unstructured program code. The code in leaves is then merged by language specific conflict handlers or by an unstructured merge. They found that merge conflicts are generally minimized, and conclude that many conflicts are ordering conflicts. In 26\% of the cases there will actually be more conflicts, due to renaming creating conflicts in this approach as opposed to compile errors in unstructured merge.
 
-\citet{Olav} describes a system which first tries unstructured merge and afterwords does structured merge on conflicting JAVA files. The idea is to minimize the running time of the tools, to make them more convenient to use in real life scenarios. They report generally a lower amount of conflicts than unstructured merge and \citet{Apel} but in some scenarios, in the case of moved files, they produce more conflicts. They general cut off 50\% of the running time compared to a pure structured approach, are a factor 12 slower than a unstructured merge, and a factor 6 faster than \citet{Apel}. However the improvement factor varies a lot from repository to repository. 
+\citet{Olav} describes a system which first tries unstructured merge and afterwords does structured merge on conflicting JAVA files. The idea is to minimize the running time of the tools, to make them more convenient to use in real life scenarios. They report generally a lower amount of conflicts than unstructured merge and \citet{Apel} but in some scenarios, in the case of moved files, they produce more conflicts. They general cut off 50\% of the running time compared to a pure structured approach, are a factor 12 slower than a unstructured merge, and a factor 6 faster than \citet{Apel}. However the improvement factor varies a lot from repository to repository.  
 
 
 \subsection{Tree differencing  and merging}
@@ -780,18 +780,41 @@ Some nodes only consists of tokens: A function name, a string literal, an intege
   \label{MergeToken}
 \end{algorithm}
 
-\subsubsection{Equality and similarity}
-\label{FunctionSimilarity}
-To do a proper matching between trees, we will need to define equality and similarity. Between nodes.
+\subsubsection{Equality}
+The equality function will define whether or not two nodes taken from syntax-trees in different branches are equal to each other.
 
 If we view syntax trees as simple n-ary trees with no semantic meeting, this becomes easy. Every node has a label and $n$ children. Given two nodes $x$ and $y$ we need to check if the label is equal, and we need to iterate through each pair of children on the same index. Whenever we encounter something not equal, return false. Otherwise return true.
 
-Similarity is a little harder to define. Is the code $x=(1+2+3)$ similar to $f(1+2+3)$? One is a variable assignment and the other is a function call, which has quite different purposes in most programming languages. Also, they have atleast 5 nodes in common out of 7. The purpose of the similarity function is to do matchings, that will later allow us to merge items later on.
+\subsubsection{Similarity}
+\label{FunctionSimilarity}
+Similarity should return whether two nodes are similar or not. We will divide it into two functions:  One that decides a similarity percentage between two nodes. Around this function we will define a function that thresholds this percentage.
 
-\todo[inline]{Skriv videre her}
+\paragraph{Initial assumptions} Is the expression $x=1+2+3$ similar to $f(1+2+3)$? They have atleast 5 nodes in common; three integers and two add operators - this, out of 7 nodes in total. From that perspective they seem quite similar. However, for several reasons, we will decide that only syntax-nodes of equal type should be considered similar:
 
-\todo[inline]{Talk about similarity and equality functions}
-\todo[inline]{Similarity structure equality needed for for merge-eqaulity}
+\begin{enumerate}
+\item As noted by \citet{Hashimoto}, showing a fine grained difference, might actually be more confusing than showing the two statements as an insertion and deletion.
+\item The running time of creating the matchings, will become considerably larger if every single sub-tree will have to be compared to each other sub-tree for similarity.
+\item The complexity of the merge algorithm will be considerable less, if we can assume that children of any of the input nodes are always the same. This would also be the case for the similarity function itself.
+\item If we want to allow for merging of the above cases, this can still be done, in the same way that we allow of uneven tree merging when no other ways of resolving an update is possible: It will generate an unstable chunk. Given this chunk we can match the sub-trees much quicker because we have a much more narrow field for the matching.
+\end{enumerate}
+
+Given that two nodes are only equal if they are of the same node-type, most of the similarity will be quite straightforward: Run similarity on all children, and do an average of these. This is however not possible for nodes that contains lists of sub-nodes - blocks, parameter-lists and argument-lists.
+
+\paragraph{Lists} There will exist lists of parameters and arguments throughout the syntax tree. Finding similarity between these lists, will be a question of matching the arguments or the parameters inside the lists. This matching we will do without order: If the order of parameters or arguments have changed across branches, it is probably more due to reorderings or change in overloads, than it has anything to do with change in actual behaviour.
+
+\paragraph{Blocks} Similarity for blocks will be determined by doing a priority-chunk-matching, and for each chunk, count up by adding up the similarity and the count of statements:
+
+\begin{itemize}
+	\item For equality-stable chunks we will add 1 to the similarity and 1 to the statement-count foreach statement
+	\item For similarity-stable chunks we will the similarity between the two statement, and 1 to the statement-count foreach matching
+	\item For unstable chunks we will add nothing to the similarity and the maximum amount of statement in both of the sides for the unstable chunk.
+\end{itemize}
+
+The first two are obvious: Together they will be used to calculate the average similarity across statements. The 
+
+\paragraph{Token similarity} Tokens-similarity, in this case integers and strings, can be defined in a few ways. 
+
+\paragraph{Threshold}
 
 \subsubsection{Merging lists}
 There are primarily two types of list that we want to merge: ParameterLists and ArgumentLists. Parameterlists are the pair of types and identifiers found in method declarations, where argument-lists are expressions found in invocations of methods. Modification of these two properties 

@@ -794,12 +794,11 @@ namespace SyntaxDiff
                             statementsTotal += Similarity(chunk.chunk.x[i], chunk.chunk.y[i]);
                     }
                     else
-                    {
-                        statements += chunk.chunk.x.Count + chunk.chunk.y.Count;
+                   { 
+                        statements += Math.Max(chunk.chunk.x.Count, chunk.chunk.y.Count);
                     }
                 }
                 var avg = statementsTotal / statements;
-                //throw new NotImplementedException("We need to tests thissssSSS");
                 return avg;
             }
             throw new NotImplementedException();

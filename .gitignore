@@ -6,12 +6,7 @@
 /Documentation/*.out
 obj
 bin
-
 *.suo
-
 *.bbl
-
 *.blg
-/Documentation/*.toc
-/Documentation/*.toc
-/Documentation/*.toc
+*.toc

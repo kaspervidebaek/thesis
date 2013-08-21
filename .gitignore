@@ -12,3 +12,5 @@ bin
 *.bbl
 
 *.blg
+/Documentation/*.toc
+/Documentation/*.toc

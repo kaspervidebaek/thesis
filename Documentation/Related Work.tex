@@ -114,7 +114,33 @@ Diff/TS: A tool for fine grained....
 \clearpage
 
 \section{Discussions}
-\todo[inline]{Revise this section}
+Discussions of how the end algorithm should look.
+
+\paragraph{Overall goal}
+- Stable time.
+- Less trivial conflicts.
+\paragraph{State based}
+\paragraph{Line vs. structure}
+\paragraph{Using regular tree matching algorhtms}
+- Problems
+- Advantages
+- Solutions?
+\paragraph{Using custom tree matching on generic trees}
+- Problems with chunking, and defining conflicts.
+
+\subsection{Algorithm}
+- Insert figure here.
+\begin{figure}
+   \centerline{\includegraphics[scale=0.55]{drawings/eps/overallmergingprocess.eps}}
+   \caption{The overall process of merging a file.}
+   \label{OverallMergingProcess}
+\end{figure}
+
+
+
+\clearpage
+\section{OldDiscussions}
+
 Every developer has their own preferences of development environment, which makes it essential that a tool can work with many environments, and as such a operation based approach where changes are logged by an editor, seems quite impractical, so we will keep the integration in the version control systems. 
 
 Several people already have looked into structural differencing and merging of structured data and specifically program code. This research seems however to focus mostly on the conflict resolution part, and glances over the problem of running times. 
@@ -131,6 +157,9 @@ In a perfect universe, the perfect merge-result would be a merge that produces e
 Structured differencing tools will be only for specific languages or structures. This makes such tools impractical in version control systems, since they are designed to integrate with line based tools, and do not discriminate between file types. Some research has been done into making tools that will work with either several languages, or that combines a line based approach with a structured approach.
 
 \subsection{Algorithm}
+
+
+
 While some algorithmic research has been done with regards to approximation algorithms and creating effective exact tree differencing algorithms, they are still prone running times many factors larger than unstructured approaches due to the tree size, counted in nodes, is generally much larger than the amount of lines in a code file. For example, running the \citet{Pawlik} algorithm on a 700 line C\# file \todo{Put this file in an appendix}, yields a syntax tree of 3800 nodes which gives running time for the matching of more than two minutes.
 
 \todo[inline]{Adaptiveness solution}

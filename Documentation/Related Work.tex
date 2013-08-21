@@ -58,10 +58,10 @@ One very commonly used algorithm for merging is Diff3. \citet{Khanna} investigat
 
 Common algorithms for merging are state based. They compare the final state of branches, and creating a series of operations that will transform one document from one state into another. \citet{Lippe} described a different approach, where editing tools instead would remember the operations used to transform the data, and where the merge process will be a matter of applying these transformations in the right order to minimize the amount of conflicts.
 
-\todo[inline]{Mention whitespace ignoring}
-\todo[inline]{Mention horizontal differincing}
-\todo[inline]{Talk about prettyprinters.}
-\todo[inline]{Point out that merges might not compile.}
+%\todo[inline]{Mention whitespace ignoring}
+%\todo[inline]{Mention horizontal differincing}
+%\todo[inline]{Talk about prettyprinters.}
+%\todo[inline]{Point out that merges might not compile.}
 
 
 \subsection{Programming languages}
@@ -84,8 +84,6 @@ In C, for example, the construct \texttt{a[i]]} is a shorthand for \texttt{*(a +
 Given the purpose of this thesis, the choice of syntax tree is quite important for us: We will be looking at syntax nodes, and want to generate concrete syntax - which means we will always want a syntax tree that is as closely corresponding to the grammatical constructs of the language.
 
 \subsubsection{Pre-processing and comments}
-\todo[inline]{Syntax Trees and Preprocessing??}
-%http://bartho.net/publications/Adding_preprocessor_directives.pdf
 When looking at the syntax tree quite a lot of information will not be immediately available: Everything from the preprocessing phase, syntactic sugar, whitespace and comments. While this information is not immediately available in the structure of the syntax tree most of this information can be found, by looking at the text that generated each node in the tree. 
 
 \subsection{Syntax Trees in Version Control}
@@ -116,6 +114,7 @@ Diff/TS: A tool for fine grained....
 \clearpage
 
 \section{Discussions}
+\todo[inline]{Revise this section}
 Every developer has their own preferences of development environment, which makes it essential that a tool can work with many environments, and as such a operation based approach where changes are logged by an editor, seems quite impractical, so we will keep the integration in the version control systems. 
 
 Several people already have looked into structural differencing and merging of structured data and specifically program code. This research seems however to focus mostly on the conflict resolution part, and glances over the problem of running times. 
@@ -124,13 +123,8 @@ In this thesis, I will focus on two parts: Overcoming the running time challenge
 
 \todo[inline]{Semantisk, eller ikke-semantisk tree merging? Every node behaves differently}
 
-
 \subsection{Merging syntax}
 In a perfect universe, the perfect merge-result would be a merge that produces either no unintended behaviour or a conflict, if the input code has no unintended behaviour. It is, however, not possible to guarantee that a single code file has no unintended behaviour - further certainly not only by looking at the syntax tree without much more in-depth semantic analysis. Further, the current tools cannot guarantee this output at all.
-
-%http://users.soe.ucsc.edu/~ejw/scm12/papers/Hayase-Chapter10.pdf
-
-\todo[inline]{Write about this}
 
 
 \subsection{Cross-language interfaces}
@@ -699,13 +693,13 @@ This function has some properties that are helpful, given the above consideratio
 
 
 \subsection{Merging functions}
-\todo[inline]{Foreach function, write about:
-
-- Intended input. \\
-- Purpose of the function.\\
-- Conflict behaviour\\
-- Tricks that are not obvious.\\
-- Intended output.\\}
+%\todo[inline]{Foreach function, write about:
+%
+%- Intended input. \\
+%- Purpose of the function.\\
+%- Conflict behaviour\\
+%- Tricks that are not obvious.\\
+%- Intended output.\\}
 
 \subsubsection{Merging nodes}
 \texttt{MergeNode} handles merging of single nodes of equal type. It will take three input values; A, O and B, and return a syntactically valid string, which is the merge of those three input values. It handles the input as a matching and will conclude insertion or deletion if appropriate. Further it assumes that all input nodes are of the same type.
@@ -810,11 +804,15 @@ Given that two nodes are only equal if they are of the same node-type, most of t
 	\item For unstable chunks we will add nothing to the similarity and the maximum amount of statement in both of the sides for the unstable chunk.
 \end{itemize}
 
-The first two are obvious: Together they will be used to calculate the average similarity across statements. The 
+The first two are obvious: Together they will be used to calculate the average similarity across statements. Adding nothing to similarity for the last item, is also pretty obvious. Choosing how many statements to add is however not - one way to look at it is that each of the statements in the unstable chunk would count. This would however mean that a statements in unstable chunks are much heavier in the average, than stable chunks: Two statements that are not similar would both count, while two statements that are similar only count once.
 
-\paragraph{Token similarity} Tokens-similarity, in this case integers and strings, can be defined in a few ways. 
+Because of this we have choosen just the maximum of the two counts - this is the upper bound on how many dissimilar statements would be in the block.
 
-\paragraph{Threshold}
+\paragraph{Token similarity} Tokens-similarity will primarily merge variable-names, integers, booleans and string. For booleans and integers strict equality of the token is the only sensible choice. For strings and variables there are many ways to compare them heuristicly. However, since our goal for matching is to merge the nodes, it seems quite nonsensical to start using heuristics for such a matching: We will not be able to automaticly merge two strings or variables, since we simply do not know the structure of them - it is better to leave them unmatched so the will be handled as an unstable chunk.
+
+\paragraph{Threshold} When the similarity of two nodes have been calculated, we will have to answer whether or not they are similar \textit{enough}. We set the cutof around 60\% eqality.
+
+\todo[inline]{Write more about cutoff}
 
 \subsubsection{Merging lists}
 There are primarily two types of list that we want to merge: ParameterLists and ArgumentLists. Parameterlists are the pair of types and identifiers found in method declarations, where argument-lists are expressions found in invocations of methods. Modification of these two properties 

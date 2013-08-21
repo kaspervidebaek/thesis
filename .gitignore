@@ -14,3 +14,4 @@ bin
 *.blg
 /Documentation/*.toc
 /Documentation/*.toc
+/Documentation/*.toc

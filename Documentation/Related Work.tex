@@ -99,8 +99,7 @@ Syntax tree differencing has generally been used to get overview of changes in v
 
 \citet{Olav} describes a system which first tries unstructured merge and afterwords does structured merge on conflicting JAVA files. The idea is to minimize the running time of the tools, to make them more convenient to use in real life scenarios. They report generally a lower amount of conflicts than unstructured merge and \citet{Apel} but in some scenarios, in the case of moved files, they produce more conflicts. They general cut off 50\% of the running time compared to a pure structured approach, are a factor 12 slower than a unstructured merge, and a factor 6 faster than \citet{Apel}. However the improvement factor varies a lot from repository to repository.  
 
-
-\subsection{Tree differencing  and merging}
+\subsection{Tree differencing and merging}
 Research in the area has shown that the problem generally can be solved in cubic time. Several different algorithms exists, that all build on different dynamic programming decompositions. They perform well in different circumstances, and algorithms for cubic time have been created. \citet{Pawlik} describes and algorithm that will perform in cubic time, and that dynamically will decide if other algorithms would perform better for a specific sub-problem - this algorithm seems to be the most promising in regards to differencing and running time.
 
 \citet{Zhang} describes the idea of constraining mapping, such that the one of the common ancestors of two nodes needs to be the same. This provides and algorithm that runs in quadratic time. Later \citet{Lu} described a loosened constraint and provided an algorithm that was quadratic, but also dependant on the degree of the tree.
@@ -116,21 +115,53 @@ Diff/TS: A tool for fine grained....
 \section{Discussions}
 Discussions of how the end algorithm should look.
 
-\paragraph{Overall goal}
-- Stable time.
-- Less trivial conflicts.
-\paragraph{State based}
-\paragraph{Line vs. structure}
-\paragraph{Using regular tree matching algorhtms}
-- Problems
-- Advantages
-- Solutions?
-\paragraph{Using custom tree matching on generic trees}
-- Problems with chunking, and defining conflicts.
+\paragraph{Overall goal} The overall goal of the algorithm is to reduce the amount of trivial conflicts found in version control systems. We say \textit{trivial} conflicts, because reducing conflicts in general cannot be a goal in itself: We will not be able to prove if a merge produces the correct behaviour of a program. Therefore we will focus on solving only conflicts where a conflict either have no semantic meaning, or where we syntactically can see a meaningful way of reassembling a line that would otherwise be deemed as conflicting.
 
-\subsection{Algorithm}
-- Insert figure here.
+\todo[inline]{Ovenstående mål er vigtigt. Flet det ind i implementeringsafsnit}
+
+Another part of the overall goal, is to keep the running time lower and more stable, than what we saw in tools and literature in the last section: Higher running times than $diff3$ are unavoidable if we want to parse the input files and match the syntax trees, however we can hopefully get a lower overall running time for the entire merging process, and hopefully have it become more stable for the general case, than what we have found.
+
+\paragraph{Operations based vs. state based} While the idea of operation based merging on syntax trees is quite interesting, we will go for a state based approach: Operation based merging will require making an entire editor that can log operations, and the idea does not fit into VCSs. Further, it would require that every developer used this specific editor for their development, instead of their favourite tool. By making a state based approach all developers have to do is change their merging tool in their VCS.
+
+\paragraph{Line-based vs. structure-based} \citet{Olav} and \citet{Apel} both have good ideas for minimizing the running time of a state-based merging algorithm for code: Do structured merging when it's suitable.
+
+\citet{Olav} uses structured merging on JAVA classes only when a line-based approach fails for the entire file. This lowers the average running time considerably for commits, but also creates a big variation from commit to commit: Whenever a file actually has a line-based conflict, the structured merge will impact considerably.
+
+\citet{Apel} divides the process of merging code into two processes: One for matching functions, and one for merging them. The matching part is unordered and when functions have been matched, these can be merged as trees. They found that this minimizes conflict a lot, due to many conflicts being due to reordering. We will use this division between matching and merging of functions too, however whenever we have matched a function, we will try to do unstructured merge on this first, and only if this fails, we will do a structured merge.
+
+\subsection{Process for algorithm}
+The overall merge algorithm will look as in Figure \ref{OverallMergingProcess}. We will start with three input, files and try to do line based merging of them. If this succeeds, we will return this result. If it fails, we will parse the input files and serve them to a method that will match each function found in the parse with the same method in the other branches. These matches will be passed to the line-based merger, that will try to do a textual merge of the function. If the line-based function merger fails, we will pass the syntax tree of the function to the structure-merger that will merge it structurally - with or without structural conflicts. When the structure merger and the line-based merger have parsed all functions, we will produce a sensible ordering for the merged functions and reassemble, generate a complete result and return this.
+
+\paragraph{Running time} From an worst-case running-time perspective, this process does not look good: In the worst case, we will have merge the entire file and hit a conflict on the last line. Then we will start over, parse the files, match the functions, and then try a line merge on each of these matches. Each function will fail on the last line and we will have to do a structure match.
+
+
+$(r+c) \cdot lm (l_a, l_o, l_b) + c ( ma(f_a, f_o, f_b) +  f \cdot lm(lf_a, lf_o, lf_b) + fc \cdot sm(nf_a, nf_o, nf_b) )$
+
+
+\begin{itemize}
+\item The growth of the line-merge-function $lm$ is smaller than $sm$
+\item The number of nodes in L-M
+
+\end{itemize}
+
+\begin{multline}
+first part of the equation \\
+= second part of the equation
+\end{multline}
+
+\begin{equation}
+\begin{split}
+(r+c) \cdot lm (l_a, l_o, l_b) + \\
+ ( ma(f_a, f_o, f_b) + \\
+ 		(fc+fr) \cdot lm(lf_a, lf_o, lf_b) +\\
+ 		fc \cdot sm(nf_a, nf_o, nf_b) ) \cdot c 
+\end{split}
+\end{equation}
+
+
+
 \begin{figure}
+
    \centerline{\includegraphics[scale=0.55]{drawings/eps/overallmergingprocess.eps}}
    \caption{The overall process of merging a file.}
    \label{OverallMergingProcess}
@@ -141,7 +172,6 @@ Discussions of how the end algorithm should look.
 \clearpage
 \section{OldDiscussions}
 
-Every developer has their own preferences of development environment, which makes it essential that a tool can work with many environments, and as such a operation based approach where changes are logged by an editor, seems quite impractical, so we will keep the integration in the version control systems. 
 
 Several people already have looked into structural differencing and merging of structured data and specifically program code. This research seems however to focus mostly on the conflict resolution part, and glances over the problem of running times. 
 
@@ -157,8 +187,6 @@ In a perfect universe, the perfect merge-result would be a merge that produces e
 Structured differencing tools will be only for specific languages or structures. This makes such tools impractical in version control systems, since they are designed to integrate with line based tools, and do not discriminate between file types. Some research has been done into making tools that will work with either several languages, or that combines a line based approach with a structured approach.
 
 \subsection{Algorithm}
-
-
 
 While some algorithmic research has been done with regards to approximation algorithms and creating effective exact tree differencing algorithms, they are still prone running times many factors larger than unstructured approaches due to the tree size, counted in nodes, is generally much larger than the amount of lines in a code file. For example, running the \citet{Pawlik} algorithm on a 700 line C\# file \todo{Put this file in an appendix}, yields a syntax tree of 3800 nodes which gives running time for the matching of more than two minutes.
 
@@ -722,6 +750,27 @@ This function has some properties that are helpful, given the above consideratio
 
 
 \subsection{Merging functions}
+\subsubsection{Place this somewhere}
+\todo[inline]{Hører nedenstående måske mere hjemme I implementerings-afstnittet?}
+\paragraph{Tree matching algorithms} Using regular tree matching algorithms on entire syntax trees gives quite an overhead, due to the best-case cubic time of the matching algorithms, and due to the amount of nodes generated from a line of code being quite high too. Some initial tests on trees generated from C\# files, we encountered matching times of up to two minutes, from a relatively complex, but not unheard of 700-line C\# file that gave a syntax tree with around 3800 nodes. This problem however, becomes a lot smaller if we only use it on method bodies - it might be a viable option.
+
+Tree matching algorithms returns a matching as a flat list of node pairs. This list makes it easy, for each node, to find the corresponding node in the other tree, and makes it possible to calculate costs easily. This can also easily be stitched together to create a three-way matching such that all nodes in the O-branch is matched with everything in the B- and A-branches.
+
+Our goal is to construct a tree that is the merge of the branches, and here it seems there are not really a natural starting point. First of all, the merging list does not have any idea of the structure of the tree we needs to construct, so the starting point needs to be an iteration over the three input-threes instead. In this iteration, however, the matching can be quite helpful: Whenever we encounter a change in either of the trees, we can look up the matching, and this will be give us a hint about what has happened here.
+
+Resolving operations as deletions, insertions and updates are quite simple this way. However tree, operations can also be moves up or down in either of the branch trees, which makes the this more complex: The matching does not tell us what has happened, just that a match exists to somewhere in the other trees - this means that such an algorithm needs to search amongst parents and children to figure this out, and when this is done produce some the correct output. This might not be impossible, but the entire process becomes a quite complex at this point, and we decided to go another way.
+
+We abandoned the general tree matching approach of some guy\todo{Who?}, and created a matching algorithm that worked entirely on the same level: Move operations would not be detected up and down in the tree. This removes the above challenge. After creating such a matching, we can do a top-down recursion and create a \textit{matching tree}; a tree where each leaf is actually a matching between the three trees. Given such a 
+\todo[inline]{Skriv ovenstående færdigt}
+- Problems
+- Advantages
+- Solutions?
+
+\paragraph{Semantic vs. non-semantic tree-merging} A syntax-tree has a built-in semantic, that cannot be broken. Each node has some specific children with a specific type and purpose. This means ta
+
+\subsubsection{Real implementaiton start}
+
+
 %\todo[inline]{Foreach function, write about:
 %
 %- Intended input. \\
@@ -877,6 +926,8 @@ The first item in the above list, depends on the matchings in both parameterlist
 \EndFunction
 \end{algorithmic}
 \end{algorithm}
+
+\todo[inline]{FilterReorderMergeContent}
 
 \subsubsection{Merging blocks}
 A block-node is hit by the MergeNode algorithm often. They are the body of methods, if-statements, while-loops, using-statements and more. We need to merge content inside in each branch and the base. We will first try to do a textual merge of the content of the block. If this fails, we will do a priority-differencing as described in section \ref{PriorityDiff}, with the equality and and similarity function defined in Algorithm \ref{FunctionSimilarity}.

@@ -2,15 +2,15 @@
 
 \documentclass[11pt]{article}
 \usepackage[utf8]{inputenc}
-\author{
-        Kasper Videbæk \\
-}
+\author{Kasper Videbæk}
 \date{\today}
  \usepackage{amsmath}
 \usepackage{graphicx}
 \usepackage[numbers]{natbib}
 \usepackage{todonotes}
 \usepackage[hidelinks]{hyperref}
+\usepackage{verbatim}
+
 \usepackage{epstopdf}
 \usepackage{wrapfig}
 \usepackage[noend]{algpseudocode} 
@@ -19,7 +19,6 @@
 
 \begin{document}
 \maketitle
-
 \tableofcontents
 
 \clearpage 
@@ -29,30 +28,24 @@
 \section{Theory}
 Several topics, scientific as well as practical, are related to the work that will be done in this thesis.
 
-In this section we will give a brief overview of what areas we will be going through, and what related work has already been done in those areas. In the first subsection we will look into research that already have worked on embedding syntax tree knowledge into version control systems, and in the second section, we will look into tree differencing. In the last section we will look into general knowledge about merging trees.
+In this section we will give a brief overview of the areas and the related work from those areas. We will briefly describe needed programming language concepts, version controls systems and the concept of automatic merging. Further we will look into what research has already been done when embedding syntax tree knowledge into version control systems, and general tree-differencing and merging.
 
 \subsection{Version control systems}
 The overall goal of version control systems is to support development of documents, by keeping track of changes over time. In the context of software development, version control systems are frequently used to keep track of source code. Two overall groups of version control systems exists: Distributed and centralized. In the context of this thesis, we do not distinguish between these two - but abstract all the different merging-scenarios possible into the simple concept of merging two branches with a common ancestor.\todo[inline]{Skrive mere om process?}
 
-Merging in version controls is the process of producing a single file, given two files that have evolved in different directions from a common ancestor. Merging source code is an inherent part of software development, and has gone through some development and automation since the first version control systems. Merging algorithms generally work by matching content between the two branches and the common ancestor. Given these matchings it is possible to merge the content into one common child. If this is not possible, we have a conflict and it will be presented to the user.
+Merging in version controls is the process of producing a single file, given two files that have evolved in different directions from a common ancestor. Merging source code is an inherent part of software development, and has gone through some development and automation since the first version control systems. Merging algorithms generally work by matching content between two branches and the common ancestor, and using the matchings it is possible to merge the content into one common file. If this is not possible a conflict is presented. Merging tools of version control systems are mostly line based - and oblivious to the structure of the content of the files contained. The content they match is lines in the two branches and the common ancestor. 
 
-Merging tools of version control systems are mostly line based and oblivious to the structure of the content of the files contained. They work by matching each line in the two branches with the common ancestor. Given these matchings, it will conclude which lines has been deleted and added in the two different branches, and produce single file that has all these deletions ans insertions included. If changes happen near each other, it will produce a conflict.
+A line based approach to works relatively well with files that are structured for computer input but also readable by humans, such as many source files and XML files. This works since line breaks often are used to make the structured data easily readable for humans; it is common for XML files to have opening and closing XML-tags on their own lines, and conventions of most programming languages have only one statement per line and opening block on lines of their own. In some programming languages line breaks are actually a part of the structure of the code - which makes them even more suitable for this approach.
 
-%Version control systems can contain any type of file. Binary files are generally not merged by version control systems. Instead they are treated as conflicts instantly. 
+Conventions of XML and source code can be broken. An entire XML-file can be a single line, and have the exact same meaning. Likewise with most source code - a function body can be written on a single line in many programming languages, and the compiler will not care. A structured merging approach will clearly be helpful for files that are not structured with line breaks. However, this is not a very common case for files inside version control systems. The better case for improving version control by introducing structural knowledge, is where a single line contains structure.
 
-A line based approach to works relatively well with source files and XML files, since line breaks are often used to make the structure of the code more easily readable for users. It is common for XML files to have opening and closing XML-tags on their own lines, and conventions of most programming languages have only one statement per line and opening block on lines of their own. In some programming languages line breaks are actually a part of the structure of the code - which makes them even more suitable for this approach.
-
-However conventions of XML or source code can be broken. An entire XML-file can be a single line, and have the exact same meaning. Likewise with most source code - a function body can be written on a single line in many programming languages, and the compiler will never notice.
-
+\todo[inline]{Dette hører nok til et andet sted}
 \todo[inline]{Er formålet med dette speciale at fixe "ikke bruger-læsbar-merging"?}
-
-A structured merging approach will clearly be helpful for files that are not structured with line breaks. However this is not a very common case. The better case for improving version control by introducing structural knowledge, is where a single line contains structure. \todo[inline]{Dette hører nok til et andet sted}
 
 A conflict can be defined in quite a few ways for line based tools. In the Unix tool diff3, a conflict is a sequence of lines, that is changed in both branches, and is not separated by a single line that is unchanged in both branches. Such a conflict detection scheme is clearly an approximation. It is oblivious to the structure of the data and one could craft input that will output invalid structural data. Further, the  actual meaning of the merged data is not considered at all - even if it is structurally valid, it might semantically be nonsense, even though a conflicts is not produced.
 
-
 \subsection{Automatic merging}
-The reason merging tools are still line based, can probably be attributed to such an approach working relatively well with source code, XML and other files often found in repositories. Structure matching will most definitely also be a more time consuming task, and given the general use case of commits in version control, it might not be worth the extra computation time. Further programs are generally undecidable which means it would be impossible to actually decide if a merge will work as intended by the user.
+The reason merging tools are line based these days, can probably be attributed to such an approach working relatively well with source code, XML and other files often found in repositories. Structure matching will most definitely also be a more time consuming task, and given the general use case of commits in version control, it might not be worth the extra computation time. Further programs are generally undecidable which means it would be impossible to actually decide if a merge will work as intended by the user.
 
 One very commonly used algorithm for merging is Diff3. \citet{Khanna} investigated it formally by regarding a file as a sequence where each line was an item in the sequence. They set up a number of expectations of what you would expect from a merge, and showed that many of these assumptions does not hold: Conflicts can happen even when only unrelated regions are changed, differencing after a merge does not produce empty output, merging fails when both branches are very different from the ancestor and so forth. Even though this is the case, Diff3 continues to be widely used with few complaints of it shortcomings - it seems that the situations where Diff3 breaks are quite uncommon in version control systems.
 
@@ -67,19 +60,19 @@ Common algorithms for merging are state based. They compare the final state of b
 \subsection{Programming languages}
 Programming languages are abstractions over the calculations computers can perform. They makes it easier for a programmer to express the problems they need to solve, without requiring the programmer to handle intricate details about memory and processors, and they allow the user to write programs as text files, and let the computer handle the process of executing the ideas expressed in the code.
 
-In this section we will look into the process that a program goes through in the process up until execution, to give a simple overview of how this process gets us to syntax trees, and to look into what kind of consequences a this process has from regenerating concrete syntax when given a syntax tree.
+In this section we will look into the process that a program goes through in the process up until execution, to give a simple overview of how this process gets us to syntax trees, and to look into what kind of consequences a this process has for regenerating concrete syntax when given a syntax tree.
 
 \subsubsection{Grammars}
 The process of turning programs into execution often relies on lexers and parsers. A lexer divides a programs into tokens. A token is any concrete string of text that is legal at any point in the program text. It can be numbers, strings, keywords, parenthesis, and any other character or sequence of characters that is legal at some point in the program text. 
 
-After the lexer has divided the program into tokens, these are passed to the parser. The parser contains a set of rules that are possibly allowed token sequences - it defines whether or not a given token is valid. Given a grammar of a language, we will be able to to parse the syntax of a legal program, or to generate syntax errors for invalid ones. While parsing it will be possible to visit each part of the concrete syntax, making the construction of a syntax tree possible.
+After the lexer has divided the program into tokens, these are passed to the parser. The parser contains a set of rules of allowed token sequences - it defines whether or not a given token is valid. Given a grammar of a language, we will be able to to parse the syntax of a legal program, or to generate syntax errors for invalid ones. While parsing it will be possible to visit each part of the concrete syntax, making the construction of a syntax tree possible.
 
 \subsubsection{Syntax Trees}
 The purpose of parsing source code is often iterating over the elements of it to generate a syntax tree. A syntax tree is a tree representation of the program. The syntax tree representation is useful for further processing of the semantics of a program. At this point a lot of details about the concrete textual representation of the code has also left behind.
 
 Depending on what kind of choice of syntax tree is done, information of the concrete syntax might be lost - several grammatical rules might produce the exact same syntax node.
 
-In C, for example, the construct \texttt{a[i]]} is a shorthand for \texttt{*(a + i)} and should produce the same semantic behaviour. Rewriting them both into the same structure in the syntax tree is one way to resolve this. Doing this also means that given a syntax tree it will be harder, or impossible, to determine what the concrete syntax was.
+In C, for example, the construct \texttt{a[i]} is a shorthand for \texttt{*(a + i)} and should produce the same semantic behaviour. Rewriting them both into the same structure in the syntax tree is one way to resolve this. Doing this also means that given a syntax tree it will be harder, or impossible, to determine what the concrete syntax was.
 
 Given the purpose of this thesis, the choice of syntax tree is quite important for us: We will be looking at syntax nodes, and want to generate concrete syntax - which means we will always want a syntax tree that is as closely corresponding to the grammatical constructs of the language.
 
@@ -95,7 +88,7 @@ Syntax tree differencing has generally been used to get overview of changes in v
 
 \citet{Ekman} also looks into refactorings using the ideas of \citet{Lippe}. The idea is to log refactorings and normal code changes, they apply traditional changes first and thereafter apply refactorings. Further they discuss how preconditions can be detected and used to detect merge conflicts.
 
-\citet{Apel} describes the idea of semistructured merge and creates a framework that will be extensible to several languages. They parse programs into unordered trees in which the leaves are functions that contain unstructured program code. The code in leaves is then merged by language specific conflict handlers or by an unstructured merge. They found that merge conflicts are generally minimized, and conclude that many conflicts are ordering conflicts. In 26\% of the cases there will actually be more conflicts, due to renaming creating conflicts in this approach as opposed to compile errors in unstructured merge.
+\citet{Apel} describes the idea of semistructured merge and creates a framework that will be extensible to several languages. They parse programs into unordered trees in which the leaves are functions that contain unstructured program code. The code in leaves is then merged by language specific mergers or by an unstructured merge if no language language specific merge exists. They found that merge conflicts are generally minimized, and conclude that many conflicts are ordering conflicts. In 26\% of the cases there will actually be more conflicts, due to renaming creating conflicts in this approach as opposed to compile errors in unstructured merge.
 
 \citet{Olav} describes a system which first tries unstructured merge and afterwords does structured merge on conflicting JAVA files. The idea is to minimize the running time of the tools, to make them more convenient to use in real life scenarios. They report generally a lower amount of conflicts than unstructured merge and \citet{Apel} but in some scenarios, in the case of moved files, they produce more conflicts. They general cut off 50\% of the running time compared to a pure structured approach, are a factor 12 slower than a unstructured merge, and a factor 6 faster than \citet{Apel}. However the improvement factor varies a lot from repository to repository.  
 
@@ -132,107 +125,52 @@ Another part of the overall goal, is to keep the running time lower and more sta
 \subsection{Process for algorithm}
 The overall merge algorithm will look as in Figure \ref{OverallMergingProcess}. We will start with three input, files and try to do line based merging of them. If this succeeds, we will return this result. If it fails, we will parse the input files and serve them to a method that will match each function found in the parse with the same method in the other branches. These matches will be passed to the line-based merger, that will try to do a textual merge of the function. If the line-based function merger fails, we will pass the syntax tree of the function to the structure-merger that will merge it structurally - with or without structural conflicts. When the structure merger and the line-based merger have parsed all functions, we will produce a sensible ordering for the merged functions and reassemble, generate a complete result and return this.
 
-\paragraph{Running time} From an worst-case running-time perspective, this process does not look good: In the worst case, we will have merge the entire file and hit a conflict on the last line. Then we will start over, parse the files, match the functions, and then try a line merge on each of these matches. Each function will fail on the last line and we will have to do a structure match.
-
-
-$(r+c) \cdot lm (l_a, l_o, l_b) + c ( ma(f_a, f_o, f_b) +  f \cdot lm(lf_a, lf_o, lf_b) + fc \cdot sm(nf_a, nf_o, nf_b) )$
-
-
-\begin{itemize}
-\item The growth of the line-merge-function $lm$ is smaller than $sm$
-\item The number of nodes in L-M
-
-\end{itemize}
-
-\begin{multline}
-first part of the equation \\
-= second part of the equation
-\end{multline}
-
-\begin{equation}
-\begin{split}
-(r+c) \cdot lm (l_a, l_o, l_b) + \\
- ( ma(f_a, f_o, f_b) + \\
- 		(fc+fr) \cdot lm(lf_a, lf_o, lf_b) +\\
- 		fc \cdot sm(nf_a, nf_o, nf_b) ) \cdot c 
-\end{split}
-\end{equation}
-
-
 
 \begin{figure}
-
    \centerline{\includegraphics[scale=0.55]{drawings/eps/overallmergingprocess.eps}}
    \caption{The overall process of merging a file.}
    \label{OverallMergingProcess}
 \end{figure}
 
+\subsection{Trivial conflicts}
 
 
-\clearpage
-\section{OldDiscussions}
+\todo[inline]{Arbejde med udskiftning af parametre: \\
+f(1, x, 3) <- f(2, x, 3) -> f(2, x, 4) Conflict? No. Because: \\
+a = 1 <- a = 2 -> a = 2 \\
+x = 2 \\
+b = 3 <- b = 3 -> b = 4 \\
+f(a, x, b); \\
+}
 
+\paragraph{Running time} The running time of the algorithm will be the sum of the following parts:
 
-Several people already have looked into structural differencing and merging of structured data and specifically program code. This research seems however to focus mostly on the conflict resolution part, and glances over the problem of running times. 
+\begin{itemize}
+\item The time for line merging the file.
+\item If it conflicts:
+\begin{itemize}
+\item The time for parsing the file.
+\item The time for matching functions in a conflicting file.
+\item The time for line merging each function.
+\item For conflicting functions:
+\begin{itemize}
+\item The time for structurally merging items.
+\end{itemize}
+\item The time for reassembling in a good order.
+\end{itemize}
+\end{itemize}
 
-In this thesis, I will focus on two parts: Overcoming the running time challenge, and further creating an interface into general algorithms, that will make it easier to implement support for new languages.
-
-\todo[inline]{Semantisk, eller ikke-semantisk tree merging? Every node behaves differently}
-
-\subsection{Merging syntax}
-In a perfect universe, the perfect merge-result would be a merge that produces either no unintended behaviour or a conflict, if the input code has no unintended behaviour. It is, however, not possible to guarantee that a single code file has no unintended behaviour - further certainly not only by looking at the syntax tree without much more in-depth semantic analysis. Further, the current tools cannot guarantee this output at all.
-
-
-\subsection{Cross-language interfaces}
-Structured differencing tools will be only for specific languages or structures. This makes such tools impractical in version control systems, since they are designed to integrate with line based tools, and do not discriminate between file types. Some research has been done into making tools that will work with either several languages, or that combines a line based approach with a structured approach.
-
-\subsection{Algorithm}
-
-While some algorithmic research has been done with regards to approximation algorithms and creating effective exact tree differencing algorithms, they are still prone running times many factors larger than unstructured approaches due to the tree size, counted in nodes, is generally much larger than the amount of lines in a code file. For example, running the \citet{Pawlik} algorithm on a 700 line C\# file \todo{Put this file in an appendix}, yields a syntax tree of 3800 nodes which gives running time for the matching of more than two minutes.
-
-\todo[inline]{Adaptiveness solution}
-
-\todo[inline]{Write about assumptions in differencing and about different possible differencing operations}
-\todo[inline]{Write about which situations we can probably avoid}
-
-
-\subsection{Algorithm on the higher level}
-\todo[inline]{Write about why we stopped using general tree-matching algorithms (e.g. was impossible to figure out a good representation that allowed top-down construction of the merged syntax - n-ary trees.}
-\todo[inline]{Write about why we stopped using the tree-matching algorithm that worked only on equal structures (e.g. it was impossible to create chunks and trees in a sensible way}
-
-It does not seem plausible to be able to make an algorithm that will make differencing an entire code file as a syntax tree possible in reasonable time.
-
-I will implement a merging algorithm that is generally syntax based, but which also relies heavily on line merging.
-
-First syntax trees are generated. These are parsed recursively until class members are encountered. Class members will be matched unordered from a heuristic cost function, and when this matchings is finished the body of the members will be merged textually. If this produces a conflict, we will instead try a tree-merge of the triple of functions.  Lastly we will have to reassemble the tree, in a ordering that is expected by the user. 
-
-An overall description for the proposed merge:
+From a worst-case running-time perspective, this does not look good: In the worst case, we will have merge the entire file and hit a conflict on the last line. Then we will start over, parse the files, match the functions, and then try a line merge on each of these matches. Each function will fail on the last line and we will have to do a structure match. However, the approach is based on a couple of assumptions:
 
 \begin{enumerate}
-    \item Create syntax trees of each file.
-    \item Do an unordered match of classes and class-members.
-    \item Foreach member of a class do a unstructured merge.
-    \item If a conflict exists after the unstructured merge:
-    \begin{enumerate}
-        \item If the conflict is two updates on the same line, try to do a syntax tree merging. If the conflict persists, merge the entire function and include a rename detection.
-        \item If the conflict is the deletion of a block in one branch, and the insertion of the other - put this specific line aside for move detection.
-    \end{enumerate}
-    \item Run through lines set aside for move detection, and see if it is possible to find a (heuristicly) corresponding insert. Do a merge, or a syntactic merge if this fails.
-    \item If conflicts cannot be resolved, present these to the user.
+	\item Tree merging will be much more time consuming than line-based merging.
+	\item Only a small amount of files will produce a line-based conflict.
+	\item When a matching is found, only a few functions will produce a line-based conflict.
 \end{enumerate}
 
-\subsection{Running time}
-\todo[inline]{clean up this}
-This approach will most definitely be slower than running a line based merging algorithm, however it will hopefully fast enough to be usable in a version control scenario.
-
-Doing a textual merge on class-member will yield results that are comparable to current merging approaches, so the added running time of this algorithm will be from two factors: Doing a three-way cost matching on class members, and the added tree matching whenever a conflict is encountered.
-
-Matching class members can be done in cubic time, on the amount of nodes. For each node pair we need to generate a cost, the running time of this function should be quite low, and we will discuss later how it turns out. 
-
-Tree matching will still have a cubic running time on the amount of nodes, however with the assumptions that conflicts are concentrated around a few functions and that functions are generally small, the running time of this part should not influence the overall running time too much.
+If these assumptions hold, the overall running time will be lowered considerably compared to other structured approaches, since we will be doing much more line-based work. The first item on the list will be true; both the size of the input problem and the asymptotic running time of the algorithm will be larger as shown later. The second two are not as clear cut to provide backing for, but best-practice guides for version control systems generally recommend that commits are small logically connected parts. Given well-encapsulated code, this would mean that only a few functions are changed per commit.
 
 \clearpage
-
 \section{Implementation}
 In this section we will dive into algorithms written for the code-merging tool. The first subsection will list a couple of utility functions that will be needed for the later sections. The second will describe the general file merging functions. In the third we will describe the syntactic breakdown of files. In the fourth we will describe our efforts to create merging of how classes, namespaces and other structures of source code are generated, and the last section will focus on merging syntax trees created inside method-definitions.
 
@@ -240,11 +178,17 @@ In this section we will dive into algorithms written for the code-merging tool. 
 In this section we will describe series of utility methods that will be used in the later sections for implementing a merging of the merging algorithms. By themselves they might seem meaningless. In some cases we motivate their existence in this section, but in other cases the motivation might first become clear in the later sections.
 
 \subsubsection{Two-way sequence matching}
-Sequence matching in our case will be done through running Needlemann-Wunch. Needlemann-Wunch will allow us to minimize the penalty of alignment between two sequences, given a cost-function and a penalty for gaps in the output. In our case, we do not care about gaps in the output sequence nor do we have very specific costs: We will only be looking into whether two items are equal, or not equal.
+\begin{wrapfigure}{r}{0.4\textwidth}
+   \centerline{\includegraphics[scale=0.4]{drawings/eps/mincostsequencematchingambigious.eps}}
+   \caption{Two input sequence that has two results from the matching algorithm.}
+   \label{TwoWayMatchingAmbigiouty}
+\end{wrapfigure}
 
-\todo{Running time}
-As such we will modify the interface of our sequence allignment, such that the algorithm takes only three parameters: Two sequences and a equality function. We will run the Needlemann-Wunch with a gap-penalty at zero and the cost of equality set to -1 and while the cost of inequality is 1.
-\todo{Sevaral results possible - can mean alot in threeway matching}
+We often want to match equality between two sequences. We will do this by solving the sequence alignment through the Needlemann-Wunch-algorithm. It will allow us to minimize the penalty of alignment between two sequences, given a cost-function and a penalty for gaps in the output. In our case, we do not care about gaps in the output sequence nor do we have very specific costs: We will only be looking into whether two items are equal, or not equal. The two-way sequence matching will take three parameters: Two sequences and a equality function. It will run Needlemann-Wunch with a gap-penalty at zero and the cost of equality set to -1 and while the cost of inequality is 1.
+
+\paragraph{Result} Some inputs will have several possibly minimum cost matchings. An example of an input that generate two different matchings can be seen in Figure \ref{TwoWayMatchingAmbigiouty}.
+
+\paragraph{Running time} The running time of Needlemann-Wunch is $O(n \cdot m)$, where $n$ and $m$ is the number of items in the two input sequences.
 
 \subsubsection{Three-way sequence matching}
 \begin{wrapfigure}{r}{0.4\textwidth}
@@ -255,11 +199,11 @@ As such we will modify the interface of our sequence allignment, such that the a
 
 Given three input sequences A, O and B it will often be necessary to match these structure, and output a single sequence of matchings between the three sequences. A match is a data-structure, that contains three elements A, O and B, illustrated as a row in the result of Figure \ref{ThreewayMatching}. An empty result in any of the three columns on each row means that there is no matching from this specific input sequence.
 
-We will run two-sequence way matching two times on the sequence-pairs (A, O) and (O, B). Afterwards we will run a two way-matching on these two results, where equality between two two-way matches is defined as them not having an empty O-item, and having equal O-items. This will in the end giving us a list of matchings. The psudocode can be seen in Algorithm \ref{ThreeWayMatchingAlgorithm}.
+We will run two-way sequence-matching two times on the sequence-pairs (A, O) and (O, B). Afterwards we will run a two-way-matching on these two results, where equality between two two-way matches is defined as them not having an empty O-item, and having equal O-items. This will in the end giving us a list of matchings. The pseudocode can be seen in Algorithm \ref{ThreeWayMatchingAlgorithm}.
 
+\paragraph{Running time} The running time for the two-way alignment functions are $O(|A||O|)$ and $O(|B||O|)$ the result from these functions are maximally of the size $|A|+|O|$ and $|B|+|O|$ in the case that there exists no matchings. This gives an overall worst-case running-time of $O((|A|+|O|) \cdot (|B|+|O|))$. This case is, however quite unlikely if A and B are actual evolved items of O. 
 
 \todo{Running time?}
-\todo{Describe and illustrate problems with ambigious results}
 
 \begin{algorithm}
 \begin{algorithmic}
@@ -291,8 +235,9 @@ A chunk is three lists, one for A, one for O and one for B. A chunk can be stabl
 
 The pseudocode for this algorithm is in Algorithm \ref{CunkingAlgorithm}. \footnote{The ChunkBy method used in the algorithm can be found at \url{http://msdn.microsoft.com/en-us/library/cc138361.aspx}}
 
-\todo{Running time?}
-\todo{Describe and illustrate problems with ambigious results}
+\paragraph{Result} The result chunking is quite interesting.
+
+\paragraph{Running time} The ChunkBy-method only performs constant time operations on each element in the input sequence, and we can conclude that it is running in $O(n)$ time, where $n$ is the amount of items in the input matching. The amount of chunks is unknown without looking at the input, however the total amount of matches within all the chunks will be $n$. Therefore the overall running time is $O(n)$ for the entire chunking-process.
 
 \begin{algorithm}
 \begin{algorithmic}
@@ -332,6 +277,8 @@ The solution to this problem will be priority-chunking as shown in Algorithm \re
    \item Similarity-stable items
    \item Unstable items
 \end{itemize}
+
+
 
 \begin{algorithm}
 \begin{algorithmic}

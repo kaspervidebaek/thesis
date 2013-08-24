@@ -188,7 +188,7 @@ We often want to match equality between two sequences. We will do this by solvin
 
 \paragraph{Result} Some inputs will have several possibly minimum cost matchings. An example of an input that generate two different matchings can be seen in Figure \ref{TwoWayMatchingAmbigiouty}.
 
-\paragraph{Running time} The running time of Needlemann-Wunch is $O(n \cdot m)$, where $n$ and $m$ is the number of items in the two input sequences.
+\paragraph{Running time} The running time of Needlemann-Wunch is often stated to be $O(n \cdot m \cdot)$, where $n$ and $m$ is the number of items in the two input sequences. This has the implicit assumption that the function that compares two items runs on $O(1)$ time. Since this function is the equality function input to our two-way sequence matching function, we will not make such an assumption; the running time will be $O(n \cdot m \cdot t)$ where $t$ is the running time for the equality function.
 
 \subsubsection{Three-way sequence matching}
 \begin{wrapfigure}{r}{0.4\textwidth}
@@ -201,16 +201,18 @@ Given three input sequences A, O and B it will often be necessary to match these
 
 We will run two-way sequence-matching two times on the sequence-pairs (A, O) and (O, B). Afterwards we will run a two-way-matching on these two results, where equality between two two-way matches is defined as them not having an empty O-item, and having equal O-items. This will in the end giving us a list of matchings. The pseudocode can be seen in Algorithm \ref{ThreeWayMatchingAlgorithm}.
 
-\paragraph{Running time} The running time for the two-way alignment functions are $O(|A||O|)$ and $O(|B||O|)$ the result from these functions are maximally of the size $|A|+|O|$ and $|B|+|O|$ in the case that there exists no matchings. This gives an overall worst-case running-time of $O((|A|+|O|) \cdot (|B|+|O|))$. This case is, however quite unlikely if A and B are actual evolved items of O. 
+\paragraph{Running time} The running time for the two-way alignment functions are $O(|A||O|t)$ and $O(|B||O|t)$, where $t$ is running time for $equality$. The result from these functions are maximally of the size $|A|+|O|$ and $|B|+|O|$ in the case that there exists no matchings. This gives an overall worst-case running-time of $O((|A|+|O|) \cdot (|B|+|O|) \cdot t)$. This case is, however quite unlikely if A and B are actual evolved items of O. 
+
+\todo{Add equality function time to this}
 
 \todo{Running time?}
 
 \begin{algorithm}
 \begin{algorithmic}
 \Function{ThreeWayMatching}{$A$, $O$, $B$, $equality$}
-	\State $AMatching\gets TwoWayAllign(A, O, equality)$
-	\State $BMatching\gets TwoWayAllign(B, O, equality)$
-	\State \Return $TwoWayAllign$($AMatching$, $BMatching$, $(x, y)$ $\Rightarrow$
+	\State $AMatching\gets$ TwoWayAllign($A, O, equality$)
+	\State $BMatching\gets$ TwoWayAllign($B, O, equality$)
+	\State \Return TwoWayAllign($AMatching$, $BMatching$, $(x, y)$ $\Rightarrow$
         \State ~~~~ $x.O$ is not empty \and
         \State ~~~~ $y.O$ is not empty \and
         \State ~~~~ $x.O$ is equal to $y.O$
@@ -235,7 +237,7 @@ A chunk is three lists, one for A, one for O and one for B. A chunk can be stabl
 
 The pseudocode for this algorithm is in Algorithm \ref{CunkingAlgorithm}. \footnote{The ChunkBy method used in the algorithm can be found at \url{http://msdn.microsoft.com/en-us/library/cc138361.aspx}}
 
-\paragraph{Result} The result chunking is quite interesting.
+\paragraph{Result} Unstable chunks are not necessarily conflicts. In the result of Figure \ref{Chunking} the top item is an insertion of the $0$-item. The second chunk is an update where $3$ is turned into $4$ and the last chunk is not resolvable. 
 
 \paragraph{Running time} The ChunkBy-method only performs constant time operations on each element in the input sequence, and we can conclude that it is running in $O(n)$ time, where $n$ is the amount of items in the input matching. The amount of chunks is unknown without looking at the input, however the total amount of matches within all the chunks will be $n$. Therefore the overall running time is $O(n)$ for the entire chunking-process.
 
@@ -268,7 +270,7 @@ The pseudocode for this algorithm is in Algorithm \ref{CunkingAlgorithm}. \footn
 
 \subsubsection{Priority-chunking}
 \label{PriorityDiff}
-Our three-way matching function operates on equality. Yet in some cases we will actually want to use heuristics functions that define equality as a heuristic measure - as a similarity function - and pass this the the matching. This creates the problem that the heuristic equality function will not be able to distinguish between equality and similarity. Yet we want to make sure that completely equal inputs are matched before similarity is used - to get the most accurate results.
+Our three-way matching function operates on equality. Yet in some cases we will actually want to use heuristics functions that looks for similar items instead of absolutely equal. This creates the problem that the heuristic equality function will not be able to distinguish between equality and similarity. Yet we want to make sure that completely equal inputs are matched before similarity is used - to get the most accurate results.
 
 The solution to this problem will be priority-chunking as shown in Algorithm \ref{PriorityChunk}. It will start by doing a matching on the three input sequences using a strict equality function. It will then iterate through all chunks and for unstable chunks it will do another matching using the similarity-function. It will therefore generate three types of chunks:
 
@@ -277,6 +279,62 @@ The solution to this problem will be priority-chunking as shown in Algorithm \re
    \item Similarity-stable items
    \item Unstable items
 \end{itemize}
+
+\todo[inline]{Der mangler et eller andet i det her afsnit.}
+
+\paragraph{Running time} The running time of the first ThreeWayMatching function is  $O((|A|+|O|) \cdot (|B|+|O|) \cdot t)$ and it returns maximally $A+O+B$ items, which are then passed to the chunking function, which run in $O(n)$ time. This gives a worst case running time of
+
+\begin{equation}
+O((|A|+|O|) \cdot (|B|+|O|) \cdot t + (A+B+C)(|A|+|O|) \cdot (|B|+|O|) \cdot t')
+\end{equation}
+
+However this is quite an exaggeration. Th situation that this describes if each chunk contains the entire matching. A more accurate way of looking at  would be to desribe the sum:
+
+\begin{equation}
+\sum_{c \in C} (|c_a| + |c_o|) (|c_o| + |c_b| \cdot t')
+\end{equation}
+
+We should now notice that the following is true:
+
+\begin{equation}
+\sum_{c \in C} |c_a| = |A| \\
+\end{equation}
+\begin{equation}
+\sum_{c \in C} |c_o| = |O|\\
+\end{equation}
+\begin{equation}
+\sum_{c \in C} |c_b| = |B|\\
+\end{equation}
+
+
+
+
+We know that:
+
+køretid for ThreeWaymatching er (a+o)(o+b) og den retunerer (a+o+b) items.
+antallet af chunks vil være mellem 1 og (a+o+b)
+
+den naive analyse siger at vi rammer:
+- (a+o)(o+b) + (a+o+b)(a+o)(o+b)
+(den ydre threeway-matching + størt mængde chunks * indre three-way matchings værste køretid)
+
+%dog:
+%- hvis mængden af chunks er (a+o+b), er køretiden for ThreeWayMatching 1.
+%- hvis mængden af chunks er 1, er køretiden for ThreeWayMatching (a+o)(o+b).
+%- altså:
+%-- antallet er chunks er en en slags omvendt proportionel med køretiden af den indre ThreeWaymatching
+
+%it postulat: køretiden for _hele_ foreach løkken er maksimalt (a+o)(o+b).
+
+
+(x + a + y + b)(z + c + y + b)
+(x + y)(y + z) + (a +b)(b+c)
+
+http://i.imgur.com/USlA8ip.png
+http://i.imgur.com/J3VMMhH.png
+
+
+Den samlede sum af alle ledende $c_a$, $c_o$, $c_b$ vil være $|A|$
 
 
 

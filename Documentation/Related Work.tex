@@ -132,16 +132,6 @@ The overall merge algorithm will look as in Figure \ref{OverallMergingProcess}. 
    \label{OverallMergingProcess}
 \end{figure}
 
-\subsection{Trivial conflicts}
-
-
-\todo[inline]{Arbejde med udskiftning af parametre: \\
-f(1, x, 3) <- f(2, x, 3) -> f(2, x, 4) Conflict? No. Because: \\
-a = 1 <- a = 2 -> a = 2 \\
-x = 2 \\
-b = 3 <- b = 3 -> b = 4 \\
-f(a, x, b); \\
-}
 
 \paragraph{Running time} The running time of the algorithm will be the sum of the following parts:
 
@@ -170,6 +160,22 @@ From a worst-case running-time perspective, this does not look good: In the wors
 
 If these assumptions hold, the overall running time will be lowered considerably compared to other structured approaches, since we will be doing much more line-based work. The first item on the list will be true; both the size of the input problem and the asymptotic running time of the algorithm will be larger as shown later. The second two are not as clear cut to provide backing for, but best-practice guides for version control systems generally recommend that commits are small logically connected parts. Given well-encapsulated code, this would mean that only a few functions are changed per commit.
 
+\subsection{Trivial conflicts}
+\todo[inline]{Write this \\
+- Ordering in classes. \\
+- Ordering in parameter and argumet-lists. \\
+- Very similar statements where different nodes have been changed in each branch. \\
+-- Argue that "small expressions" could be external variables - i.e. it is all about coding style whether a line based conflict will happen. }
+
+
+\todo[inline]{Arbejde med udskiftning af parametre: \\
+f(1, x, 3) <- f(2, x, 3) -> f(2, x, 4) Conflict? No. Because: \\
+a = 1 <- a = 2 -> a = 2 \\
+x = 2 \\
+b = 3 <- b = 3 -> b = 4 \\
+f(a, x, b); \\
+}
+
 \clearpage
 \section{Implementation}
 In this section we will dive into algorithms written for the code-merging tool. The first subsection will list a couple of utility functions that will be needed for the later sections. The second will describe the general file merging functions. In the third we will describe the syntactic breakdown of files. In the fourth we will describe our efforts to create merging of how classes, namespaces and other structures of source code are generated, and the last section will focus on merging syntax trees created inside method-definitions.
@@ -192,11 +198,11 @@ We often want to match equality between two sequences. We will do this by solvin
 \todo{Add the two-way-step to this figure}
 
 \subsubsection{Three-way sequence matching}
-\begin{wrapfigure}{r}{0.4\textwidth}
-   \centerline{\includegraphics[scale=0.4]{drawings/eps/threewaymatching.eps}}
+\begin{figure}
+   \centerline{\includegraphics[scale=0.6]{drawings/eps/threewaymatching.eps}}
    \caption{A run of the Three-way matching-algorithm}
    \label{ThreewayMatching}
-\end{wrapfigure}
+\end{figure}
 
 Given three input sequences A, O and B it will often be necessary to match these structure, and output a single sequence of matchings between the three sequences. A match is a data-structure, that contains three elements A, O and B, illustrated as a row in the result of Figure \ref{ThreewayMatching}. An empty result in any of the three columns on each row means that there is no matching from this specific input sequence.
 
@@ -622,6 +628,7 @@ A conflicting move is a move where two "Moved to" operations exists on each list
       \If{$match$ is unchanged}
          \State add item O to $resultList$
       \EndIf
+      
 	\EndFor
 	\State $conflicts \gets$ find indexes of duplicate items in $resultList$
 	\State \Return $(resultList, conflicts)$

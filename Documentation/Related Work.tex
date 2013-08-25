@@ -41,6 +41,7 @@ Conventions of XML and source code can be broken. An entire XML-file can be a si
 
 \todo[inline]{Dette hører nok til et andet sted}
 \todo[inline]{Er formålet med dette speciale at fixe "ikke bruger-læsbar-merging"?}
+\todo[inline]{Tal om autogenereret kode, som placeres i VCS}
 
 A conflict can be defined in quite a few ways for line based tools. In the Unix tool diff3, a conflict is a sequence of lines, that is changed in both branches, and is not separated by a single line that is unchanged in both branches. Such a conflict detection scheme is clearly an approximation. It is oblivious to the structure of the data and one could craft input that will output invalid structural data. Further, the  actual meaning of the merged data is not considered at all - even if it is structurally valid, it might semantically be nonsense, even though a conflicts is not produced.
 
@@ -194,7 +195,7 @@ We often want to match equality between two sequences. We will do this by solvin
 
 \paragraph{Result} Some inputs will have several possibly minimum cost matchings. An example of an input that generate two different matchings can be seen in Figure \ref{TwoWayMatchingAmbigiouty}.
 
-\paragraph{Running time} The running time of Needlemann-Wunch is often stated to be $O(n \cdot m \cdot)$, where $n$ and $m$ is the number of items in the two input sequences. This has the implicit assumption that the function that compares two items runs on $O(1)$ time. Since this function is the equality function input to our two-way sequence matching function, we will not make such an assumption; the running time will be $O(n \cdot m \cdot t)$ where $t$ is the running time for the equality function.
+\paragraph{Running time} The running time of Needlemann-Wunch is often stated to be $O(n \cdot m)$, where $n$ and $m$ is the number of items in the two input sequences. This has the implicit assumption that the function that compares two items runs on $O(1)$ time. Since this function is the equality function input to our two-way sequence matching function, we will not make such an assumption; the running time will be $O(n \cdot m \cdot t)$ where $t$ is the running time for the equality function.
 \todo{Add the two-way-step to this figure}
 
 \subsubsection{Three-way sequence matching}
@@ -261,7 +262,7 @@ Given a three-way sequence matching, a single match can be defined as stable or 
    \label{Chunking}
 \end{wrapfigure}
 
-Another assumption one could make is that an unstable match can be viewed as either a deletion or an insertion. This however leaves us in a situation where all matchings can easily be resolved into a merge. This tells us something is inherently wrong with the approach. The problem lies in the fact that the matching sequence cannot represent the actual sentiment of the changes it is seeing: A deletion followed by an insertion might very well be an update of a single line. If both branches have done an update of the same line, then a conflict should be produced. Because of this we need to introduce chunking.
+Another view could be that an unstable match should be viewed as either a deletion or an insertion. This however leaves us in a situation where all matchings can easily be resolved into a merge; something is inherently wrong with that approach. The problem lies in the fact that the matching sequence cannot represent the actual sentiment of the changes it is seeing: A deletion followed by an insertion might very well be an update of a single line. If both branches have done an update of the same line, then a conflict should be produced. Because of this we need to introduce chunking.
 
 A chunk is three lists, one for A, one for O and one for B. A chunk can be stable or unstable. Given a sequence matching, we will generate chunks by iterating over every single match. If the first element is stable, then we generate a stable chunk, and add it's three items to the appropriate list. We continue adding all elements until we hit an unstable match. When we hit an unstable match we generate an unstable chunk, and add all non-empty elements from the match to the appropriate list.
 
@@ -300,9 +301,9 @@ The pseudocode for this algorithm is in Algorithm \ref{CunkingAlgorithm}. \footn
 
 \subsubsection{Priority-chunking}
 \label{PriorityDiff}
-Our three-way matching function operates on equality. Yet in some cases we will actually want to use heuristics functions that looks for similar items instead of absolutely equal. This creates the problem that the heuristic equality function will not be able to distinguish between equality and similarity. Yet we want to make sure that completely equal inputs are matched before similarity is used - to get the most accurate results.
+Our three-way matching function operates on equality. Yet in some cases we will actually want to use heuristics functions that looks for similar items instead of absolute equality. To use such a heuristic function in the matching functions earlier defined, it will have to answer either "similiar" or "not similar", and it will not be able to distinguish between equality and similarity. However, sometimes we want to make sure that completely equal items are matched before similarity is used.
 
-The solution to this problem will be priority-chunking as shown in Algorithm \ref{PriorityChunk}. It will start by doing a matching on the three input sequences using a strict equality function. It will then iterate through all chunks and for unstable chunks it will do another matching using the similarity-function. It will therefore generate three types of chunks:
+The solution to this problem will be priority-chunking as shown in Algorithm \ref{PriorityChunk}. It will start by doing a matching on the three input sequences using a strict equality function. It will then iterate through all chunks and for unstable chunks it will do another matching using the similarity-function. It will generate three types of chunks:
 
 \begin{itemize}
    \item Equality-stable items
@@ -318,57 +319,47 @@ The solution to this problem will be priority-chunking as shown in Algorithm \re
 O(|A||O|t + |B||O|t + |A|+|O|+|B|) \nonumber
 \end{equation}
 
-The loop around chunks runs maximally $|A|+|O|+|B|$ times. In each iteration we can worst case use the same time as above algorithm. This gives this overall worst case running time:
+The for-loop around $chunks$ runs $|A|+|O|+|B|$ times in worst case. In each iteration the worst case running time is the same as above. This gives this overall worst case running time for the loop:
 
 \begin{equation}
 O((|A| + |O| + |B|) (|A||O|t' + |B||O|t' + |A|+|O|+|B|)) \nonumber
 \end{equation}
 
-This is, however, quite an exaggeration. The situation that this describes if every single chunk contains the entire input matching, which is obviously never true. Actually it can be seen that:
+This is, however, quite an exaggeration. The situation that this describes if every single chunk contains the entire input matching, which is obviously not true. Actually it can be seen that:
 
 \begin{enumerate}
 \item If there are $|A|+|O|+|B|$ chunks, then the running time of ThreeWayMatching will be $O(1)$
-\item If there is 1 chunk, then the running time of inner ThreeWayMatching will be the same as for the outer ThreeWayMatching, which will also be the case for the entire loop.
+\item If there is 1 chunk, then the running time of inner ThreeWayMatching will be the same as for the outer ThreeWayMatching.
 \end{enumerate}
 
-A more accurate way of describing the running time of the loop of algorithm would be with this sum:
+A more accurate way of describing the running time of the loop of algorithm would be with this sum over each chunk, and their individual sequences from each input branch $c_a$, $c_o$ and $c_b$:
 
 \begin{equation}
 \sum_{c \in C} O(|c_a||c_o|t' + |c_b||c_o|t' + |c_a|+|c_o|+|c_b|) \nonumber
 \end{equation}
 
-Further, we know that:
-
+We know that each chunk contains only one items from the input sequences, and we know there is no overlap between chunks. Therefore, we know that:
 \begin{equation}
 \sum_{c \in C} |c_a| = |A| \nonumber
 , \sum_{c \in C} |c_o| = |O| \nonumber
 , \sum_{c \in C} |c_b| = |B| \nonumber
 \end{equation}
-
-Which means that we can simplify it into:
-
+Which means that we can simplify the above sum by moving out the sums:
 \begin{equation}
 O(|A| + |O| + |B| + \sum_{c \in C} |c_a||c_o|t' + |c_b||c_o|t)' \nonumber
 \end{equation}
-
 And this can be over-approximated as:
-
 \begin{equation}
 O(|A| + |O| + |B| + |C| (|A| |O| + |O| |B|) t') \nonumber
 \end{equation}
-
-And leaves us with the overall running time of:
-
+Which leaves us with the overall running time of:
 \begin{equation}
 O((|A| + |B|)|O|t + |A|+|O|+|B| + |C| (|A| |O| + |O| |B|) t')) \nonumber
 \end{equation}
-
 Where $|C|$ is the amount of chunks in outer chunking. $t$ is the running time of $equal$ and $t'$ is the running time of $similar$. This can be simplified into:
-
 \begin{equation}
 O(|O| (|A| + |B|)(t + |C|t')) \nonumber
 \end{equation}
-
 
 \begin{algorithm}
 \begin{algorithmic}
@@ -527,7 +518,7 @@ This gives us the overall time of:
 O(mao^2 \log mao + mbo^2 \log mbo + (A+O) \log (A+O) + (B+O) \log (B+O) + A + O + B) \nonumber
 \end{equation}
 
-If we define $n$ as $max(|A|, |O|, |B|)$, which is clearly an overapproximation, the expression can be simplified to:
+If we define $n$ as $max(|A|, |O|, |B|)$, which is clearly an over-approximation, the expression can be simplified to:
 
 \begin{equation}
 O(n^2 \log n + n \log (n) + n) \nonumber
@@ -610,6 +601,9 @@ A matching will contain some stable elements, and some unstable elements. The st
 We will iterate through each matching, and treat them as such. Distinguishing between a deletion or a "move from" is not important - we will always treat them the same: Not adding them to the output. Distinguishing between insertion and moving is quite important however. Insertions should always be inserted in the output, however moves should only be inserted to the output if they have not been deleted in the opposite branch. 
 
 A conflicting move is a move where two "Moved to" operations exists on each list. Detecting these is a matter of looking into duplicate records in the result list. These will also be returned along with the result, and the callers of the reordering methods have the responsibility of presenting these to the user.
+
+
+
 \todo[inline]{Running time?}
 
 \begin{algorithm}
@@ -821,11 +815,10 @@ This function has some properties that are helpful, given the above consideratio
 \item Higher similarity between parameters gives better costs.
 \item Renamed functions can be matched if they match completely in the parameterslist, or if some of the parameterlist is similar and it has the same return type.
 \end{enumerate}
-
-
 \subsection{Merging functions}
+
 \subsubsection{Place this somewhere}
-\todo[inline]{Hører nedenstående måske mere hjemme I implementerings-afstnittet?}
+\todo[inline]{This subsubsection belongs in this subsection, but is not written for it yet, and is not finished}
 \paragraph{Tree matching algorithms} Using regular tree matching algorithms on entire syntax trees gives quite an overhead, due to the best-case cubic time of the matching algorithms, and due to the amount of nodes generated from a line of code being quite high too. Some initial tests on trees generated from C\# files, we encountered matching times of up to two minutes, from a relatively complex, but not unheard of 700-line C\# file that gave a syntax tree with around 3800 nodes. This problem however, becomes a lot smaller if we only use it on method bodies - it might be a viable option.
 
 Tree matching algorithms returns a matching as a flat list of node pairs. This list makes it easy, for each node, to find the corresponding node in the other tree, and makes it possible to calculate costs easily. This can also easily be stitched together to create a three-way matching such that all nodes in the O-branch is matched with everything in the B- and A-branches.
@@ -842,8 +835,7 @@ We abandoned the general tree matching approach of some guy\todo{Who?}, and crea
 
 \paragraph{Semantic vs. non-semantic tree-merging} A syntax-tree has a built-in semantic, that cannot be broken. Each node has some specific children with a specific type and purpose. This means ta
 
-\subsubsection{Real implementaiton start}
-
+\todo[inline]{Below here is the actual start of this "Mergin Functions" subsection}
 
 %\todo[inline]{Foreach function, write about:
 %

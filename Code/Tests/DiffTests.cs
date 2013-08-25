@@ -27,7 +27,11 @@ namespace Tests
 
             return false;
         }
-        public static void Test()
+
+
+        [TestMethod]
+        [TestCategory("ThreeWayDiff")]
+        public void TestMergeFromDiff3Paper()
         {
 #if true
             var fileA = new List<String>(new string[] { "1", "4", "5", "2", "3", "6" });

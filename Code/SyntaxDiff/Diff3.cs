@@ -84,8 +84,53 @@ namespace SyntaxDiff
             var Ma = NeedlemanWunsch<T>.Allignment(A, O, comparer);
             var Mb = NeedlemanWunsch<T>.Allignment(B, O, comparer);
 
-            var totalMatch = NeedlemanWunsch<Tuple<T, T>>.Allignment(Ma, Mb, (a, b) => a.Item2 != null && b.Item2!= null && Object.ReferenceEquals(a.Item2, b.Item2)).Select(x => new Diff<T>(x.Item1, x.Item2)).ToList();
-            return totalMatch;
+            int a = 0;
+            int b = 0;
+
+            var totalLength = Ma.Count + Mb.Count;
+
+            var rv = new List<Diff<T>>();
+
+            while (a + b < totalLength)
+            {
+                // If we are at the end of the sequence
+                if (a >= Ma.Count) {
+                    rv.Add(new Diff<T>(null, Mb[b]));
+                    b++;
+                }
+                else if (b >= Mb.Count)
+                {
+                    rv.Add(new Diff<T>(Ma[a], null));
+                    a++;
+                }
+                else { 
+                    // Otherwise iterate over o-items that are null, and add these.
+                    var aItem = Ma[a].Item2;
+                    var bItem = Mb[b].Item2;
+
+                    if (aItem == null)
+                    {
+                        rv.Add(new Diff<T>(Ma[a], null));
+                        a++;
+                    }
+                    else if (bItem == null)
+                    {
+                        rv.Add(new Diff<T>(null, Mb[b]));
+                        b++;
+                    }
+                    else if (aItem == bItem)
+                    {
+                        rv.Add(new Diff<T>(Ma[a], Mb[b]));
+                        a++;
+                        b++;
+                    }
+                    else
+                        throw new NotImplementedException();
+                }
+            }
+
+            //var totalMatch = NeedlemanWunsch<Tuple<T, T>>.Allignment(Ma, Mb, (a, b) => a.Item2 != null && b.Item2!= null && Object.ReferenceEquals(a.Item2, b.Item2)).Select(x => new Diff<T>(x.Item1, x.Item2)).ToList();
+            return rv;
         }
 
 

@@ -189,6 +189,7 @@ We often want to match equality between two sequences. We will do this by solvin
 \paragraph{Result} Some inputs will have several possibly minimum cost matchings. An example of an input that generate two different matchings can be seen in Figure \ref{TwoWayMatchingAmbigiouty}.
 
 \paragraph{Running time} The running time of Needlemann-Wunch is often stated to be $O(n \cdot m \cdot)$, where $n$ and $m$ is the number of items in the two input sequences. This has the implicit assumption that the function that compares two items runs on $O(1)$ time. Since this function is the equality function input to our two-way sequence matching function, we will not make such an assumption; the running time will be $O(n \cdot m \cdot t)$ where $t$ is the running time for the equality function.
+\todo{Add the two-way-step to this figure}
 
 \subsubsection{Three-way sequence matching}
 \begin{wrapfigure}{r}{0.4\textwidth}
@@ -199,23 +200,46 @@ We often want to match equality between two sequences. We will do this by solvin
 
 Given three input sequences A, O and B it will often be necessary to match these structure, and output a single sequence of matchings between the three sequences. A match is a data-structure, that contains three elements A, O and B, illustrated as a row in the result of Figure \ref{ThreewayMatching}. An empty result in any of the three columns on each row means that there is no matching from this specific input sequence.
 
-We will run two-way sequence-matching two times on the sequence-pairs (A, O) and (O, B). Afterwards we will run a two-way-matching on these two results, where equality between two two-way matches is defined as them not having an empty O-item, and having equal O-items. This will in the end giving us a list of matchings. The pseudocode can be seen in Algorithm \ref{ThreeWayMatchingAlgorithm}.
+As can be seen in Algorithm \ref{ThreeWayMatchingAlgorithm}, we two-way sequence-matching two times on the sequence-pairs $(A, O)$ and $(O, B)$, this gives two sequences of matchings.  We will iterate over these two in parallel; starting at the first item of both and continue to the next item in specific circumstances:
 
-\paragraph{Running time} The running time for the two-way alignment functions are $O(|A||O|t)$ and $O(|B||O|t)$, where $t$ is running time for $equality$. The result from these functions are maximally of the size $|A|+|O|$ and $|B|+|O|$ in the case that there exists no matchings. This gives an overall worst-case running-time of $O((|A|+|O|) \cdot (|B|+|O|) \cdot t)$. This case is, however quite unlikely if A and B are actual evolved items of O. 
+\begin{itemize}
+	\item If either of the items are at the end of the sequence. Add the opposite item to the result and iterate further in that matching sequence.
+	\item If either of the items has an $o$-item that is $null$, add it this item to the result and iterate further in that matching sequence.
+	\item Otherwise the O-item must be the same of both lists, and we can add both items to the result and iterate to next item in both matching sequences.
+\end{itemize}
 
-\todo{Add equality function time to this}
+Each column in a matching keeps the order of the input sequences, and the intuition behind the $while$-loop in the algorithm is that the $O$-items in the two matching will always show up in order.
 
-\todo{Running time?}
+\paragraph{Running time} The running time for the two-way alignment functions are $O(|A||O|t)$ and $O(|B||O|t)$, where $t$ is running time for $equality$. The result from these functions are maximally of the size $|A|+|O|$ and $|B|+|O|$ in the extreme where there exists no matching. The $While$-loop will iterate at most $|A|+|O|+|B|$ times, and all operations inside it are constant time. This gives an overall worst-case running-time of:
+
+\begin{equation}
+	O(|A||O| t + |B||O| t + |A|+|O|+|B| ) \nonumber
+\end{equation}  
 
 \begin{algorithm}
 \begin{algorithmic}
 \Function{ThreeWayMatching}{$A$, $O$, $B$, $equality$}
-	\State $AMatching\gets$ TwoWayAllign($A, O, equality$)
-	\State $BMatching\gets$ TwoWayAllign($B, O, equality$)
-	\State \Return TwoWayAllign($AMatching$, $BMatching$, $(x, y)$ $\Rightarrow$
-        \State ~~~~ $x.O$ is not empty \and
-        \State ~~~~ $y.O$ is not empty \and
-        \State ~~~~ $x.O$ is equal to $y.O$
+	\State $ma\gets$ TwoWayAllign($A, O, equality$)
+	\State $mb\gets$ TwoWayAllign($B, O, equality$)
+	
+	\State $a \gets 0$
+	\State $b \gets 0$
+	\State $rv \gets []$
+	
+	\While{$a+b < |ma| + |mb|$}
+		\If{$a \geq |ma|$ or $b \geq |mb|$}
+			\State add item from opposite matching to $rv$
+			\State increase opposite counter
+		\ElsIf{$ma[a].o$ is $null$ or $mb[b].o$ is $null$}
+			\State add the matching whose $o$-item is $null$ to $rv$
+			\State increase that matchings counter
+		\Else
+			\State add $ma[a]$ and $mb[b]$ to $rv$
+			\State increase $a$ and $b$
+		\EndIf
+	\EndWhile
+	\State \Return $rv$
+	
 \EndFunction
 \end{algorithmic}
 \caption{The function for three-way sequence matching}
@@ -282,60 +306,62 @@ The solution to this problem will be priority-chunking as shown in Algorithm \re
 
 \todo[inline]{Der mangler et eller andet i det her afsnit.}
 
-\paragraph{Running time} The running time of the first ThreeWayMatching function is  $O((|A|+|O|) \cdot (|B|+|O|) \cdot t)$ and it returns maximally $A+O+B$ items, which are then passed to the chunking function, which run in $O(n)$ time. This gives a worst case running time of
+\paragraph{Running time} The running time of the first ThreeWayMatching function is  $O(|A||O|t + |B||O|t)$ and it returns maximally $A+O+B$ items, which are then passed to the chunking function, which run in $O(n)$ time. This gives a worst case running time like below, for the first two statements in the algorithm.
 
 \begin{equation}
-O((|A|+|O|) \cdot (|B|+|O|) \cdot t + (A+B+C)(|A|+|O|) \cdot (|B|+|O|) \cdot t')
+O(|A||O|t + |B||O|t + |A|+|O|+|B|) \nonumber
 \end{equation}
 
-However this is quite an exaggeration. Th situation that this describes if each chunk contains the entire matching. A more accurate way of looking at  would be to desribe the sum:
+The loop around chunks runs maximally $|A|+|O|+|B|$ times. In each iteration we can worst case use the same time as above algorithm. This gives this overall worst case running time:
 
 \begin{equation}
-\sum_{c \in C} (|c_a| + |c_o|) (|c_o| + |c_b| \cdot t')
+O((|A| + |O| + |B|) (|A||O|t' + |B||O|t' + |A|+|O|+|B|)) \nonumber
 \end{equation}
 
-We should now notice that the following is true:
+This is, however, quite an exaggeration. The situation that this describes if every single chunk contains the entire input matching, which is obviously never true. Actually it can be seen that:
+
+\begin{enumerate}
+\item If there are $|A|+|O|+|B|$ chunks, then the running time of ThreeWayMatching will be $O(1)$
+\item If there is 1 chunk, then the running time of inner ThreeWayMatching will be the same as for the outer ThreeWayMatching, which will also be the case for the entire loop.
+\end{enumerate}
+
+A more accurate way of describing the running time of the loop of algorithm would be with this sum:
 
 \begin{equation}
-\sum_{c \in C} |c_a| = |A| \\
+\sum_{c \in C} O(|c_a||c_o|t' + |c_b||c_o|t' + |c_a|+|c_o|+|c_b|) \nonumber
 \end{equation}
+
+Further, we know that:
+
 \begin{equation}
-\sum_{c \in C} |c_o| = |O|\\
+\sum_{c \in C} |c_a| = |A| \nonumber
+, \sum_{c \in C} |c_o| = |O| \nonumber
+, \sum_{c \in C} |c_b| = |B| \nonumber
 \end{equation}
+
+Which means that we can simplify it into:
+
 \begin{equation}
-\sum_{c \in C} |c_b| = |B|\\
+O(|A| + |O| + |B| + \sum_{c \in C} |c_a||c_o|t' + |c_b||c_o|t)' \nonumber
 \end{equation}
 
+And this can be over-approximated as:
 
+\begin{equation}
+O(|A| + |O| + |B| + |C| (|A| |O| + |O| |B|) t') \nonumber
+\end{equation}
 
+And leaves us with the overall running time of:
 
-We know that:
+\begin{equation}
+O((|A| + |B|)|O|t + |A|+|O|+|B| + |C| (|A| |O| + |O| |B|) t')) \nonumber
+\end{equation}
 
-køretid for ThreeWaymatching er (a+o)(o+b) og den retunerer (a+o+b) items.
-antallet af chunks vil være mellem 1 og (a+o+b)
+Where $|C|$ is the amount of chunks in outer chunking. $t$ is the running time of $equal$ and $t'$ is the running time of $similar$. This can be simplified into:
 
-den naive analyse siger at vi rammer:
-- (a+o)(o+b) + (a+o+b)(a+o)(o+b)
-(den ydre threeway-matching + størt mængde chunks * indre three-way matchings værste køretid)
-
-%dog:
-%- hvis mængden af chunks er (a+o+b), er køretiden for ThreeWayMatching 1.
-%- hvis mængden af chunks er 1, er køretiden for ThreeWayMatching (a+o)(o+b).
-%- altså:
-%-- antallet er chunks er en en slags omvendt proportionel med køretiden af den indre ThreeWaymatching
-
-%it postulat: køretiden for _hele_ foreach løkken er maksimalt (a+o)(o+b).
-
-
-(x + a + y + b)(z + c + y + b)
-(x + y)(y + z) + (a +b)(b+c)
-
-http://i.imgur.com/USlA8ip.png
-http://i.imgur.com/J3VMMhH.png
-
-
-Den samlede sum af alle ledende $c_a$, $c_o$, $c_b$ vil være $|A|$
-
+\begin{equation}
+O(|O| (|A| + |B|)(t + |C|t')) \nonumber
+\end{equation}
 
 
 \begin{algorithm}
@@ -449,6 +475,11 @@ We now have three sets, that together will be give the final matching:
 
 We will simply union these sets and create matchings with an empty end apprioriately for the last two items in the list. The algorithm can be seen in Figure \ref{TwoWayCostMatching}.
 
+\paragraph{Running time} The running time for the original algorithm is expressed in terms of the input size of both sets $n$ as $O(n^2 \log n)$. We have artificially expanded the smaller of the two sets. Therefore $n$ will be $max(|X|, |Y|)$ in our case, and the algorithm will have a running time of:
+
+\begin{equation}
+O(\max(|X|, |Y|)^2 \log (\max(|X|, |Y|)) \nonumber
+\end{equation}
 
 
 \begin{algorithm}
@@ -479,32 +510,63 @@ We will simply union these sets and create matchings with an empty end apprioria
 \label{TwoWayCostMatching}
 \end{algorithm}
 
-\todo{Running time?}
 
 \subsubsection{Three-way set matching with costs}
-When we are given an original set $O$ and two branched sets $A$ and $B$, three way cost-matching will allow us to decided what items of each set belong together if we define a decent cost-function. 
+When we are given an original set $O$ and two branched sets $A$ and $B$, three way cost-matching will allow us to decided what items of each set belong together if we define a decent cost-function. We will then sort the output matching after the index of their input $O$-items, to align all items that have been matched in all three sets. Then we will iterate through the sequences, and add them as unmatched in their opposite branch, or add the matching from both branches to the result list. Algorithm \ref{ThreeWayCostMatchingAlgorithm} shows this.
 
-Algorithm \ref{ThreeWayCostMatchingAlgorithm} will do two two-way matchings between $A$ and $O$ and between $O$ and $B$, and afterwards do a cost-matchings on these two matchings, where a cost is defined between the matchings if the $O$-item of each matching is not, and if they are equal.
+\paragraph{Running time} The two two-way cost matching algorithms will run in $O(mao^2 \log mao)$ and $O(mbo^2 \log mbo)$ time, where $mao$ is $max(|A|, |O|)$ and $mbo$ is $max(|B|, |O|)$. They will return sequences of the maximal sizes $A+O$ and $O+B$. Ordering each of the matchings will take $O(n \log n)$ time; which overall gives $O((A+O) \log (A+O) + (B+O) \log (B+O))$. Afterwards we will iterate through $A+O+B$ items, and for each of them do constant time operations.
 
-\todo[inline]{We could probably just sort them after $O$-items, and then do a zipping on most of the lists.}
+This gives us the overall time of:
+\begin{equation}
+O(mao^2 \log mao + mbo^2 \log mbo + (A+O) \log (A+O) + (B+O) \log (B+O) + A + O + B) \nonumber
+\end{equation}
+
+If we define $n$ as $max(|A|, |O|, |B|)$, which is clearly an overapproximation, the expression can be simplified to:
+
+\begin{equation}
+O(n^2 \log n + n \log (n) + n) \nonumber
+\end{equation}
+
+And further to:
+
+\begin{equation}
+O(n^2 \log n) \nonumber
+\end{equation}
+
 
 \begin{algorithm}
 \begin{algorithmic}
 \Function{ThreeWayCostMatching}{$A$, $O$, $B$, $cost$}
-	\State $AMatching\gets TwoWayCostMatch(A, O, cost)$
-	\State $BMatching\gets TwoWayCostMatch(B, O, cost)$
-	\State \Return $TwoWayCostMatch$($AMatching$, $BMatching$, $(x, y)$ $\Rightarrow$
-        \State ~~~~~~~~~~~~~~~~ $x.O$ is not empty \and
-        \State ~~~~~~~~~~~~~~~~ $y.O$ is not empty \and
-        \State ~~~~~~~~~~~~~~~~ $x.O$ is equal to $y.O$
+	\State $ma\gets TwoWayCostMatch(A, O, cost)$
+	\State $mb\gets TwoWayCostMatch(B, O, cost)$
+	
+	\State Sort $ma$ after the index of $O$-items
+	\State Sort $mb$ after the index of $O$-items
+
+	\State $a \gets 0$
+	\State $b \gets 0$
+	
+	\State $rv \gets []$
+	
+	\While{$a+b < |ma| + |mb|$}
+		\If{$a \geq |ma|$ or $b \geq |mb|$}
+			\State add item from opposite matching to $rv$
+			\State increase opposite counter
+		\ElsIf{$ma[a].o$ is $null$ and $mb[b].o$ is $null$}
+			\State add the $ma[a]$ to $rv$
+			\State add the $mb[b]$ to $rv$
+			\State increase $a$ and $b$
+		\Else
+			\State add $(ma[a], mb[b])$ to $rv$
+			\State increase $a$ and $b$
+		\EndIf
+	\EndWhile
+	\State \Return $rv$
 \EndFunction
 \end{algorithmic}
 \caption{Three-way cost-matching algorithm}
   \label{ThreeWayCostMatchingAlgorithm}
 \end{algorithm}
-
-An over approximation of the running time here will be  $3*max(x, y, z)^3$.
-
 
 \subsubsection{Reordering}
 \label{ThreeWayReorderingAlgorithmSec}

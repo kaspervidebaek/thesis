@@ -186,33 +186,58 @@ namespace SyntaxDiff
         public static List<Diff<T>> GetThreeWayUnorderedMatch(List<T> Ac, List<T> Oc, List<T> Bc, GraphMatching<T, T>.Cost cost)
         {
             //var oWI = Oc.Select((x, i) => Tuple.Create(x, i)).ToList();
+            var OwithIndex =  Oc.Select((x, i) => Tuple.Create(x, i)).ToList();
 
-            var Ma = GraphMatching<T, T>.Match(Ac, Oc, cost);
-            var Mb = GraphMatching<T, T>.Match(Bc, Oc, cost);
+            var Ma = GraphMatching<T, Tuple<T, int>>.Match(Ac, OwithIndex, (x, y) => cost(x, y.Item1)).OrderBy(x => x.Item2 == null ? int.MaxValue : x.Item2.Item2).Select(x => Tuple.Create(x.Item1, x.Item2 == null ? null : x.Item2.Item1)) .ToList();
+            var Mb = GraphMatching<T, Tuple<T, int>>.Match(Bc, OwithIndex, (x, y) => cost(x, y.Item1)).OrderBy(x => x.Item2 == null ? int.MaxValue : x.Item2.Item2).Select(x => Tuple.Create(x.Item1, x.Item2 == null ? null : x.Item2.Item1)).ToList();
 
-            /*var sortedMa = Ma.OrderBy(x => x.Item2.Item2).ToList();
-            var sortedMb = Mb.OrderBy(x => x.Item2.Item2).ToList();
+            int a = 0;
+            int b = 0;
 
-            var maxI = Math.Max(sortedMa.Count, sortedMb.Count);
+            var totalLength = Ma.Count + Mb.Count;
 
-            var returnvalue = new List<Diff<T>>();
+            var rv = new List<Diff<T>>();
 
-            for (int i = 0; i < maxI; i++)
+            while (a + b < totalLength)
             {
-                var aItem = sortedMa[i];
-                var bItem = sortedMb[i];
-
-                if (aItem.Item2 != null && bItem.Item2 != null)
+                // If we are at the end of the sequence
+                if (a >= Ma.Count)
                 {
-                    returnvalue.Add(new Diff<T> { A = aItem.Item1, O = aItem.Item2.Item1, B = bItem.Item1 });
+                    rv.Add(new Diff<T>(null, Mb[b]));
+                    b++;
                 }
-                else if(aItem.Item2 == null && ) // 
+                else if (b >= Mb.Count)
                 {
-
+                    rv.Add(new Diff<T>(Ma[a], null));
+                    a++;
                 }
-            }*/
+                else
+                {
+                    var aItem = Ma[a].Item2;
+                    var bItem = Mb[b].Item2;
 
-                var totalMatch = GraphMatching<
+                    if (aItem != null && bItem != null)
+                    {
+                        rv.Add(new Diff<T>(Ma[a], Mb[b]));
+                        a++;
+                        b++;
+                    }
+                    else if (aItem == null && bItem == null)
+                    {
+                        rv.Add(new Diff<T>(Ma[a], null));
+                        rv.Add(new Diff<T>(null, Mb[b]));
+                        a++;
+                        b++;
+                    }
+                    else
+                        throw new NotImplementedException();
+                }
+            }
+
+            return rv;
+
+
+                /*var totalMatch = GraphMatching<
                                             Tuple<T, T>,
                                             Tuple<T, T>
                                             >.Match(Ma, Mb,
@@ -222,7 +247,7 @@ namespace SyntaxDiff
                                                         return 1;
                                                     return null;
                                                 }).Select(u => new Diff<T>(u.Item1, u.Item2)).ToList();
-                return totalMatch;
+                return totalMatch;*/
         }
 
 

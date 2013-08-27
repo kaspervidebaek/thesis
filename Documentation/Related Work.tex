@@ -10,7 +10,7 @@
 \usepackage{todonotes}
 \usepackage[hidelinks]{hyperref}
 \usepackage{verbatim}
-
+\usepackage{multicol}
 \usepackage{epstopdf}
 \usepackage{wrapfig}
 \usepackage[noend]{algpseudocode} 
@@ -162,20 +162,105 @@ From a worst-case running-time perspective, this does not look good: In the wors
 If these assumptions hold, the overall running time will be lowered considerably compared to other structured approaches, since we will be doing much more line-based work. The first item on the list will be true; both the size of the input problem and the asymptotic running time of the algorithm will be larger as shown later. The second two are not as clear cut to provide backing for, but best-practice guides for version control systems generally recommend that commits are small logically connected parts. Given well-encapsulated code, this would mean that only a few functions are changed per commit.
 
 \subsection{Trivial conflicts}
-\todo[inline]{Write this \\
-- Ordering in classes. \\
-- Ordering in parameter and argumet-lists. \\
-- Very similar statements where different nodes have been changed in each branch. \\
--- Argue that "small expressions" could be external variables - i.e. it is all about coding style whether a line based conflict will happen. }
+The goal described earlier was to minimize the amount of trivial conflicts found in the syntax tree. But what is a trivial conflict? A trivial conflict is a conflict that cannot be solved in line based tools, but where knowledge of the structure of the language will actually allow us to make mostly informed choices about what is intended by the user.
 
+\todo[inline]{Insert code examples in all of the below.}
 
-\todo[inline]{Arbejde med udskiftning af parametre: \\
-f(1, x, 3) <- f(2, x, 3) -> f(2, x, 4) Conflict? No. Because: \\
-a = 1 <- a = 2 -> a = 2 \\
-x = 2 \\
-b = 3 <- b = 3 -> b = 4 \\
-f(a, x, b); \\
-}
+\paragraph{Reordering of class-members} Class-members needs to have a definition order in concrete syntax, yet this order has no meaning for the execution in most languages. If one branch moves a method of a class, and another branch makes change to this branch, a line based tool will report a conflict. An intelligent merge of these would be to propagate the changes in one branches into the moved methods body.
+
+Given a syntax tree, we know where method-definitions exists, and we can treat them as a set. This gives us a problem of matching functions together across the three branches; we will need to create some heuristic that allow us to decide whether two functions are the same or not. After that can merge the function bodies of the methods matched from the three branches.
+
+\paragraph{Reorderings in parameter-lists and argument-lists} Parameter-lists and argument-lists are closely tied together. A reordering of the parameters in a method definition in one branch will cause all argument lists to also be reordered. If the second branch adds a parameter at the same time, this will also be added as an argument in all calls to this function. From a line based perspective this will generate conflicts, however given a syntax tree this can be solved by matching parameters and arguments across branches and create new argument- and parameter-lists, that both contain the reorderings and the added items.
+
+\paragraph{Merging conflicting lines} A conflict in line based tools is when two branches change the same part of the code, where there is no unchanged line inbetween those changed parts. This seems like a good heuristic for when the code for two branches might interfere, but another reason to treat this as a conflict in a line based tool, is because the tool has no idea how to merge those lines. This is however not the case for a merging algorithm based on syntax trees; we can look at sub-nodes of the trees from different branches, and merge these.
+
+\begin{figure}
+
+\begin{multicols*}{3}
+
+\texttt{A}
+
+\begin{algorithmic}
+	\State $a \gets 0+2+3$
+\end{algorithmic}
+
+\columnbreak
+
+\texttt{O}
+
+\begin{algorithmic}
+	\State $a \gets 1+2+3$
+\end{algorithmic}
+
+\columnbreak
+
+\texttt{B}
+ 
+\begin{algorithmic}
+	\State $a \gets 1+2+4$
+\end{algorithmic}
+
+\end{multicols*}
+\caption{Three statements, that will conflict in a line-based merge}
+\label{ConflictingLines}
+
+\end{figure}
+
+Given three input lines, that are vaguely similar as in figure \ref{ConflictingLines} where both branches have changed small parts of the behaviour of the line, what should we merge it into? Both branches want to change small parts of behaviour, and as such producing a conflict could easily be seen as the best choice. However a simple re-factoring of the code like in figure \ref{RefactoredForNoConflict} will make a line based merge it without a conflict.
+
+This show the arbitrariness of the line based merge approach; in this case it wont mean much due to it being a small integer expression, but it is easy to imagine more complicated expressions where the same refactoring will make a big difference. 
+
+\todo[inline]{Adding a single, empty, line will be "remove" conflicts}
+
+\begin{figure}
+\begin{multicols*}{3}
+
+\texttt{A}
+
+\begin{algorithmic}
+	\State $x \gets 0$
+	\State $y \gets 2$
+	\State $z \gets 3$
+	\State $a \gets x+y+z$
+\end{algorithmic}
+
+\columnbreak
+
+\texttt{O}
+
+\begin{algorithmic}
+	\State $x \gets 1$
+	\State $y \gets 2$
+	\State $z \gets 3$
+	\State $a \gets x+y+z$
+\end{algorithmic}
+
+\columnbreak
+
+\texttt{B}
+ 
+\begin{algorithmic}
+	\State $x \gets 1$
+	\State $y \gets 2$
+	\State $z \gets 4$
+	\State $a \gets x+y+z$
+\end{algorithmic}
+
+\end{multicols*}
+\caption{The lines from Figure \ref{ConflictingLines} refactored for merging without conflicts.}
+\label{RefactoredForNoConflict}
+\end{figure}
+
+So what do we do? If we can match nodes in the syntax tree of the branches when they are similar, then we can do a top-down merge of nodes; only if the structure or content of two sub-nodes has changed different structure or content, we will have to generate a conflict. This allows us to actively merge the branches in figure \ref{ConflictingLines} into $a \gets 1+2+4$ without user interaction.
+
+\paragraph{Renaming identifiers} Local variables and class members have an identifier that is used to reference them from other places in the code. This identifier can be renamed. Renaming an identifier will also have the consequence of changing the identifier all the places where this specific identifier is referenced. If a rename happens in one branch, and somebody changes or adds a line that references this identifier in another branch, the merge will either give a conflict or a compile error: 
+
+\begin{itemize}
+\item If somebody changes an expression around an identifier that has been renamed in another branch this would generate a conflict in a line based approach. This might not actually produce a conflict in our approach, since we only modify parts of the sub-tree, but it might still do it.
+\item If a identifier has been renamed in one branched, while somebody has added a new reference to it, in the opposite branch, this will generate merge that gives an compile error.
+\end{itemize}
+
+It might be possible to detect rename of identifiers and apply this rename on the trees before doing an actual merge, and thereby avoid conflicts.
 
 \clearpage
 \section{Implementation}
@@ -196,7 +281,6 @@ We often want to match equality between two sequences. We will do this by solvin
 \paragraph{Result} Some inputs will have several possibly minimum cost matchings. An example of an input that generate two different matchings can be seen in Figure \ref{TwoWayMatchingAmbigiouty}.
 
 \paragraph{Running time} The running time of Needlemann-Wunch is often stated to be $O(n \cdot m)$, where $n$ and $m$ is the number of items in the two input sequences. This has the implicit assumption that the function that compares two items runs on $O(1)$ time. Since this function is the equality function input to our two-way sequence matching function, we will not make such an assumption; the running time will be $O(n \cdot m \cdot t)$ where $t$ is the running time for the equality function.
-\todo{Add the two-way-step to this figure}
 
 \subsubsection{Three-way sequence matching}
 \begin{figure}
@@ -676,9 +760,9 @@ The sequence based merging algorithm in figure \ref{Genericmergingalgorithm} is 
 \begin{algorithm}
 \begin{algorithmic}
 \Function{Merge}{$A$, $O$, $B$, $equality$, $comparer$}
-   \State $match  <- ThreeWayMatch(A, O, B, equality)$
-   \State $chunks <- getChunks(match, comparer)$
-   \State $merged <- []$
+   \State $match \gets ThreeWayMatch(A, O, B, equality)$
+   \State $chunks \gets getChunks(match, comparer)$
+   \State $merged \gets []$
    \ForAll{$chunk$ in $chunks$}
         \If {$chunk$ is stable}
             \State add line of chunk.O to merged
@@ -686,13 +770,13 @@ The sequence based merging algorithm in figure \ref{Genericmergingalgorithm} is 
         \EndIf
         \If {$chunk$ is added in $A$ or $B$}
             \State add lines of $chunk$ to $merged$
-        \ElsIf
+        \Else
             \If{$O$ is equal with one branch, but not the other}
                \State add lines of changed branch to $merged$
-            \ElsIf
+            \Else
                 \If{the two branches are equal}
                    \State add either of them to merged
-                \ElsIf
+                \Else
                    \State $conflicthandler(merged, chunk)$
                    \If{$conflicthandler$ indicates termination}
                       \State break
@@ -766,7 +850,9 @@ One extra detail is needed however. Items that are deleted in one branch, and mo
 
 \paragraph{Running time} $an(x)$ is the total amount of nodes that is found in the tree from the root, down to until the leaves that are class member; it will contain all root-items, namespaces, classes and class members, but no nodes from below class-members. $n$ is $max((an(A) an(O), an(B))$ and the time for running the cost function is constant. 
 
-The running time for the match is $O(n^2 \log n)$, and it returns $O(n)$ matchings, giving an overall running time of the loop $O((n^2 \log n)^n)$ running time. Arguable not a very good 
+The running time for the match is $O(n^2 \log n)$, and it returns $O(n)$ matchings, giving an overall running time of the loop $O((n^2 \log n)^n)$ running time. 
+
+\todo[inline]{Finish this}
 
 \begin{algorithm}
 \begin{algorithmic}
@@ -799,8 +885,6 @@ The running time for the match is $O(n^2 \log n)$, and it returns $O(n)$ matchin
 \caption{The entry point for syntactic merge}
 \label{TreeMergeAlgorithm}
 \end{algorithm}
-
-
 
 \subsubsection{Cost-functions}
 We will have to define the cost-functions for namespaces, classes and class-members. For each level, these functions will be called for each pair of items possible in $(A, O)$ and $(O, B)$. As a consequence, it we will have to keep the runtime cost of calculating a cost of two items relatively low.

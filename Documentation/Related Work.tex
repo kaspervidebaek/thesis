@@ -73,7 +73,7 @@ morestring=[b]',
 In this section we give a background for the problem statement of this thesis. We briefly describe programming language concepts, version controls systems and the concept of automatic merging, which all contribute to understanding the problem we investigate.
 
 \subsection{Version control systems}
-The overall goal of version control systems is to support development of documents, by keeping track of changes over time. In the context of software development, version control systems are frequently used to keep track of source code. In the context of this thesis, we do not distinguish between these two - but abstract all the different merging-scenarios possible into the simple concept of merging two files, the \textit{branches}, with the \textit{base}; a third file that they both evolved from. Merging is the process of producing a single file that contains all the changes in the source that the two branches produced.
+The overall goal of version control systems is to support development of documents, by keeping track of changes over time. In the context of software development, version control systems are frequently used to keep track of source code. In the context of this thesis, we do not distinguish between these two - but abstract all the different merging-scenarios possible into the concept of merging two files, the \textit{branches}, with the \textit{base}; a third file that they both evolved from. Merging is the process of producing a single file that contains all the changes in the source that the two branches produced.
 
 Merging source code is an inherent part of software development, and has gone through some development and automation since the first version control systems. Merging algorithms generally work by matching content between two branches and the common ancestor, and using the matchings it is possible to merge the content into one common file. If this is not possible a conflict is presented. Merging tools of version control systems are mostly line based; oblivious to the structure of the content of the files contained. The content they match is lines in the two branches and the common ancestor. 
 
@@ -85,7 +85,7 @@ Conventions of XML and source code can be broken. An entire XML-file can be a si
 \todo[inline]{Er formålet med dette speciale at fixe "ikke bruger-læsbar-merging"?}
 \todo[inline]{Tal om autogenereret kode, som placeres i VCS}
 
-A conflict can be defined in quite a few ways for line based tools. In the Unix tool diff3, a conflict is a sequence of lines, that is changed in both branches, and is not separated by a single line that is unchanged in both branches. Such a conflict detection scheme is clearly an approximation. It is oblivious to the structure of the data and one could craft input that output invalid structural data. Further, the  actual meaning of the merged data is not considered at all - even if it is structurally valid, it might semantically be nonsense, even though a conflicts is not produced - see figure \ref{WrongMergeFromLineBasedApproach}.
+A conflict can be defined in a few ways for line based tools. In the Unix tool diff3, a conflict is a sequence of lines, that is changed in both branches, and is not separated by a single line that is unchanged in both branches. Such a conflict detection scheme is clearly an approximation. It is oblivious to the structure of the data and one could craft input that output invalid structural data. Further, the  actual meaning of the merged data is not considered at all - even if it is structurally valid, it might semantically be nonsense, even though a conflicts is not produced - see figure \ref{WrongMergeFromLineBasedApproach}.
 
 \begin{figure}
 
@@ -148,7 +148,7 @@ f3();
 \subsection{Automatic merging}
 The reason merging tools are line based these days, can probably be attributed to such an approach working relatively well with source code, XML and other files often found in repositories. Structure matching most definitely is a more time consuming task, and given the general use case of commits in version control, it might not be worth the extra computation time. Further, the semantics of programs are generally undecidable; in the most general sense we are unable to prove if a program works as intended. This is true for both the two branches, and the base of our merging, and since we cannot prove the behaviour of those we cannot say anything about if the merge works as intended either.
 
-One very commonly used algorithm for merging is Diff3. \citet{Khanna} investigated it formally by regarding a file as a sequence where each line was an item in the sequence. They set up a number of expectations of what one expects from a merge, and showed that many of these assumptions do not hold: Conflicts can happen even when only unrelated regions are changed, differencing after a merge does not produce empty output, merging fails when both branches are very different from the ancestor and so forth. Even though this is the case, Diff3 continues to be widely used with few complaints of it shortcomings - it seems that the situations where Diff3 breaks are quite uncommon in version control systems.
+One very commonly used algorithm for merging is Diff3. \citet{Khanna} investigated it formally by regarding a file as a sequence where each line was an item in the sequence. They set up a number of expectations of what one expects from a merge, and showed that many of these assumptions do not hold: Conflicts can happen even when only unrelated regions are changed, differencing after a merge does not produce empty output, merging fails when both branches are very different from the ancestor and so forth. Even though this is the case, Diff3 continues to be widely used with few complaints of it shortcomings - it seems that the situations where Diff3 breaks are uncommon in version control systems.
 
 Common algorithms for merging are state based. They compare the final state of branches, and creating a series of operations that transform one document from one state into another. \citet{Lippe} described a different approach, where editing tools remember the operations used to transform the data, and where the merge process is a matter of applying these transformations in the right order to minimize the number of conflicts.
 
@@ -159,7 +159,7 @@ Common algorithms for merging are state based. They compare the final state of b
 
 
 \subsection{Programming languages}
-In this section we look into the process that a program goes through in the process up until execution, to give a simple overview of how this process gets us to syntax trees, and to look into what kind of consequences a this process has for regenerating concrete syntax when given a syntax tree.
+In this section we look into the process that a program goes through in the process up until execution, to give an overview of how this process gets us to syntax trees, and to look into what kind of consequences a this process has for regenerating concrete syntax when given a syntax tree.
 
 \subsubsection{Grammars}
 The process of turning programs into execution often relies on lexers and parsers. A lexer divides a programs into tokens. A token is any concrete string of text that is legal at any point in the program text. It can be numbers, strings, keywords, parenthesis, and any other character or sequence of characters that is legal at some point in the program text. 
@@ -173,10 +173,10 @@ Depending on what kind of choice of syntax tree is done, information of the conc
 
 In C, for example, the construct $a[i]$ is a shorthand for $*(a + i)$ and should produce the same semantic behaviour. Rewriting them both into the same structure in the syntax tree is one way to resolve this. Doing this also means that given a syntax tree it is harder, or impossible, to determine what the concrete syntax was.
 
-Given the purpose of this thesis, the choice of syntax tree is quite important for us: We traverse syntax nodes and want to generate concrete syntax - which means we want a syntax tree that is as closely corresponding to the grammatical constructs of the language.
+Given the purpose of this thesis, the choice of syntax tree is important for us: We traverse syntax nodes and want to generate concrete syntax - which means we want a syntax tree that is as closely corresponding to the grammatical constructs of the language.
 
 \subsubsection{Pre-processing and comments}
-When looking at the syntax tree quite a lot of information is not immediately available: Everything from the preprocessing phase, syntactic sugar, whitespace and comments. While this information is not immediately available in the structure of the syntax tree most of this information can be found, by looking at the text that generated each node in the tree. 
+When looking at the syntax tree, a lot of information is not immediately available: Everything from the preprocessing phase, syntactic sugar, whitespace and comments. While this information is not immediately available in the structure of the syntax tree most of this information can be found, by looking at the text that generated each node in the tree. 
 
 \todo[inline]{Preprocessing}
 
@@ -219,7 +219,7 @@ Discussions of how the end algorithm should look.
 
 Another part of the overall goal, is to keep the running time lower and more stable, than what we saw in tools and literature in the last section: Higher running times than $diff3$ are unavoidable if we want to parse the input files and match the syntax trees, however we can hopefully get a lower overall running time for the entire merging process, and hopefully have it become more stable for the general case, than what we have found.
 
-\paragraph{Operations based vs. state based} While the idea of operation based merging on syntax trees is quite interesting, we choose a state based approach: Operation based merging require making an entire editor that can log operations, and the idea does not fit into VCSs. Further, it requires that every developer used this specific editor for their development, instead of their favourite tool. By making a state based approach all developers have to do is change their merging tool in their VCS.
+\paragraph{Operations based vs. state based} While the idea of operation based merging on syntax trees is interesting, we choose a state based approach: Operation based merging require making an entire editor that can log operations, and the idea does not fit into VCSs. Further, it requires that every developer used this specific editor for their development, instead of their favourite tool. By making a state based approach all developers have to do is change their merging tool in their VCS.
 
 \paragraph{Line-based vs. structure-based} We adapt the ideas of \citet{Olav} and \citet{Apel} for minimizing the running time of a state-based merging algorithm for code: Do structured merging when it's suitable.
 
@@ -309,7 +309,7 @@ Given a syntax tree, we know where method-definitions exists, and we can treat t
 
 \end{figure}
 
-Given three input lines, that are vaguely similar as in figure \ref{ConflictingLines} where both branches have changed small parts of the behaviour of the line, what should we merge it into? Both branches want to change small parts of behaviour, and as such producing a conflict could easily be seen as the best choice. However a simple re-factoring of the code like in figure \ref{RefactoredForNoConflict} makes a line based merge it without a conflict.
+Given three input lines, that are vaguely similar as in figure \ref{ConflictingLines} where both branches have changed small parts of the behaviour of the line, what should we merge it into? Both branches want to change small parts of behaviour, and as such producing a conflict could easily be seen as the best choice. However re-factoring of the code like in figure \ref{RefactoredForNoConflict} makes a line based merge it without a conflict.
 
 This show the arbitrariness of the line based merge approach; in this case it wont mean much due to it being a small integer expression, but it is easy to imagine more complicated expressions where the same refactoring makes a big difference. 
 
@@ -366,23 +366,23 @@ So what do we do? If we can match nodes in the syntax tree of the branches when 
 It might be possible to detect rename of identifiers and apply this rename on the trees before doing an actual merge, and thereby avoid conflicts.
 
 \subsection{Handling syntax trees}
-\paragraph{Tree matching algorithms} Using regular tree matching algorithms on entire syntax trees takes cubic time of the number of nodes in the trees. Further, the number of nodes generated from a line of code can be quite high. Some initial tests on trees generated from C\# files, we encountered matching times of up to two minutes, from a relatively complex, but not unheard of 700-line C\# file that gave a syntax tree with around 3800 nodes. This problem however, becomes a lot smaller if we only use it on method bodies - then it might be a viable option.
+\paragraph{Tree matching algorithms} Using regular tree matching algorithms on entire syntax trees takes cubic time of the number of nodes in the trees. Further, the number of nodes generated from a line of code can be high. Some initial tests on trees generated from C\# files, we encountered matching times of up to two minutes, from a relatively complex, but not unheard of 700-line C\# file that gave a syntax tree with around 3800 nodes. This problem however, becomes a lot smaller if we only use it on method bodies - then it might be a viable option.
 
 Tree matching algorithms returns a matching as a flat list of node pairs. This list makes it easy, for each node, to find the corresponding node in the other tree, and makes it possible to calculate costs easily. This can also easily be stitched together to create a three-way matching such that all nodes in the O-branch is matched with everything in the B- and A-branches.
 
-Our goal is to construct a tree that is the merge of the branches, and here it seems there are not really a natural starting point. First of all, the merging list does not have any idea of the structure of the tree we needs to construct, so the starting point needs to be an iteration over the three input-threes instead. In this iteration, however, the matching can be quite helpful: Whenever we encounter a change in either of the trees, we can look up the matching, and this gives us a hint about what has happened here. Resolving operations as deletions, insertions and updates are quite simple this way.
+Our goal is to construct a tree that is the merge of the branches, and here it seems there are not really a natural starting point. First of all, the merging list does not have any idea of the structure of the tree we needs to construct, so the starting point needs to be an iteration over the three input-threes instead. In this iteration, however, the matching can be helpful: Whenever we encounter a change in either of the trees, we can look up the matching, and this gives us a hint about what has happened here. Resolving operations as deletions, insertions and updates is easy this way.
 
-However, operations on trees can also be moves up or down in either of the branch trees, which makes this more complex: The matching does not tell us what happened, just that a match exists to somewhere in the other trees - this means that such an algorithm needs to search amongst parents and children to figure this out, and when this is done produce some the correct output. This might not be impossible, but the entire process becomes a quite complex at this point. 
+However, operations on trees can also be moves up or down in either of the branch trees, which makes this more complex: The matching does not tell us what happened, just that a match exists to somewhere in the other trees - this means that such an algorithm needs to search amongst parents and children to figure this out, and when this is done produce some the correct output. This might not be impossible, but the entire process becomes complex at this point. 
 
 We abandoned the general tree matching approach, and created a matching algorithm that worked entirely on the same levels of the two input trees: Move operations are not detected up and down in the tree. This removes the above challenge. After creating such a matching, we can do a top-down recursion and create a \textit{matching tree}; a tree where each leaf is a matching between the three trees. 
 
-The next step is to chunk these trees. Chunking is the part of the matching algorithms that divide them into stable and unstable parts, to identify updates. This definition becomes quite mindbogling in the matching tree generated, and we wound up abandoning the general tree-matching approach altogether.
+The next step is to chunk these trees. Chunking is the part of the matching algorithms that divide them into stable and unstable parts, to identify updates. This definition becomes mindbogling in the matching tree generated, and we wound up abandoning the general tree-matching approach altogether.
  
 \paragraph{Semantic vs. non-semantic tree-merging} A syntax-tree has a built-in semantic, that cannot be broken. Each node has some specific children with a specific type and purpose. A syntax tree can also be viewed as a tree with generic nodes with arbitrary arity. The later option is the option that allow us to run general tree-merging algorithms on the syntax trees.
 
 Abandoning general tree merging algorithms does not mean that we have to abandon the general tree approach to merging. The advantage of using a general tree is that we can manipulate the tree more freely; for example we can insert nodes to indicate conflicts or we can iteratively create a tree instead of creating a tree entirely top-down. Further, we can create generic algorithms that work on the semantic-free trees, which then later make it easier to make the merging algorithm cross-language.
 
-The disadvantage is that we have to create an entirely new step that takes a semantic-free-tree and turns it into a semantic tree. This step can get quite complicated; what should happen if a subnode has been added as a child to a node, where we it does not semantically fit? This creates quite a few problems.
+The disadvantage is that we have to create an entirely new step that takes a semantic-free-tree and turns it into a semantic tree. This step can get complicated; what should happen if a subnode has been added as a child to a node, where we it does not semantically fit? This again, creates few problems.
 
 In the end, we decided to only work on semantic trees and we decided that our algorithm takes in the nodes from each branch, and return a string that is the concrete syntax that the merge of these nodes creates.
 
@@ -739,7 +739,7 @@ This gives us the overall time of:
 O(m_{ao}^2 \log m_{ao} + m_{bo}^2 \log m_{bo} + (A+O) \log (A+O) + (B+O) \log (B+O) + A + O + B) \nonumber
 \end{equation}
 
-If we define $n$ as $max(|A|, |O|, |B|)$, which is clearly an over-approximation, the expression can be simplified to:
+If we define $n$ as $max(|A|, |O|, |B|)$, which is clearly an upper bound, the expression can be simplified to:
 
 \begin{equation}
 O(n^2 \log n + n \log (n) + n) \nonumber
@@ -1035,7 +1035,7 @@ The more of these factors that are similar, the lower a cost two functions shoul
 
 Equal identifiers is a clear sign of similarity, and one that should weight heigh for this scale. Parameters are also important; we need to match different overloads of a function to the same overload in another branch. Given these two criterias we match any unchanged function completely.
 
-If we look at two functions with dissimilar names, equal return types and no parameterlist, it is not quite obvious how to define if they are similar or not. For this reason we define it as not similar. However with several parameters similar, the likelihood of the functions being the same increases.  The cost-function can be found in Algorithm \ref{MethodCostFunction}.
+If we look at two functions with dissimilar names, equal return types and no parameterlist, it is not obvious how to define if they are similar or not. For this reason we define it as not similar. However with several parameters similar, the likelihood of the functions being the same increases.  The cost-function can be found in Algorithm \ref{MethodCostFunction}.
 
 \begin{algorithm}
 \caption{Cost for method-similarity}
@@ -1076,16 +1076,9 @@ This function has some properties that are helpful, given the above consideratio
 \item Renamed functions can be matched if they match completely in the parameterslist, or if some of the parameterlist is similar and it has the same return type.
 \end{enumerate}
 
+\paragraph{Running time} The running time for the cost function for classes and namespaces is $O(1)$. Defining the cost of functions is dependant on the size of the input lists $n_x$ and $n_y$. We run a two-way matching on the two input lists with function running in $O(1)$ time; this gives an overall running time of $O(n_x n_y)$.
 
 \subsection{Merging functions}
-
-%\todo[inline]{Foreach function, write about:
-%
-%- Intended input. \\
-%- Purpose of the function.\\
-%- Conflict behaviour\\
-%- Tricks that are not obvious.\\
-%- Intended output.\\}
 
 \subsubsection{Merging nodes}
 \texttt{MergeNode} handles merging of single nodes of equal type. It takes three input values; A, O and B, and return a syntactically valid string, which is the merge of those three input values. It handles the input as a matching and concludes insertion or deletion if appropriate. Further it assumes that all input nodes are of the same type.
@@ -1104,10 +1097,7 @@ Otherwise it treats the input as a merge of the two branches A and B. From a con
 
 The responsibility of an invocation of MergeNode is to return the the exact syntax needed for these specific node. Any work of generating concrete syntax for children is handled by a recursive call to MergeNode. For example a method invocation generate the opening and closing parenthesis, while the argument list be passed to another invocation, as well as the method-expression. This breakdown makes the merging of most nodes trivial.
 
-Some nodes only consists of tokens: A function name, a string literal, an integer, a keyword and so forth. For these kind of nodes, we check if only one of the branch nodes differs, and if this is the case, return that, and otherwise return a conflict, as can be seen in Figure \ref{MergeToken}.
-
-\todo[inline]{A fixed structural node is nodes that has a fixed number of children, that are easily merged - like methods declerations, expressionsstatements, invocations, memberaccesses, single arguments. A content node is a node which is generated from a single token.}
-
+Some nodes only consists of tokens: A function name, a string literal, an integer, a keyword and so forth. For these kind of nodes, we check if only one of the branch nodes differs, and if this is the case, return that, and otherwise return a conflict, as can be seen in Figure \ref{MergeToken}. A fixed structural node is a node that has a fixed number of children, that are easily merged - like methods declerations, expressions-statements, invocations, member-accesses, single arguments. A content node is a node which is generated from a single token.
 
 \begin{algorithm}
 \caption{Tree-merging algorithm}
@@ -1165,7 +1155,9 @@ Some nodes only consists of tokens: A function name, a string literal, an intege
 \subsubsection{Equality}
 The equality function defines whether or not two nodes taken from syntax-trees in different branches are equal to each other.
 
-If we view syntax trees as simple n-ary trees with no semantic meaning, this becomes easy. Every node has a label and $n$ children. Given two nodes $x$ and $y$ we need to check if the label is equal, and we need to iterate through each pair of children on the same index. Whenever we encounter something not equal, return false. Otherwise return true.
+If we view syntax trees as n-ary trees with no semantic meaning, this becomes easy. Every node has a label and $n$ children. Given two nodes $x$ and $y$ we need to check if the label is equal, and we need to iterate through each pair of children on the same index. Whenever we encounter something not equal, return false. Otherwise return true.
+
+\paragraph{Running time} The worst case running time for the equality algorithm is the case where two trees are completely equal; in this case we will have to visit every single node to verify the equality. The upper bound for the running time becomes $O(n)$ where $n$ is the amount of nodes in the tree.
 
 \subsubsection{Similarity}
 \label{FunctionSimilarity}
@@ -1219,7 +1211,7 @@ This ensures that:
    \item All items that existed in the branches exist in the output of this function. 
 \end{itemize}
 
-The cost between a pair of parameters can be boiled down the question of how similar the type of the parameter is, and how similar the name is. Similarity of type can be measured as closeness in the class hierarchy. String similarity can be measured in quite a few ways. In our case we want to keep the runtime low. Therefore we keep to a simple and exact scheme of similarity of both.
+The cost between a pair of parameters can be boiled down the question of how similar the type of the parameter is, and how similar the name is. Similarity of type can be measured as closeness in the class hierarchy. String similarity can be measured in quite a few ways. In our case we want to keep the runtime low. Therefore we keep to an exact scheme of similarity of both.
 
 The cost of the argument-lists is much harder to define. An argument is an expression, so the obvious ideas is to look into what type that expression has. This information, however, is not available. Instead we look into the string value of the nodes and compare these for equality or not. Lower equality means lower cost. This cost-function produces matchings of items that have not been changed, but have been reordered, and items that have changed are not matched; thereby they are treated as insertions, deletions or moves.
 

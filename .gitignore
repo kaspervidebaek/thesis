@@ -11,3 +11,6 @@ bin
 *.blg
 *.toc
 /Documentation/*.loa
+*.loa
+/Documentation/*.ist
+/Documentation/*.glo

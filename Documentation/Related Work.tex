@@ -16,6 +16,8 @@
 \usepackage{wrapfig}
 \usepackage[noend]{algpseudocode} 
 \usepackage{algorithm}
+
+
 \renewcommand{\algorithmicforall}{\textbf{for each}}
 
 \lstdefinelanguage{CSharp}
@@ -47,12 +49,24 @@ morestring=[b]',
 
 \begin{document}
 \maketitle
-\setcounter{tocdepth}{2}
 
+\clearpage
+\setcounter{tocdepth}{2}
 \tableofcontents
 
 \clearpage 
+
+\section*{Glossary}
+\todo[inline]{Define:\\
+- The length operator on sets $|A|$ \\
+- Branch and base \\
+- Opposite branch \\
+- Three branches
+}
+
+\clearpage 
 \section{Introduction}
+
 
 \clearpage 
 \section{Background}
@@ -970,7 +984,7 @@ Items that are deleted in one branch and modified in another branch, should gene
 
 \paragraph{Running time} $f(x)$ is the total number of nodes that is found in the tree from the root, down to until the leaves that are class member; it contain all root-items, namespaces, classes and class members, but no nodes from below class-members. $n$ is $max(f(A) f(O), f(B))$ and the time for running the cost function is constant. 
 
-The running time for the match is $O(n^2 \log n)$, and it returns $O(n)$ matchings, giving an overall upper bound of the running time of the loop as $O((n^2 \log n)^n)$. This upper is awful; yet two factors allow us to tolerate this. First, it is a very crude upper bound that illustrates the situation where every node contains the entire tree which is obviously not the case. Second, the number of namespaces, classes and class-members per file is often quite low.
+The running time for the match is $O(n^2 \log n)$, and it returns $O(n)$ matchings, giving an overall upper bound of the running time of the loop as $O((n^2 \log n)^n)$. This upper bound is awful; yet two factors allow us to tolerate this. First, it is a very crude upper bound that illustrates the situation where every node contains the entire tree which is obviously not the case. Second, the number of namespaces, classes and class-members per file is often quite low.
 
 \begin{algorithm}
 \begin{algorithmic}
@@ -1196,7 +1210,9 @@ There are primarily two types of list that we want to merge: ParameterLists and 
    \item Modifications of argument-lists can be done as a consequence of change in a parameter list other places in the syntax-tree. Modifications in arguments can also be to change the expression or value to be passed into a function, or because the user intends to call another overload of the method.
 \end{itemize}
 
-The first part is solved the same way that we reorderings were solved in section \todo{page number}. We do an unordered matching of them, and then do a reordering, and filtering of the output. The returned list is a list that tries to preserve any reordering, and that has filtered items in the sequence that did not exist in either of the two branches. This hopefully ensures that:
+Reordering is solved the same way that general reordering is solved earlier. We do an unordered matching of them, and then do a reordering, and filtering of the output. The returned list is a list that tries to preserve any reordering, and that has filtered items in the sequence that did not exist in either of the two branches.
+
+This ensures that:
 
 \begin{itemize}
    \item Since the reordering uses the exact same algorithm, merging both parameter- and argument-lists produces compatible output, given that the cost function matches in the same way on both types of lists.
@@ -1214,17 +1230,30 @@ The first item in the above list, depends on the matchings in both parameterlist
   \label{Listmerger}
 \begin{algorithmic}
 \Function{Listmerger}{A, O, B, cost}
-    \State $match \gets ThreeWayCostMatching(A, O, B, cost)$
-    \State $(merge, conflicts) \gets FilterReorderMergeContent(a, o, b, match)$
-    \ForAll{conflict}
+    \State $zip \gets ThreeWayCostMatching(A, O, B, cost)$
+    \State $members \gets [];$
+   	\State $conflicts \gets []$
+    \ForAll{$m$ in $zip$}
+        \If{$m$ exists in all}
+           \State $member.add(m, MergeSyntax(m.A, m.O, m.B))$
+		\ElsIf{match was inserted in A or B}
+			\State $member.add(m, (m.A$ or $m.B ))$
+		\ElsIf{match was deleted and changed in opposite branch}
+			\State $member.add(m, (m.A$ or $m.B ))$
+			\State $conflicts.add(m.A$ or $m.B )$
+		\EndIf
+		\State $reorderLists \gets $ map each item in each list (A, O, B)
+		\State ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ to their merged result.
+		\State $members = Reorder(A, O, B, conflicts)$
+	\EndFor
+
+    \ForAll{$conflicts$}
         \State Add a warning to the merges.
     \EndFor
-    \State \Return $merge$
+	\State \Return the string of each $members$ seperated by commas
 \EndFunction
 \end{algorithmic}
 \end{algorithm}
-
-\todo[inline]{FilterReorderMergeContent}
 
 \subsubsection{Merging blocks}
 A block-node is hit by the MergeNode algorithm often. They are the body of methods, if-statements, while-loops, using-statements and more. We need to merge content inside in each branch and the base. We do a textual merge of the content of the block. If this fails, we do a priority-differencing as described in section \ref{PriorityDiff}, with the equality and and similarity function defined in algorithm \ref{FunctionSimilarity}.
@@ -1317,6 +1346,15 @@ $MergeUneven$ is called in case of an unsolvable conflict in Algorithm \ref{Merg
 
 \clearpage
 \section{Future work}
+\todo[inline]{Things we did not do: \\
+- Evaluate the practical running time of the algorithm \\
+- Evaluate the actual output of the algorithm \\
+- Struktur-matcher og merger \\
+- Renaming \\
+- Comments og preprocesser \\
+- Better three-way matching for reordering? \\
+- Using costs of needlemann-wunchs to create better diffs?
+}
 
 \clearpage
 \section{Conclusion}

@@ -1242,6 +1242,17 @@ If we view syntax trees as n-ary trees with no semantic meaning, this becomes ea
 
 \subsubsection{Similarity}
 \label{FunctionSimilarity}
+
+\begin{algorithm}
+  \caption{Similarity algorithm}
+  \label{SimilarityAlgorithm}
+\begin{algorithmic}
+\Function{NodeSimilarity}{x, y}
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+
 Similarity should return whether two nodes are similar or not. We divide it into two functions:  One that decides a similarity percentage between two nodes. Around this function we define a function that thresholds this percentage.
 
 \paragraph{Initial assumptions} Is the expression $x=1+2+3$ similar to $f(1+2+3)$? They have atleast 5 nodes in common; three integers and two add operators - this, out of 7 nodes in total. From that perspective they seem quite similar. For several reasons, we decide that only syntax-nodes of equal type should be considered similar:

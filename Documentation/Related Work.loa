@@ -1,16 +1,16 @@
-\contentsline {algorithm}{\numberline {1}{\ignorespaces Three-way matching algorithm}}{20}{algorithm.1}
-\contentsline {algorithm}{\numberline {2}{\ignorespaces Chunking algorithm}}{22}{algorithm.2}
-\contentsline {algorithm}{\numberline {3}{\ignorespaces Priority-chunking algorithm}}{24}{algorithm.3}
-\contentsline {algorithm}{\numberline {4}{\ignorespaces Bipartite set matching algorithm}}{25}{algorithm.4}
-\contentsline {algorithm}{\numberline {5}{\ignorespaces Two-way set matching algorithm}}{27}{algorithm.5}
-\contentsline {algorithm}{\numberline {6}{\ignorespaces Three-way set matching algorithm}}{29}{algorithm.6}
-\contentsline {algorithm}{\numberline {7}{\ignorespaces Three-way reordering algorithm}}{32}{algorithm.7}
-\contentsline {algorithm}{\numberline {8}{\ignorespaces Merging algorithm}}{34}{algorithm.8}
-\contentsline {algorithm}{\numberline {9}{\ignorespaces File-merge algorithm}}{35}{algorithm.9}
-\contentsline {algorithm}{\numberline {10}{\ignorespaces Class-merging algorithm}}{37}{algorithm.10}
-\contentsline {algorithm}{\numberline {11}{\ignorespaces Cost for method-similarity}}{39}{algorithm.11}
-\contentsline {algorithm}{\numberline {12}{\ignorespaces Tree-merging algorithm}}{41}{algorithm.12}
-\contentsline {algorithm}{\numberline {13}{\ignorespaces Token merging}}{41}{algorithm.13}
-\contentsline {algorithm}{\numberline {14}{\ignorespaces Unordered list merging algorithm}}{46}{algorithm.14}
-\contentsline {algorithm}{\numberline {15}{\ignorespaces Statement-list merging algorithm}}{46}{algorithm.15}
-\contentsline {algorithm}{\numberline {16}{\ignorespaces Uneven branch merging algorithm}}{48}{algorithm.16}
+\contentsline {algorithm}{\numberline {1}{\ignorespaces Three-way matching algorithm}}{22}{algorithm.1}
+\contentsline {algorithm}{\numberline {2}{\ignorespaces Chunking algorithm}}{23}{algorithm.2}
+\contentsline {algorithm}{\numberline {3}{\ignorespaces Priority-chunking algorithm}}{25}{algorithm.3}
+\contentsline {algorithm}{\numberline {4}{\ignorespaces Bipartite set matching algorithm}}{28}{algorithm.4}
+\contentsline {algorithm}{\numberline {5}{\ignorespaces Two-way set matching algorithm}}{30}{algorithm.5}
+\contentsline {algorithm}{\numberline {6}{\ignorespaces Three-way set matching algorithm}}{31}{algorithm.6}
+\contentsline {algorithm}{\numberline {7}{\ignorespaces Three-way reordering algorithm}}{35}{algorithm.7}
+\contentsline {algorithm}{\numberline {8}{\ignorespaces Merging algorithm}}{37}{algorithm.8}
+\contentsline {algorithm}{\numberline {9}{\ignorespaces File-merge algorithm}}{37}{algorithm.9}
+\contentsline {algorithm}{\numberline {10}{\ignorespaces Class-merging algorithm}}{40}{algorithm.10}
+\contentsline {algorithm}{\numberline {11}{\ignorespaces Cost for method-similarity}}{42}{algorithm.11}
+\contentsline {algorithm}{\numberline {12}{\ignorespaces Tree-merging algorithm}}{44}{algorithm.12}
+\contentsline {algorithm}{\numberline {13}{\ignorespaces Token merging}}{44}{algorithm.13}
+\contentsline {algorithm}{\numberline {14}{\ignorespaces Unordered list merging algorithm}}{48}{algorithm.14}
+\contentsline {algorithm}{\numberline {15}{\ignorespaces Statement-list merging algorithm}}{49}{algorithm.15}
+\contentsline {algorithm}{\numberline {16}{\ignorespaces Uneven branch merging algorithm}}{51}{algorithm.16}

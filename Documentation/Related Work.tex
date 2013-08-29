@@ -143,7 +143,7 @@ f2();
 f3();
 \end{lstlisting}
 \end{multicols*}
-\caption{A line based merge that produces no conflict, but produces a result which is structurally incompatible with the language.}
+\caption{A line based merge that produces no conflict, but produces a result which is structurally incompatible, given languages like C, C\# or Java.}
 \label{WrongMergeFromLineBasedApproach2}
 
 \end{figure}
@@ -200,14 +200,15 @@ f3();
 
 \end{lstlisting}
 \end{multicols*}
-\caption{A line based merge that produces no conflict, but produces a result, which is most likely not the intend of the users; $f3$ is not conditioned by $e2$, which no branches specified and $e$ only conditions $f2$ and not $f3$ as specified in the A-branch}
+\caption{A line based merge that produces no conflict, but produces a result, which is most likely not the intend of the users; $f3$ is conditioned by $e2$, which no branches specified and $e$ only conditions $f2$ and not $f3$ as specified in the A-branch}
 \label{WrongMergeFromLineBasedApproach}
 
 \end{figure}
 
-
 \subsection{Automatic merging}
-The fact that merging tools are line based these days, can probably be attributed to such an approach working relatively well with source code, XML and other files often found in repositories. Structure matching most definitely is a more computationally intensive task, and given the general use case of commits in version control, it might not be worth the extra computation time; the user does not want to wait. Further, proving if any program works as specified in a specification is generally an undecidable problem; even if we had a specification of all input programs, we cannot write an algorithm to prove if a program works as intended. This is true for both the two branches, and the base of our merging, and since we cannot prove the behaviour of those we cannot say anything about if the merge works as intended either.
+The fact that merging tools are line based these days, can probably be attributed to such an approach working relatively well with source code, XML and other files often found in repositories. Structure matching most definitely is a more computationally intensive task, and given the general use case of commits in version control, it might not be worth the extra computation time; the user does not want to wait.
+
+Automatic merging can never actually give us any guarantees; proving if any program works as specified in a specification is generally an undecidable problem; even if we had a sufficient specification of the input programs, we cannot write an algorithm that proves if these work as intended. This is true for all three input programs, and since we cannot prove the behaviour of those we cannot say anything about if the merged program lives up to a merge of the specification either.
 
 One commonly used tool for merging is \texttt{diff3}. \citet{Khanna} investigated the algorithm it uses formally by regarding a file as a sequence where each line was an item in the sequence. They set up a number of expectations of what one expects from a merge, and showed that many of these assumptions do not hold: Conflicts can happen even when only unrelated regions are changed, differencing after a merge does not produce empty output, merging fails when both branches are different from the ancestor and so forth. Even though this is the case, \texttt{diff3} continues to be widely used with few complaints of it shortcomings --- it seems that the situations where \texttt{diff3} breaks are uncommon in practice.
 
@@ -899,12 +900,12 @@ A conflicting move is a move where two \textit{move to} operations exists on eac
 
 The process of reordering can be seen in Figure \ref{Reordering}. This figure also shows that the ambiguity in our two-way-matching algorithm can lead to different potential outcomes of the reordering algorithm; if the $A \rightarrow O$-matching chooses to match the 4; implying that 4 has only moved in the $O \rightarrow B$-match, we produce a conflict-free output. If the $A \rightarrow O$-matching chooses 3 as the match, we get a conflict where 4 is being inserted both places. The safe bet is to modify the algorithm such that a conflict is always produced, by modifying the two-way-matching to return all possible matchings, and let the three-way-matching algorithm choose a pair that share most matchings.
 
-\paragraph{Running time} ThreeWayMatching runs in $O(|A||O| t + |B||O| t + |A|+|O|+|B| )$ time, and in worst case it returns $|A|+|O|+|B|$ items. The loop in the algorithm only has constant time operations which means the overall running time is $O(|A|+|O|+|B|)$ for the loop. Conflict detection can be done by keeping a hash set on the side of the results already added which gives us constant time lookup for each item; leaving us with $O(|A|+|O|+|B|)$ time.
+\paragraph{Running time} ThreeWayMatching runs in $O(|A||O| t + |B||O| t)$ time, and in worst case it returns $|A|+|O|+|B|$ items. The loop in the algorithm only has constant time operations which means the overall running time is $O(|A|+|O|+|B|)$ for the loop. Conflict detection can be done by keeping a hash set on the side of the results already added which gives us constant time lookup for each item; leaving us with $O(|A|+|O|+|B|)$ time.
 
-The reordering algorithm thereby has the following runtime:
+The reordering algorithm has the following upper bound running time:
 
 \begin{equation}
-O(|A||O| t + |B||O| t + |A|+|O|+|B| ) \nonumber
+O(|A||O| t + |B||O| t| ) \nonumber
 \end{equation}
 
 \begin{algorithm}
@@ -952,13 +953,13 @@ The sequence based merging algorithm in Figure \ref{Genericmergingalgorithm} is 
 \begin{itemize}
 	\item When the conflict-handler output the chunks as conflicting, it runs only constant time operations on the chunks, for any chunk. The running time is:\\
 		\begin{equation}
-			O(|A||O| t + |B||O| t + |A|+|O|+|B| ) \nonumber
+			O(|A||O| t + |B||O| t) \nonumber
 		\end{equation}
 
 	
 	\item When the conflict-handler flushes the output and starts a new merging algorithm it also break the loop, meaning conflicthandler is only invoked once. Given that $t'$ is the time it takes to run the conflicthandler, the running time is:\\
 		\begin{equation}
-			O(|A||O| t + |B||O| t + |A|+|O|+|B| + t') \nonumber
+			O(|A||O| t + |B||O| t + t') \nonumber
 		\end{equation}
 
 \end{itemize}
@@ -1007,7 +1008,7 @@ The main merging function of this thesis consists of a conflict-handler and a ge
 
 \paragraph{Running time} The running time for this is the second scenario of the sequence based merging algorithm, with the equality function being constant time. The running time for $t'$ is defined later. 
 		\begin{equation}
-			O(|A||O| + |B||O| + |A|+|O|+|B| + t') \nonumber
+			O(|A||O| + |B||O| + t') \nonumber
 		\end{equation}
 
 
@@ -1266,13 +1267,16 @@ Given that two nodes are only equal if they are of the same node-type, most of t
 
 The first two are obvious: Together they are used to calculate the average similarity across statements. Adding nothing to similarity for the last item, is also pretty obvious. Choosing how many statements to add is however not - one way to look at it is that each of the statements in the unstable chunk counts. This, however, means that a statements in unstable chunks have double the weight in the average compared to stable chunks: Two statements that are not similar both counts, while two statements that are similar only count once.
 
-Because of this we have choosen just the maximum of the two counts - this is the upper bound on how many dissimilar statements is in the block.
+Because of this we have chosen just the maximum of the two counts - this is the upper bound on how many dissimilar statements is in the block.
 
 \paragraph{Token similarity} Tokens-similarity is primarily merge of variable-names, integers, booleans and string. For booleans and integers strict equality of the token is the only sensible choice. For strings and variables there are many ways to compare them heuristically. However, since our goal for matching is to merge the nodes, it seems quite nonsensical to start using heuristics for such a matching: We cannot automatically merge two strings or variables, since we do not know the structure of them - it is better to leave them unmatched so they can be handled as an unstable chunks.
 
 \paragraph{Threshold} When the similarity of two nodes is calculated, we have to answer whether or not they are similar \textit{enough}. We set the cut off around 60\% equality.
 
 \todo[inline]{Write more about cutoff}
+
+\paragraph{Runnning time} 
+\todo[inline]{Write me!}
 
 \subsubsection{Merging lists}
 \begin{algorithm}
@@ -1328,6 +1332,9 @@ The cost of the argument-lists is much harder to define. An argument is an expre
 
 The first item in the above list, depends on the matchings in both parameterlists and argumentlists to match the same items. This is not generally true for for the two matching functions that we provide, but it is true in cases where reordering have happened without changing the expressions of each parameter.
 
+\paragraph{Runnning time} 
+\todo[inline]{Write me!}
+
 \subsubsection{Merging blocks}
 A block-node is hit by the MergeNode algorithm often. They are the body of methods, if-statements, while-loops, using-statements and more. We need to merge content inside in each branch and the base. We do a textual merge of the content of the block. If this fails, we do a priority-differencing as described in section \ref{PriorityDiff}, with the equality and and similarity function defined in algorithm \ref{FunctionSimilarity}.
 
@@ -1339,6 +1346,9 @@ Given these chunks we handle them in three different ways:
 	\item If a chunk is unstable, check of either branch is equal with base, and use the other.
 	\item Otherwise try to do an uneven merge as described later.
 \end{itemize}
+
+\paragraph{Runnning time} 
+\todo[inline]{Write me!}
 
 \begin{algorithm}
   \caption{Statement-list merging algorithm}
@@ -1374,6 +1384,9 @@ $MergeUneven$ is called in case of an unsolvable conflict in Algorithm \ref{Merg
 \paragraph{Flattening} $MergeUneven$ starts by flatting the input lists, in the sense that for any node found in the input lists that contains a sub-statement or a block, we bring these statements into the top level. During the flattening we remember the parent of each node, as can be seen in the left columns of the Flattened-item in the figure. Looking at the flattened list of child and parent elements,  it is obvious that chunks of continuous parent items in any of the three lists is a sub-block.
 
 \paragraph{Matching} Afterwards we run $PriorityChunking$ on the child elements of the flattened lists. If some statements have been moved to a subscope for these conflicts, this matches these statements with the ones in the other branches scope. As mentioned above, a continuous sequence of keys in the three branches means a sub-block. The same is the case in this matching: For each branch, we are able to track opening and closing sub-scopes by looking at the change between the last observed parent element, and at the current. This means we can isolate chunks of matches that happen in specific scopes. After isolating these, we can merge the parents, and for each continuous sequence of parent items, we can output a block around them.
+
+\paragraph{Runnning time} 
+\todo[inline]{Write me!}
 
 \begin{figure}
    \centerline{\includegraphics[scale=0.55]{drawings/html/EditedFlattenedMerge.eps}}
@@ -1421,6 +1434,9 @@ $MergeUneven$ is called in case of an unsolvable conflict in Algorithm \ref{Merg
 
 \clearpage
 \section{Future work}
+
+
+
 \todo[inline]{Things we did not do: \\
 - Evaluate the practical running time of the algorithm \\
 - Evaluate the actual output of the algorithm \\

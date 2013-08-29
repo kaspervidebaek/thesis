@@ -7,10 +7,10 @@
 \contentsline {algorithm}{\numberline {7}{\ignorespaces Three-way reordering algorithm}}{35}{algorithm.7}
 \contentsline {algorithm}{\numberline {8}{\ignorespaces Merging algorithm}}{37}{algorithm.8}
 \contentsline {algorithm}{\numberline {9}{\ignorespaces File-merge algorithm}}{37}{algorithm.9}
-\contentsline {algorithm}{\numberline {10}{\ignorespaces Class-merging algorithm}}{40}{algorithm.10}
-\contentsline {algorithm}{\numberline {11}{\ignorespaces Cost for method-similarity}}{42}{algorithm.11}
-\contentsline {algorithm}{\numberline {12}{\ignorespaces Tree-merging algorithm}}{44}{algorithm.12}
-\contentsline {algorithm}{\numberline {13}{\ignorespaces Token merging}}{44}{algorithm.13}
-\contentsline {algorithm}{\numberline {14}{\ignorespaces Unordered list merging algorithm}}{48}{algorithm.14}
+\contentsline {algorithm}{\numberline {10}{\ignorespaces Class-merging algorithm}}{39}{algorithm.10}
+\contentsline {algorithm}{\numberline {11}{\ignorespaces Cost for method-similarity}}{41}{algorithm.11}
+\contentsline {algorithm}{\numberline {12}{\ignorespaces Tree-merging algorithm}}{43}{algorithm.12}
+\contentsline {algorithm}{\numberline {13}{\ignorespaces Token merging}}{43}{algorithm.13}
+\contentsline {algorithm}{\numberline {14}{\ignorespaces Unordered list merging algorithm}}{47}{algorithm.14}
 \contentsline {algorithm}{\numberline {15}{\ignorespaces Statement-list merging algorithm}}{49}{algorithm.15}
 \contentsline {algorithm}{\numberline {16}{\ignorespaces Uneven branch merging algorithm}}{51}{algorithm.16}

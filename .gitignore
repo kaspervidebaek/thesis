@@ -14,3 +14,4 @@ bin
 *.loa
 /Documentation/*.ist
 /Documentation/*.glo
+*.loa

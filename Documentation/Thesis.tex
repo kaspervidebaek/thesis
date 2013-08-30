@@ -54,7 +54,7 @@ morestring=[b]',
 \section*{Abstract}
 \todo[inline]{Write me}
 \clearpage
-\setcounter{tocdepth}{2}
+%\setcounter{tocdepth}{2}
 \tableofcontents
 
 \clearpage 
@@ -583,14 +583,14 @@ The pseudocode for this algorithm is in Algorithm \ref{CunkingAlgorithm}. \footn
 \begin{algorithm}
 \begin{algorithmic}
 \Function{PriorityChunk}{$A$, $O$, $B$, $equal$, $similar$}
-	\State $m \gets \Call{ThreeWayChunking}{A, O, B, equal}$
+	\State $m \gets \Call{ThreeWayMatching}{A, O, B, equal}$
 	\State $cs \gets \Call{Chunking}{m}$
 	\State $r \gets [\,]$
 	\ForAll{$c$ in $cs$}
 		\If{$c$ is stable}
 			\State add $c$ to $r$ as equality-stable
 		\Else
-			\State $m' \gets \Call{ThreeWayChunking}{c.A, c.O, c.B, similar} $
+			\State $m' \gets \Call{ThreeWayMatching}{c.A, c.O, c.B, similar} $
             \State $cs' \gets \Call{Chunking}{m'}$
 			\ForAll{$c'$ in $cs'$}
 				\If{$c'$ is stable}
@@ -898,12 +898,12 @@ A conflicting move is a move where two \textit{move to} operations exists on eac
 
 The process of reordering can be seen in Figure \ref{Reordering}. This figure also shows that the ambiguity in our two-way-matching algorithm can lead to different potential outcomes of the reordering algorithm; if the $A \rightarrow O$-matching chooses to match the 4; implying that 4 has only moved in the $O \rightarrow B$-match, we produce a conflict-free output. If the $A \rightarrow O$-matching chooses 3 as the match, we get a conflict where 4 is being inserted both places. The safe bet is to modify the algorithm such that a conflict is always produced, by modifying the two-way-matching to return all possible matchings, and let the three-way-matching algorithm choose a pair that share most matchings.
 
-\paragraph{Running time} ThreeWayMatching runs in $O(|A||O| t + |B||O| t)$ time, and in worst case it returns $|A|+|O|+|B|$ items. The loop in the algorithm only has constant time operations which means the overall running time is $O(|A|+|O|+|B|)$ for the loop. Conflict detection can be done by keeping a hash set on the side of the results already added which gives us constant time lookup for each item; leaving us with $O(|A|+|O|+|B|)$ time.
+\paragraph{Running time} ThreeWayMatching runs in $O(|A||O| t + |B||O| t)$ time, where $t$ in this case is constant time for checking referential equality. In worst case it returns $|A|+|O|+|B|$ items. The loop in the algorithm only has constant time operations which means the overall running time is $O(|A|+|O|+|B|)$ for the loop. Conflict detection can be done by keeping a hash set on the side of the results already added which gives us constant time lookup for each item; leaving us with $O(|A|+|O|+|B|)$ time.
 
 The reordering algorithm has the following upper bound running time:
 
 \begin{equation}
-O(|A||O| t + |B||O| t| ) \nonumber
+O(|A||O| + |B||O|) \nonumber
 \end{equation}
 
 \begin{algorithm}

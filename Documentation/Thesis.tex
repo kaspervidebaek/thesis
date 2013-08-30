@@ -54,7 +54,7 @@ morestring=[b]',
 \section*{Abstract}
 \todo[inline]{Write me}
 \clearpage
-%\setcounter{tocdepth}{2}
+\setcounter{tocdepth}{2}
 \tableofcontents
 
 \clearpage 
@@ -772,7 +772,7 @@ O(\max(|X|, |Y|)^2 \log (\max(|X|, |Y|)) \nonumber
 
 \begin{algorithm}
 \begin{algorithmic}
-\Function{CostSetMatching}{$X$, $Y$}
+\Function{TwoWayCostMatching}{$X$, $Y$}
 	\State Generate $G$ from $X$ and $Y$ given a cost function.
 	\State ~~~~ Store items of $X$ and $Y$ that has no cost.
 	\State ~~~~~~ Do not add them to $G$.
@@ -802,9 +802,9 @@ O(\max(|X|, |Y|)^2 \log (\max(|X|, |Y|)) \nonumber
 
 \begin{algorithm}
 \begin{algorithmic}
-\Function{ThreeWayCostMatching}{$A$, $O$, $B$, $cost$}
-	\State $m_a\gets TwoWayCostMatch(A, O, cost)$
-	\State $m_b\gets TwoWayCostMatch(B, O, cost)$
+\Function{ThreeWayCostMatching}{A, O, B, $\texttt{cost}$}
+	\State $m_a\gets \Call{TwoWayCostMatching}{$A, O, $\texttt{cost}}$
+	\State $m_b\gets \Call{TwoWayCostMatching}{$B, O, $\texttt{cost}}$
 	
 	\State Sort $m_a$ after the index of $O$-items
 	\State Sort $m_b$ after the index of $O$-items
@@ -857,6 +857,34 @@ O(n^2 \log n) \nonumber
 
 \subsubsection{Reordering}
 \label{ThreeWayReorderingAlgorithmSec}
+
+\begin{algorithm}
+\begin{algorithmic}
+\Function{Reordering}{$A$, $O$, $B$}
+   \State $ms \gets \Call{ThreeWayMatcing}{A, O, B, $ item equalilty $}$
+   \State $r \gets [\,]$
+   
+   \ForAll{$m$ in $ms$}
+      \If{$m$ is insertion}
+         \State add relevant item (A or B) to $r$.
+      \EndIf
+      \If{$m$ is move and exists in opposite branch}
+         \State add relevant item (A or B) to $r$.
+      \EndIf
+      \If{$m$ is unchanged}
+         \State add item O to $resultList$
+      \EndIf
+      
+	\EndFor
+	\State $c \gets$ find indexes of duplicate items in $r$
+	\State \Return $(r, c)$
+\EndFunction
+\end{algorithmic}
+\caption{Three-way reordering algorithm}
+  \label{ThreeWayReorderingAlgorithm}
+\end{algorithm}
+
+
 Several times in this thesis, we match sets together and afterwards want to produce a sequence for our output. While we are looking at the sets, we have no order, and when we later want to produce the sequence we will have to generate this order. Here we provide a function to resolve the problem where reordering of items in a sequence have happened in different branches. We define a general three-way sequence-reordering-function. Given an original sequence and two reordered sequences, the result is a single sequence where all elements are outputted in a onrder that can reasonably be described as a merge the orders in the three input sequences.
 
 Reorderings can conflict. One example could be that the sequence \texttt{(a, b, x, c, d)} has turned into \texttt{(x, a, b, c, d)} in one branch and \texttt{(a, b, c, d, x)}. These three sequences can easily be intepreted as \texttt{x} being been moved different places in the two branches, and a conflict should be produced.
@@ -905,32 +933,6 @@ The reordering algorithm has the following upper bound running time:
 \begin{equation}
 O(|A||O| + |B||O|) \nonumber
 \end{equation}
-
-\begin{algorithm}
-\begin{algorithmic}
-\Function{Reordering}{$A$, $O$, $B$}
-   \State $ms \gets ThreeWayMatcing(A, O, B, $ item equalilty $)$
-   \State $r \gets [\,]$
-   
-   \ForAll{$m$ in $ms$}
-      \If{$m$ is insertion}
-         \State add relevant item (A or B) to $r$.
-      \EndIf
-      \If{$m$ is move and exists in opposite branch}
-         \State add relevant item (A or B) to $r$.
-      \EndIf
-      \If{$m$ is unchanged}
-         \State add item O to $resultList$
-      \EndIf
-      
-	\EndFor
-	\State $c \gets$ find indexes of duplicate items in $r$
-	\State \Return $(r, c)$
-\EndFunction
-\end{algorithmic}
-\caption{Three-way reordering algorithm}
-  \label{ThreeWayReorderingAlgorithm}
-\end{algorithm}
 
 \subsection{Merging files}
 
@@ -999,7 +1001,7 @@ The sequence based merging algorithm from Algorithm \ref{Genericmergingalgorithm
   \label{Genericmergingalgorithm}
 \end{algorithm}
 
-\subsubsection{Mergefile function}
+\subsubsection{Merging files}
 Algorithm \ref{Mainmerge} does a line-based merge, and if this fails, it does a syntactic merge.
 
 The main merging function of this thesis consists of a conflict-handler and a general merge function. The merge function is given three lists of strings. Each item in this list represents a line in the code-files we want to merge. It passes these lists to the to the sequence merging algorithm, and if this algorithm encounters a conflict, the conflict-handler is called. The conflict-handler flushes the output, and launches the syntax-aware merging, and add this as output instead. Then it indicates to the merging algorithm that the entire input sequence is merged.
@@ -1012,13 +1014,13 @@ The main merging function of this thesis consists of a conflict-handler and a ge
 
 \begin{algorithm}
 \begin{algorithmic}
-\Function{MergeFile}{$A$, $O$, $B$}
-   \State $Conflicthandler \gets (output, chunk) \Rightarrow$
+\Function{MergeFile}{A, O, B}
+   \State $\texttt{conflicthandler} \gets (output, chunk) \Rightarrow$
       \State ~~~~~~~~~~~~~~~~~~~~ clear $output$
-      \State ~~~~~~~~~~~~~~~~~~~~ let $output$ be the result of $MergeSyntax(A, O, B)$
+      \State ~~~~~~~~~~~~~~~~~~~~ let $output$ be the result of \Call{MergeSyntax}{A, O, B}
       \State ~~~~~~~~~~~~~~~~~~~~ terminate outer merge function
-	\State $equality \gets (x, y) \Rightarrow x = y$
-	\State \Return $Merge(A, O, B, equality, conflicthandler)$
+	\State $\texttt{equality} \gets (x, y) \Rightarrow x = y$
+	\State \Return \Call{Merge}{A, O, B, \texttt{equality}, \texttt{conflicthandler}}
 \EndFunction
 \end{algorithmic}
 \caption{File-merge algorithm}
@@ -1185,7 +1187,7 @@ MergeSyntax is a traversal on every single node of the three trees, taking $O(n)
 O(n^3 \log n)  \nonumber
 \end{equation}
 
-\subsubsection{Cost-functions}
+\subsubsection{Costs}
 
 \begin{algorithm}
 \caption{Cost for method-similarity}
@@ -1246,7 +1248,7 @@ This function has some properties that are helpful, given the above consideratio
 
 \paragraph{Running time} The running time for the cost function for classes and namespaces is $O(1)$. Defining the cost of functions is dependant on the size of the input lists $n_x$ and $n_y$. We run a two-way matching on the two input lists with function running in $O(1)$ time; this gives an running time of $O(n_x n_y)$.
 
-\subsection{Merging functions}
+\subsection{Merging}
 \todo[inline]{Explain that running times are at the end of the section}
 
 \label{MergingFunction}
@@ -1507,9 +1509,29 @@ $MergeUneven$ is called in case of an unsolvable conflict in Algorithm \ref{Merg
 \label{MergeUneven}
 \end{algorithm}
 
-
 \subsection{Running time}
+In this section we will give a brief overview of the overall running time of the algorithm we have created. We generally view $n$ as $O(max(|A|, |O|, |B|)$ or $O(max(|X|, |Y|)$  or $O(|M|)$ depending on the input parameters. $t$ and $t'$ are the running times of input functions in order.
 
+\begin{tabular}{l | l }
+Algorithm & Upper bound \\ \hline
+TwoWayMatching(X, Y) & $O(n^2 \cdot t)$ \\
+ThreeWayMatching(A, O, B) & $O(n^2 \cdot t)$ \\
+Chunking(M) & $O(n)$ \\
+PriorityChunking(A, O, B, eq, sim) & $O(n^2(t + t')$ \\
+TwoWayCostMatching(X, Y, t) & $O(n^2 \log n)$ \\
+Three-way set matching(A, O, B) & $O(n^2 \log n)$ \\
+Reordering(A, O, B) & $O(n^2)$ \\
+
+Equality(X, Y)  & $O(n)$ \\
+Similar(X, Y) & $O(n^4)$ \\
+
+Merge(A, O, B, eq, ch) & $O(n^2 \cdot t)$  or  $O(n^2 \cdot t +  t')$ \\
+MergeFile(A, O, B) & $O(n^2 + c)$  \\
+MergeSyntax(A, O, B) & $O(n^3 \log n)$ \\
+MergeNode(A, O, B) & $O(n^3 + n^6)$ \\
+\end{tabular}
+
+The main entry point for our algorithm is \texttt{MergeFile}. It is inputted sequences.
 
 
 \clearpage

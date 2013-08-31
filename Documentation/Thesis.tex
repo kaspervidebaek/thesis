@@ -47,6 +47,10 @@ morestring=[b]",
 morestring=[b]',
 }
 
+\lstset{
+   showlines=true
+}
+
 \begin{document}
 \maketitle
 
@@ -95,7 +99,7 @@ A conflict can be defined in a few ways for line based tools. In the \texttt{dif
 
 \begin{multicols*}{4}
 
-\texttt{A}
+\textbf{A}
 
 
 \begin{lstlisting}[language=CSharp]
@@ -104,11 +108,12 @@ f1();
 }
 f2();
 f3();
+
 \end{lstlisting}
 
 \columnbreak
 
-\texttt{O}
+\textbf{O}
 
 \begin{lstlisting}[language=CSharp]
 if(e) {
@@ -116,11 +121,12 @@ f1();
 f2();
 f3();
 }
+
 \end{lstlisting}
 
 \columnbreak
 
-\texttt{B}
+\textbf{B}
  
 \begin{lstlisting}[language=CSharp]
 if(e) {
@@ -128,11 +134,12 @@ f1();
 f2();
 }
 f3();
+
 \end{lstlisting}
 
 \columnbreak
 
-\texttt{Result}
+\textbf{Result}
  
 \begin{lstlisting}[language=CSharp]
 if(e) {
@@ -152,7 +159,7 @@ f3();
 
 \begin{multicols*}{4}
 
-\texttt{A}
+\textbf{A}
 
 
 \begin{lstlisting}[language=CSharp]
@@ -161,21 +168,27 @@ if(e) {
 f2();
 f3();
 }
+
+
 \end{lstlisting}
 
 \columnbreak
 
-\texttt{O}
+\textbf{O}
 
 \begin{lstlisting}[language=CSharp]
 f1();
 f2();
 f3();
+
+
+
+
 \end{lstlisting}
 
 \columnbreak
 
-\texttt{B}
+\textbf{B}
  
 \begin{lstlisting}[language=CSharp]
 if(e2) {
@@ -183,11 +196,13 @@ f1();
 f2();
 }
 f3();
+
+
 \end{lstlisting}
 
 \columnbreak
 
-\texttt{Result}
+\textbf{Result}
  
 \begin{lstlisting}[language=CSharp]
 if(e2) {
@@ -197,7 +212,6 @@ f2();
 }
 f3();
 }
-
 \end{lstlisting}
 \end{multicols*}
 \caption{A line based merge that produces no conflict, but produces a result, which is most likely not the intend of the users; $f3$ is conditioned by $e2$, which no branches specified and $e$ only conditions $f2$ and not $f3$ as specified in the A-branch}
@@ -446,12 +460,19 @@ In the end, we decided to only work on semantic trees and we decided that our al
 
 \clearpage
 
-\section{Toolbox}
+\section{Merging toolbox}
+\todo[inline]{Rephrase a little}
+
 This section describes the algorithms written for the code-merging tool. Section \ref{UtilitiyMethods} lists a couple of functions that are used generally throughout the later sections. Section \ref{MergingFiles} describe the general file merging functions; the entry point for our algorithm. 
 
 We will be doing run-time analysis through the section. When doing this we will interchangeably refer to the number of items in a set or sequence $x$ as $|x|$.
 
-\subsection{Functions for sequences and sets}
+
+\todo[inline]{UtilitiyMethods \\
+SequenceMerging \\
+EqSim}
+
+\subsection{Sequences and sets}
 \label{UtilitiyMethods}
 This section describes a series of methods that can match and manipulate sets an sequences in a way that is useful for sequence and tree merging. In some cases we motivate their existence in this section, but in other cases the motivation might first become clear in the later sections.
 
@@ -584,9 +605,9 @@ The pseudocode for this algorithm is in Algorithm \ref{CunkingAlgorithm}. \footn
 \begin{algorithmic}
 \Function{PriorityChunk}{$A$, $O$, $B$, $equal$, $similar$}
 	\State $m \gets \Call{ThreeWayMatching}{A, O, B, equal}$
-	\State $cs \gets \Call{Chunking}{m}$
+	\State $c' \gets \Call{Chunking}{m}$
 	\State $r \gets [\,]$
-	\ForAll{$c$ in $cs$}
+	\ForAll{$c$ in $c'$}
 		\If{$c$ is stable}
 			\State add $c$ to $r$ as equality-stable
 		\Else
@@ -713,8 +734,8 @@ The pseudocode for the algorithm can be found in Algorithm \ref{OriginalCostMatc
 We want to modify this algorithm to have the following properties:
 
 \begin{itemize}
-\item It works for x and y sets of different size. 
-\item It works even though a perfect matching cannot be found in the residual graph.
+\item It should work for x and y sets of different size. 
+\item It should work even though a perfect matching cannot be found in the residual graph.
 \item For any element not matched it should return a matching $(x, \epsilon)$ or $(\epsilon, y)$
 \end{itemize}
 
@@ -895,9 +916,10 @@ To do a three-way reordering, the obvious entry point is to identify which items
 
 Further, such a move operation is not our input, and it is not clear how to calculate one from our input. Our input is three sequences with a specific order, and given those, many different move operations could be generated. The difference between two sequences \texttt{a, b, c, d} and \texttt{a, b, d, c} can be interpreted as \texttt{c} being moved to after \texttt{d}, as \texttt{d} being placed before \texttt{c}, as \texttt{c} and \texttt{d} swapping places, and many other options. Also, figuring out the correct representation of a move in an algorithmic way can only be an uninformed guess - the users reasoning for doing a reordering is probably grounded in context that the algorithm is unaware of.
 
-We interpret reorderings differently. Given the input sequences we do three-way matching. Such a matching produces the actual ordering. A matching contain some stable elements and some unstable elements. The stable elements are elements where a match exists in both A, O and B. we assume these elements to be items that have not moved in the sequence. If something is not stable, it is either a \textit{move}, an \textit{insertion} or a \textit{deletion} as seen in table \ref{ReorderingTable}.
+We interpret reorderings differently. Given the input sequences we do three-way matching. Such a matching produces the actual ordering. A matching contain some stable elements and some unstable elements. The stable elements are elements where a match exists in both A, O and B. we assume these elements to be items that have not moved in the sequence. If something is not stable, it is either a \textit{move}, an \textit{insertion} or a \textit{deletion} as seen in Table \ref{ReorderingTable}.
 
-\begin{figure}
+\begin{table}
+
 \centering
 \begin{tabular}{ | l | l | l || r |}
   \hline                        
@@ -912,7 +934,7 @@ We interpret reorderings differently. Given the input sequences we do three-way 
 \end{tabular}
   \caption{How to interpret matchings in the reordering algorithm}
 \label{ReorderingTable}
-\end{figure}
+\end{table}
 
 We iterate through each matching, and treat them as such. Distinguishing between a \textit{deletion} or a \textit{move from} is not important - neither should be added to the output. However, distinguishing between \textit{insertion} and \textit{move to} is important. Insertions should always be inserted in the output, however moves should only be inserted to the output if they have not been deleted in the opposite branch. 
 
@@ -924,9 +946,9 @@ A conflicting move is a move where two \textit{move to} operations exists on eac
    \label{Reordering}
 \end{figure}
 
-The process of reordering can be seen in Figure \ref{Reordering}. This figure also shows that the ambiguity in our two-way-matching algorithm can lead to different potential outcomes of the reordering algorithm; if the $A \rightarrow O$-matching chooses to match the 4; implying that 4 has only moved in the $O \rightarrow B$-match, we produce a conflict-free output. If the $A \rightarrow O$-matching chooses 3 as the match, we get a conflict where 4 is being inserted both places. The safe bet is to modify the algorithm such that a conflict is always produced, by modifying the two-way-matching to return all possible matchings, and let the three-way-matching algorithm choose a pair that share most matchings.
+The process of reordering can be seen in Figure \ref{Reordering}. This figure also shows that the ambiguity in our two-way-matching algorithm can lead to different potential outcomes of the reordering algorithm; if the \texttt{AO}-matching chooses to match the 4, implying that 4 has only moved in the \texttt{OB}-match, then we produce a conflict-free output. If the \texttt{AO}-matching chooses 3 as the match, we get a conflict where 4 is being inserted both places. The safe bet is to modify the algorithm such that a conflict is always produced, by modifying the two-way-matching to return all possible matchings, and let the three-way-matching algorithm choose a pair that share most matchings.
 
-\paragraph{Running time} ThreeWayMatching runs in $O(|A||O| t + |B||O| t)$ time, where $t$ in this case is constant time for checking referential equality. In worst case it returns $|A|+|O|+|B|$ items. The loop in the algorithm only has constant time operations which means the overall running time is $O(|A|+|O|+|B|)$ for the loop. Conflict detection can be done by keeping a hash set on the side of the results already added which gives us constant time lookup for each item; leaving us with $O(|A|+|O|+|B|)$ time.
+\paragraph{Running time} ThreeWayMatching runs in $O(|A||O| t + |B||O| t)$ time, where $t$ in this case is constant time for checking referential equality. In worst case it returns $|A|+|O|+|B|$ items. The loop in the algorithm contains constant time operations which means the overall running time is $O(|A|+|O|+|B|)$ for the loop. Conflict detection can be done by keeping a hash set on the side of the results already added which gives us constant time lookup for each item, leaving us with $O(|A|+|O|+|B|)$ time.
 
 The reordering algorithm has the following upper bound running time:
 
@@ -934,14 +956,45 @@ The reordering algorithm has the following upper bound running time:
 O(|A||O| + |B||O|) \nonumber
 \end{equation}
 
-\subsection{Merging files}
 
-\label{MergingFiles}
+\subsection{Sequence-merging}
+\label{SequenceMerging}
 
-Merging files is initially be done using a line-based approach. When a conflict is detected, we break down the syntax tree and use a structured merged instead. In this section we briefly describe our algorithms for the line based approach and for conflict detection and resolving.
+\begin{algorithm}
+\begin{algorithmic}
+\Function{MergeSequence}{$\texttt{A}$, $\texttt{O}$, $\texttt{B}$, \texttt{equality}, \texttt{conflicthandler}}
+   \State $\texttt{match} \gets \Call{ThreeWayMatch}{\texttt{A}, \texttt{O}, \texttt{B}, \texttt{equality}}$
+   \State $\texttt{chunks} \gets \Call{Chunking}{\texttt{match}}$
+   \State $\texttt{merged} \gets [\,]$
+   \ForAll{\texttt{chunk} in \texttt{chunks}}
+        \If {\texttt{chunk} is stable}
+            \State add line of chunk.O to merged
+            \State continue to next iteration
+        \EndIf
+        \If {\texttt{chunk} is added in \texttt{A} or \texttt{B }}
+            \State add lines of \texttt{chunk} to \texttt{merged}
+        \Else
+            \If{\texttt{O} is equal with one branch, but not the other}
+               \State add lines of changed branch to \texttt{merged}
+            \ElsIf{the two branches are equal}
+               	\State add either of them to merged
+			\Else
+				\State \Call{conflicthandler}{\texttt{merged}, \texttt{chunk}}
+				\If{conflict-handler indicates termination}
+					\State break
+                \EndIf
+			\EndIf
+   		\EndIf
+    \EndFor
+	\State \Return \texttt{merged}
+\EndFunction
 
-\subsubsection{Sequence based merging}
-The sequence based merging algorithm from Algorithm \ref{Genericmergingalgorithm} is based on the description found of the original \texttt{diff3} algorithm in \citet{Khanna}. Conflict-handling is delegated to an input function, to allow different handling in different situations. We pass the list of current merged text, and the currently unmerged chunk. The merged list can be arbitrarily modified inside the conflict handler. Also, We allow the conflict-handler to break out of the entire loop. This allows two essential use-cases:
+\end{algorithmic}
+\caption{Sequence merging algorithm}
+  \label{Genericmergingalgorithm}
+\end{algorithm}
+
+The sequence based merging algorithm from Algorithm \ref{Genericmergingalgorithm} is based on the description found of the original \texttt{diff3} algorithm in \citet{Khanna}. Conflict-handling is delegated to an input function, to allow different handling in different situations. We pass the list of current merged text, and the currently unmerged chunk. The merged list can be arbitrarily modified inside the conflict handler. Also, We allow the conflict-handler to break out of the entire loop. This supports two essential use-cases:
 
 \begin{itemize}
    \item Output the three items of the chunk, indicating that these are conflicting.
@@ -964,70 +1017,9 @@ The sequence based merging algorithm from Algorithm \ref{Genericmergingalgorithm
 
 \end{itemize}
 
-\begin{algorithm}
-\begin{algorithmic}
-\Function{Merge}{$A$, $O$, $B$, $equality$, $comparer$}
-   \State $match \gets ThreeWayMatch(A, O, B, equality)$
-   \State $chunks \gets getChunks(match, comparer)$
-   \State $merged \gets []$
-   \ForAll{$chunk$ in $chunks$}
-        \If {$chunk$ is stable}
-            \State add line of chunk.O to merged
-            \State continue to next iteration
-        \EndIf
-        \If {$chunk$ is added in $A$ or $B$}
-            \State add lines of $chunk$ to $merged$
-        \Else
-            \If{$O$ is equal with one branch, but not the other}
-               \State add lines of changed branch to $merged$
-            \Else
-                \If{the two branches are equal}
-                   \State add either of them to merged
-                \Else
-                   \State $conflicthandler(merged, chunk)$
-                   \If{$conflicthandler$ indicates termination}
-                      \State break
-                   \EndIf
-                \EndIf
-			\EndIf
-   		\EndIf
-    \EndFor
-	\State \Return $merged$
-\EndFunction
-
-
-\end{algorithmic}
-\caption{Merging algorithm}
-  \label{Genericmergingalgorithm}
-\end{algorithm}
-
-\subsubsection{Merging files}
-Algorithm \ref{Mainmerge} does a line-based merge, and if this fails, it does a syntactic merge.
-
-The main merging function of this thesis consists of a conflict-handler and a general merge function. The merge function is given three lists of strings. Each item in this list represents a line in the code-files we want to merge. It passes these lists to the to the sequence merging algorithm, and if this algorithm encounters a conflict, the conflict-handler is called. The conflict-handler flushes the output, and launches the syntax-aware merging, and add this as output instead. Then it indicates to the merging algorithm that the entire input sequence is merged.
-
-\paragraph{Running time} The running time for this is the second scenario of the sequence based merging algorithm, with the equality function being constant time. The running time for $t'$ is defined later. 
-		\begin{equation}
-			O(|A||O| + |B||O| + t') \nonumber
-		\end{equation}
-
-
-\begin{algorithm}
-\begin{algorithmic}
-\Function{MergeFile}{A, O, B}
-   \State $\texttt{conflicthandler} \gets (output, chunk) \Rightarrow$
-      \State ~~~~~~~~~~~~~~~~~~~~ clear $output$
-      \State ~~~~~~~~~~~~~~~~~~~~ let $output$ be the result of \Call{MergeSyntax}{A, O, B}
-      \State ~~~~~~~~~~~~~~~~~~~~ terminate outer merge function
-	\State $\texttt{equality} \gets (x, y) \Rightarrow x = y$
-	\State \Return \Call{Merge}{A, O, B, \texttt{equality}, \texttt{conflicthandler}}
-\EndFunction
-\end{algorithmic}
-\caption{File-merge algorithm}
-  \label{Mainmerge}
-\end{algorithm}
 
 \subsection{Equality and similarity}
+\label{EqSim}
 In this section we define equality and similarity on syntax nodes.
 
 \subsubsection{Equality}
@@ -1056,18 +1048,17 @@ If we view syntax trees as n-ary trees with no semantic meaning, this becomes ea
 		\State \texttt{c} $\gets$ \Call{Map}{} (\texttt{m}, (\texttt{x}, \texttt{y}) $\rightarrow$ \texttt{x} or \texttt{y} is null ? 0 : 1)
 		\State \Return \Call{Average}{\texttt{Cost}}
 	\ElsIf{\texttt{x} and \texttt{y} are blocks}
-		\State \texttt{m} $\gets$ \Call{TwoWayAllign}{x, y, equal}
-		\State \texttt{cs} $\gets$ \Call{Chunking}{m}
+		\State \texttt{m'} $\gets$ \Call{TwoWayAllign}{x, y, equal}
 		\State \texttt{s} $\gets$ 0, \texttt{t} $\gets$ 0
-		\ForAll{\texttt{c} in \texttt{cs}}
-			\If{\texttt{c} is stable}
-				\State \texttt{s} += $|c_x| \cdot 2$
-				\State \texttt{t} += $|c_x| \cdot 2$
+		\ForAll{\texttt{m} in \texttt{m'}}
+			\If{\texttt{m}$_x$ is null or \texttt{m}$_y$ is null}
+				\State \texttt{s} += 1
 			\Else
-				\State \texttt{s} += $|c_x| + |c_y|$
+				\State \texttt{s} += 2
+				\State \texttt{t} += 2
 			\EndIf
-		\State \Return $ \texttt{s} / \texttt{t} $;
 		\EndFor
+		\State \Return $ \texttt{s} / \texttt{t} $;
 	\EndIf
 \EndFunction
 \end{algorithmic}
@@ -1089,17 +1080,7 @@ Given that two nodes are only equal if they are of the same node-type, most of t
 
 \paragraph{Lists} Parameters and arguments throughout the syntax tree are placed in lists. Finding similarity between these lists, is a question of matching the arguments or the parameters inside the lists. This matching is done without order: If the order of parameters or arguments have changed across branches, it is probably more due to reorderings or change in overloads, than it has anything to do with change in actual behaviour.
 
-\paragraph{Blocks} Similarity for blocks is determined by doing a priority-chunk-matching, and for each chunk, count up by adding up the similarity and the count of statements:
-
-\begin{itemize}
-	\item For equality-stable chunks we add 1 to the similarity and 1 to the statement-count foreach statement
-	\item For similarity-stable chunks we add the similarity between the two statement, and 1 to the statement-count for each matching
-	\item For unstable chunks we add nothing to the similarity and the maximum number of statement in both of the sides for the unstable chunk.
-\end{itemize}
-
-The first two are obvious: Together they are used to calculate the average similarity across statements. Adding nothing to similarity for the last item, is also pretty obvious. Choosing how many statements to add is however not - one way to look at it is that each of the statements in the unstable chunk counts. This, however, means that a statements in unstable chunks have double the weight in the average compared to stable chunks: Two statements that are not similar both counts, while two statements that are similar only count once.
-
-Because of this we have chosen just the maximum of the two counts - this is the upper bound on how many dissimilar statements is in the block.
+\paragraph{Blocks} Similarity for blocks are determined by doing a two-way matching on the input sequences with node equality as the equality function. Each stable match counts for one, and each unstable counts zero. We averag these numbers; weighing stable matches twice as much as unstable due to updates in a line counting twice in the amount of unstable matches.
 
 \paragraph{Token similarity} Tokens-similarity is primarily merge of variable-names, integers, booleans and string. For booleans and integers strict equality of the token is the only sensible choice. For strings and variables there are many ways to compare them heuristically. However, since our goal for matching is to merge the nodes, it seems quite nonsensical to start using heuristics for such a matching: We cannot automatically merge two strings or variables, since we do not know the structure of them - it is better to leave them unmatched so they can be handled as an unstable chunks.
 
@@ -1112,47 +1093,76 @@ Because of this we have chosen just the maximum of the two counts - this is the 
 \begin{equation}
 O(n^4) \nonumber
 \end{equation}
-
+\clearpage
 \section{C\# Specific implementation}
 Section \ref{SyntaxBreakDown} describe the syntactic breakdown of files. Section \ref{MergingClasses} describe the structure matcher that matches and merges methods in classes. Section \ref{MergingFunction} focus on merging syntax trees that are matched. Section \ref{MergingUnevenSection} describe our approach to merging branches where matched nodes have moved in or out of sub-blocks.
 
-\subsection{Syntactic breakdown}
+\subsection{Merging files}
+\label{MergingFiles}
+Merging files is generally done using a line-based approach. When a conflict is detected, we parse the code and generate the syntax tree and use a structured merged instead. In this section we briefly describe the entry point for the file-merging algorithm. Algorithm \ref{Mainmerge} does a line-based merge, and if this fails, it does a syntactic merge.
+
+The function is given three lists of strings. Each item in this list represents a line in the code-files we want to merge. It passes these lists to the to the sequence merging algorithm, and if this algorithm encounters a conflict, the conflict-handler is called. The conflict-handler flushes the output, and launches the syntax-aware merging; adding this functions output instead, and indicates to the sequence based merging that it should terminate and return.
+
+\paragraph{Running time} The running time for this is the second scenario of the sequence based merging algorithm, with the equality function being constant time. The running time for $t'$ is defined later. 
+		\begin{equation}
+			O(|A||O| + |B||O| + t') \nonumber
+		\end{equation}
+
+
+\begin{algorithm}
+\begin{algorithmic}
+\Function{MergeFile}{A, O, B}
+   \State $\texttt{conflicthandler} \gets (\texttt{output}, \texttt{chunk}) \Rightarrow$
+      \State ~~~~~~~~~~~~~~~~~~~~ flush \texttt{output}
+      \State ~~~~~~~~~~~~~~~~~~~~ \texttt{output} $\gets$ \Call{MergeSyntax}{A, O, B}
+      \State ~~~~~~~~~~~~~~~~~~~~ \Return \texttt{Terminate} \Comment{Indicates that MergeSequence  \\ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  should terminate}
+	\State $\texttt{equality} \gets (x, y) \Rightarrow x = y$
+	\State \Return \Call{MergeSequence}{A, O, B, \texttt{equality}, \texttt{conflicthandler}}
+\EndFunction
+\end{algorithmic}
+\caption{File merging algorithm}
+  \label{Mainmerge}
+\end{algorithm}
+
+
+\subsection{Syntactic analysis}
 \label{SyntaxBreakDown}
-At some point we have turn parse the input files to get syntax trees. We'll use Microsofts Roslyn Compiler. It has implemented a C\# syntax tree as a .NET class hierarchy, and with a single function call it is possible to get a syntax tree produced from a code file. This syntax tree seems to be closely corresponding to the actual grammatical rules set up by it's languages, and it allows us to get the textual representation for each node in the three.
+When \texttt{MergeSyntax} is launched, we need to parse the three input files into syntax trees. The implementation uses Microsofts Roslyn Compiler, which builds a syntax tree as object in a class hierarchy of C\#. This syntax tree is closely corresponding to the grammatical rules set up by C\# and it allows us to get the textual representation for each node in the three.
 
-\paragraph{Running time} The running time for getting syntax trees from Roslyn does not seem to be specified. However, Visual Studio relies on Roslyn for compilation, refactoring and code highlighting which all seems reasonable fast.
-
-
+\paragraph{Running time} The running time for getting syntax trees from Roslyn does not seem to be specified. However, Visual Studio relies on Roslyn for compilation, refactoring and code highlighting which seems reasonably fast.
 
 \subsection{Merging classes}
-\label{mergingclasses}
 \label{MergingClasses}
 
 \begin{algorithm}
 \begin{algorithmic}
 \Function{MergeSyntax}{$A$, $O$, $B$}
-    \If{nodes are roots, namespaces or classes}
-        \State $zip  \gets ThreeWayCostMatching(A.children, O.children,$
-        \State ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  $B.children,$ relevant cost function $)$  
-        \State $members \gets [];$
-        \State $deletionconflicts \gets []$
-        \ForAll{$m$ in $zip$}
-           \If{$m$ exists in all}
-               \State $member.add(m, MergeSyntax(m.A, m.O, m.B))$
+    \If{$A$, $O$, $B$ are roots, namespaces or classes}
+        \State $\texttt{zip} \gets $\Call{ThreeWayCostMatching}{children of $A$, children of $O$
+        \State ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  children of $B$, relevant cost function}
+        \State $\texttt{members} \gets [\,];$
+        \State $\texttt{deletionconflicts} \gets [\,]$
+        \ForAll{$m$ in $\texttt{zip}$}
+           \If{$m$ exists in both branches and base}
+               \State Add $(m, $\Call{MergeSyntax}{$m_A, m_O, m_B}$ to \texttt{members}
            \ElsIf{match was inserted in A or B}
-              \State $member.add(m, (m.A$ or $m.B ))$
+              \State Add $(m, (m.A$ or $m.B ))$ to \texttt{members}
            \ElsIf{match was deleted and changed in opposite branch}
-               \State $member.add(m, (m.A$ or $m.B ))$
-               \State $deletionconflicts.add(m.A$ or $m.B )$
+               \State Add $(m, (m_A$ or $m_B )$ to \texttt{members}
+               \State Add $(m_A$ or $m_B )$ to \texttt{deletionconflicts}
            \EndIf
-           \State $reorderLists \gets $ map each item in each list (A, O, B)
-           \State ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ to their merged result.
-           \State $members = Reorder(A, O, B, conflicts)$
        \EndFor
-       \State \Return $recreate(b, l, r, members)$
-    \ElsIf{nodes are classmembers}
-       \State Run $MergeFile$ on the source text of A, O, B
-       \State If a conflict happens run $MergeNode$ on the nodes.
+       	\State $\texttt{r} \gets $ map each item in each list (A, O, B)
+     	\State ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ to their merged result.
+        \State $(members, conflicts) \gets $\Call{Reordering}{$r_A, r_O, r_B, \texttt{deletionconflicts}$}
+	    \ForAll{$conflicts$}
+    	    \State Add a warning to the merges.
+	    \EndFor        
+       	\State \Return The merged node as a concrete string representation.
+    \ElsIf{$A$, $O$, $B$ are class-members}
+       \State Run \Call{MergeSequence}{} on the source text of $A$, $O$, $B$
+       \State If a conflict happens run \Call{MergeNode}{} on the nodes.
+       \State \Return The result of either of above statement.
     \EndIf
 \EndFunction
 \end{algorithmic}
@@ -1161,36 +1171,38 @@ At some point we have turn parse the input files to get syntax trees. We'll use 
 \end{algorithm}
 
 
-The top level of a C\# file contains an optional sequence of using-statements followed by a sequence of namespaces or type-declaration. A type-declaration is a struct, a class, an enum, a delegate or an interface. Classes, structs and namespaces can be nested in each other.
+The top level of a C\# file contains an optional sequence of using-statements --- library imports in C\#. These are followed by either a sequence of namespaces or type-declaration. A type-declaration is a struct, a class, an enumeration, a delegate or an interface. Futher, classes, structs and namespaces can be nested in each other.
 
-This structure in itself can lead to many potential merge scenarios; members of types can be moved and types can be nested in different way. We look aside most of these issues and focus on merging purely inside classes. This means that a move of a class member looks like a deletion at one place, and an insertion at another place. As a consequence, a change in a function that is also moved moved between structures therefore produces a conflict.
+This structure in itself can lead to many potential merge scenarios since members of types can be moved and types can be re-nested in many different way. While this could lead to some interesting merge scenarios, we ignore most of these issues and focus on merging purely inside classes in this thesis.
 
-We do an unordered match between the the base file, and the two input brances using heuristics to determine the match of the input trees children. Nodes that are matched in the syntax trees are merged together. The overall process is:
+This has many implications; a move of a class member to another class in the same file will look like a deletion at in one class and an insertion in the other class. As a consequence, a change in a function that is also moved moved between structures therefore produces a conflict.
+
+For our general matching, we will assume no order, but will follow the same hierarchy in all three files. We perform an unordered match between the trees from the base, and the trees from the two input branches. To do this, we use heuristics to determine the match of the input trees children. Nodes that are matched in the syntax trees are merged together. The overall process is:
 
 \begin{itemize}
    \item Match similar namespaces together and merge these.
-   \item During a merge of namespaces, match similar classes together and merge these.
-   \item During the merge of classes, match similar class-members and merge these.
+   \item During a merge of namespaces, match similar classes together and merge them.
+   \item During the merge of classes, match similar class members and merge them.
 \end{itemize}
 
-The input for Algorithm \ref{TreeMergeAlgorithm} is three syntax tree generated from the input files. The output is a text string with the concrete syntax of the merge. Whenever the function encounters a namespace or a class, it does an unordered matching on these, and recursively call itself for each match. Whenever a class-member is hit in the recursive call, we try a line-based merge. If a conflict happens during this merge, we launch a syntax based merge of the specific class-member. The effect of this is, that class-members only does expensive syntax merge as a last resort.
+The input for Algorithm \ref{TreeMergeAlgorithm} is three syntax trees generated from the input files. The output is a text string with the concrete syntax of the merge. Whenever the function encounters a namespace or a class, it does an unordered matching on their chidlren, and recursively call itself for each match. When class member is the input in the recursive call, we perform a line-based merge. If a conflict happens, we launch a syntax based merge of the specific class-member; class-members only do expensive syntax merge as a last resort.
 
-After creating the merge of all children for a class or a namespace, we need to create the ordered sequence of the merged items, that can be used to generate the entire merged node. We store all matches in a list, along with their merge-result. From this list we generate three new sequences for each input sequence. These lists are feeded into the reordering function seen in section \ref{ThreeWayReorderingAlgorithmSec}.
+After creating the merge of all children for a class or a namespace, we need to create the ordered sequence of the merged items that can be used to generate the entire merged node. We store all matches in a list, along with the result of their merging. From this list we generate three new sequences for each input sequence. These sequences are feeded into the reordering function seen in section \ref{ThreeWayReorderingAlgorithmSec}.
 
-Items that are deleted in one branch and modified in another branch, should generate a conflict. The reordering function assumes equality between the items in the sequences, and therefore cannot consider a deletion to be a possible conflict. Therefore we detect conflicts during merging and pass a set of these to a modified Reordering function, that only deletes items if they are not a part of this set.
+Items that are deleted in one branch and modified in another branch should generate a conflict. The reordering function assumes equality between the items in the sequences, and therefore cannot consider a deletion to be a possible conflict inside the reordering function. Therefore we detect conflicts during merging and pass a set of these to a modified reordering function, that only deletes items if they are not a part of this set.
 
-\paragraph{Running time} $f(x)$ is the total number of nodes that is found in the tree from the root, down to class members; it contain all root-items, namespaces, classes and class members, but no nodes that are children of class-members. $n$ is $\max(f(A) f(O), f(B))$ and the time for running the cost function is constant. 
+\paragraph{Running time} Let $f(x)$ be the number of nodes that is found in the syntax tree from the root, down to class members; it contain all root-items, namespaces, classes and class members, but no nodes that are children of class-members. $n$ is $\max(f(A) f(O), f(B))$ and the time for running the cost function is constant. 
 
-MergeSyntax is a traversal on every single node of the three trees, taking $O(n)$ time. Each invocation of MergeSyntax has the worst time running time of ThreeWayCostMatching; $O(m^2 \log m)$, where $m$ is the largest size of the input sets. We are passing the children of our input size to ThreeWayCostMatching; the amount of children can be bounded to $n$. This gives the upper bound running time of:
+MergeSyntax is a traversal on every $f(x)$-node of the three trees, taking $O(n)$ time. Each invocation of MergeSyntax has the worst time running time of ThreeWayCostMatching; $O(m^2 \log m)$, where $m$ is the largest size of the input sets. We are passing the children of our input size to ThreeWayCostMatching; the amount of children can be bounded to $n$. When all $f(x)$. When the matching is finished, each match $m$ should be merged; taking each $c$ time. $c$ will be defined later.
 
 \begin{equation}
-O(n^3 \log n)  \nonumber
+O(n^3 \log n + m \cdot c)  \nonumber
 \end{equation}
 
 \subsubsection{Costs}
 
 \begin{algorithm}
-\caption{Cost for method-similarity}
+\caption{Cost for method similarity}
 \label{MethodCostFunction}
 \begin{algorithmic}
 \Function{FunctionCost}{x, y}
@@ -1202,7 +1214,7 @@ O(n^3 \log n)  \nonumber
     	  \State select 0.5 if either name or type are equal
 	      \State select 0 if there is no matching item
       \EndFor
-      \State s $\gets 4* \text{the averager of above match value}$
+      \State s $\gets 4 \cdot \text{the averager of above match value}$
    \EndIf
    \State $c \gets 9$
    \If{equal return type of $x$ and $y$}
@@ -1213,42 +1225,42 @@ O(n^3 \log n)  \nonumber
    \EndIf
    \State $c \gets c - s$
    \If{$c \geq 4$}
-         \State \Return No link
+         \State \Return null \Comment{Indicates no edge between the two nodes.}
    \EndIf
    \State \Return $c$
 \EndFunction
 \end{algorithmic}
 \end{algorithm}
 
-We have to define the cost-functions for namespaces, classes and class-members. For each level, these functions are called for each pair of items possible in $(A, O)$ and $(O, B)$. As a consequence, we need to keep the runtime cost of calculating a cost of two items relatively low.
+We need to define costs for pairs of namespaces, classes and class members. For every node in the tree, these functions are called for each pair of items possible in $(A, O)$ and $(O, B)$. Therefore we need to keep the runtime cost of calculating a cost of two items relatively low.
 
-For classes and namespaces we define functions that assign low cost to nodes with similar identifiers, and a higher cost to all other nodes of the same type on the same structural level. This approach has the benefit of being quite fast. Further, renaming a class on the same structural level match correctly, since it is matched to another node of the same type. A drawback, however, is that given this heuristic, we have no way to know what to do if a node has been renamed and another node inserted at the same time: All possible matchings in such case are valid and has the same cost. A better heuristic for namespaces and classes probably is to also include the different members of namespaces and classes as a part of the cost-function, however we decided not pursue this approach further.
+For classes and namespaces we define functions that assign low cost to nodes with similar identifiers, and a higher cost to all other nodes of the same type on the same structural level. This approach has the benefit of being quite fast. Further, renaming a class on the same structural level matches correctly, since it is matched to another node of the same type. A drawback, however, is that given this heuristic, we have no way to know what to do if a node has been renamed and another node inserted at the same time: All possible matchings in such case are valid and have the same cost. A better heuristic for namespaces and classes would probably be to include the different members of namespaces and classes as a part of the cost-function.
 
-One obvious function to use to assign the cost between two functions, is the similarity function defined in section \ref{FunctionSimilarity}. However this function is quite intensive computation-wise, since it walks through the entire tree. This is expensive computation time-wise, and since it is done for every possible pair it leads to an unfortunate explosion of running times. Instead we limit our matching to the signature of a method:
+One obvious function to use to assign the cost between two functions, is the similarity function defined in Section \ref{FunctionSimilarity}. However this function is quite intensive computation-wise, since it walks through the entire tree. This is computationally expensive, and since it is examined for every possible pair it leads to an unfortunate explosion of running times. Instead, we limit our matching to the signature of a method:
 
 \begin{itemize}
     \item The return type.
     \item The identifier.
-    \item The type and identifier for each parameter.
+    \item The type and name of each parameter.
 \end{itemize}
 
-The more of these factors that are similar, the lower a cost two functions should have. Matching functions that are dissimilar in their method body might produce unproductively numbers of conflicts, and because of this it's a goal of this heuristic to not match things together too greedily.
+The more of these factors that are similar, the lower a cost two methods should have. Matching methods that are dissimilar in their method body might produce unproductively numbers of conflicts, and because of this it's a goal of this heuristic to not match things together too greedily.
 
-Equal identifiers is a clear sign of similarity, and one that should weight heigh for this scale. Parameters are also important; we need to match different overloads of a function to the same overload in another branch. Given these two criterias we match any unchanged function completely.
+Equal names are a clear sign of similarity, and one that should weight heigh for this scale. Parameters are also important: we need to match different overloads of a function to the same overload in another branch. Given these two criterias we match any unchanged function completely.
 
-If we look at two functions with dissimilar names, equal return types and no parameterlist, it is not obvious how to define if they are similar or not. For this reason we define it as not similar. However with several parameters similar, the likelihood of the functions being the same increases.  The cost-function can be found in Algorithm \ref{MethodCostFunction}.
+If we look at two functions with dissimilar names, equal return types and no parameter list, it is not obvious how to define if they are similar or not. For this reason we define it as not similar. However with several parameters similar, the likelihood of the functions being the same increases.  The cost-function can be found in Algorithm \ref{MethodCostFunction}.
 
 This function has some properties that are helpful, given the above considerations:
 
 \begin{enumerate}
-\item If the name of a function is equal, a possible match is produced.
+\item If the names of the functions are equal, a possible match is produced.
 \item Higher similarity between parameters gives better costs.
-\item Renamed functions can be matched if they match completely in the parameterslist, or if some of the parameterlist is similar and it has the same return type.
+\item Renamed functions can be matched if they match completely in the parameters list, or if some of the parameter list is similar and it has the same return type.
 \end{enumerate}
 
 \paragraph{Running time} The running time for the cost function for classes and namespaces is $O(1)$. Defining the cost of functions is dependant on the size of the input lists $n_x$ and $n_y$. We run a two-way matching on the two input lists with function running in $O(1)$ time; this gives an running time of $O(n_x n_y)$.
 
-\subsection{Merging}
+\subsection{Merging methods}
 \todo[inline]{Explain that running times are at the end of the section}
 
 \label{MergingFunction}
@@ -1307,7 +1319,7 @@ This function has some properties that are helpful, given the above consideratio
 \end{algorithm}
 
 
-\texttt{MergeNode} handles merging of single nodes of equal type. It takes three input values; A, O and B, and return a syntactically valid string, which is the merge of those three input values. It handles the input as a matching and concludes insertion or deletion if appropriate. Further it assumes that all input nodes are of the same type.
+\texttt{MergeNode} handles merging of single nodes of syntactically equal type. It takes three input values A, O and B, and return a syntactically valid string; the merge of those three input values. It assumes the input nodes have been matched together for node-similarity; which means it all nodes will be the same type, and that its children is atleast somewhat similar. It also terminates insertion or deletion if appropriate. 
 
 \begin{itemize}
    \item If O is null and either A or B is null it treats the input as an insertion, and returns the inserted value.
@@ -1331,22 +1343,22 @@ Some nodes only consists of tokens: A function name, a string literal, an intege
   \label{Listmerger}
 \begin{algorithmic}
 \Function{MergeList}{A, O, B, cost}
-    \State $zip \gets ThreeWayCostMatching(A, O, B, cost)$
-    \State $members \gets [];$
-   	\State $conflicts \gets []$
-    \ForAll{$m$ in $zip$}
-        \If{$m$ exists in all}
-           \State $member.add(m, MergeSyntax(m.A, m.O, m.B))$
+    \State \texttt{m'} $\gets$ \Call{ThreeWayCostMatching}{A, O, B, cost}
+    \State \texttt{members} $\gets [\,]$
+   	\State \texttt{conflicts} $\gets [\,]$
+    \ForAll{\texttt{m} in \texttt{m'}}
+        \If{\texttt{m} exists in all}
+           \State \texttt{member}.add(m, MergeSyntax(m.A, m.O, m.B))
 		\ElsIf{match was inserted in A or B}
-			\State $member.add(m, (m.A$ or $m.B ))$
+			\State \texttt{member}.add(m, (\texttt{m.A} or \texttt{m.B} ))
 		\ElsIf{match was deleted and changed in opposite branch}
-			\State $member.add(m, (m.A$ or $m.B ))$
-			\State $conflicts.add(m.A$ or $m.B )$
+			\State \texttt{member}.add(m, (\texttt{m.A} or \texttt{m.B}))
+			\State \texttt{conflicts}.add(\texttt{m.A} or \texttt{m.B})
 		\EndIf
-		\State $reorderLists \gets $ map each item in each list (A, O, B)
-		\State ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ to their merged result.
-		\State $members = Reorder(A, O, B, conflicts)$
 	\EndFor
+	\State \texttt{reorderLists} $\gets$ map each item in each list (\texttt{A}, \texttt{O}, \texttt{B})
+	\State ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ to their merged result.
+	\State $(\texttt{members}, \texttt{conflicts})$ $\gets$ \Call{Reordering}{A, O, B, conflicts}
 
     \ForAll{$conflicts$}
         \State Add a warning to the merges.
@@ -1357,7 +1369,7 @@ Some nodes only consists of tokens: A function name, a string literal, an intege
 \end{algorithm}
 
 
-There are primarily two types of list that we want to merge: ParameterLists and ArgumentLists. Parameterlists are the pair of types and identifiers found in method declarations, where argument-lists are expressions found in invocations of methods. Modification of these two properties 
+There are primarily two types of list that we want to merge: paremeterlists and argumentlists. Parameterlists are the pair of types and identifiers found in method declarations, where argumentlists are expressions found in invocations of methods. Modification of these has two properties:
 
 \begin{itemize}
    \item Modifications of parameter-lists can be reorderings with no semantic meaning. Further it can be additions or removals of a parameter. These are often accompanied by some change in the behaviour of a method.
@@ -1399,12 +1411,12 @@ Given these chunks we handle them in three different ways:
 \Function{MergeBlock}{A, O, B}
     \State try  a textual merge of the statements.
     \If{that does not work}
-        \State $chunk \gets PriorityDiff(A, O, B, equality, similarity)$
+        \State $chunk \gets $ \Call{PriorityChunk}{A, O, B, equality, similarity}
         \ForAll{chunks}
             \If{chunk is primaryequal}
                 \State \Return $chunk.O$
             \ElsIf{chunk is secondary equal}
-                \State for each line \Return $MergeNode(A, O, B)$
+                \State for each line \Return \Call{MergeNode}{A, O, B}
             \ElsIf{either A and O or O and B are equal}
                 \State add the opposite chunk.
             \Else
@@ -1453,24 +1465,7 @@ O(n^4 + n^7) \nonumber
 \end{equation}
 
 \subsection{Merging uneven trees}
-
 \label{MergingUnevenSection}
-Generally our merge has been working with structural equality. This means that if one branch moved a chunk of code into a block, and the opposite branch changed something in the chunk of code, we have no way of handling this.
-
-$MergeUneven$ is called in case of an unsolvable conflict in Algorithm \ref{MergeUneven}, and tries to handle the scenario of inserted sub-block in the code - for example wrapping a couple of lines of code in an if-statement. It takes an unstable chunk as input, that contains a sequence of nodes that cannot be matched. MergeUneven looks for nodes in the chunks that contains sub-blocks which might create a stable match. It works as can be seen in Figure \ref{UeventreeProcess}. Below is a description of each step.
-
-\paragraph{Flattening} $MergeUneven$ starts by flatting the input lists, in the sense that for any node found in the input lists that contains a sub-statement or a block, we bring these statements into the top level. During the flattening we remember the parent of each node, as can be seen in the left columns of the Flattened-item in the figure. Looking at the flattened list of child and parent elements,  it is obvious that chunks of continuous parent items in any of the three lists is a sub-block.
-
-\paragraph{Matching} Afterwards we run $PriorityChunking$ on the child elements of the flattened lists. If some statements have been moved to a subscope for these conflicts, this matches these statements with the ones in the other branches scope. As mentioned above, a continuous sequence of keys in the three branches means a sub-block. The same is the case in this matching: For each branch, we are able to track opening and closing sub-scopes by looking at the change between the last observed parent element, and at the current. This means we can isolate chunks of matches that happen in specific scopes. After isolating these, we can merge the parents, and for each continuous sequence of parent items, we can output a block around them.
-
-\paragraph{Runnning time} 
-\todo[inline]{Write me!}
-
-\begin{figure}
-   \centerline{\includegraphics[scale=0.55]{drawings/html/EditedFlattenedMerge.eps}}
-   \caption{Process of merging uneven trees.}
-   \label{UeventreeProcess}
-\end{figure}
 
 \begin{algorithm}
 \begin{algorithmic}
@@ -1509,29 +1504,74 @@ $MergeUneven$ is called in case of an unsolvable conflict in Algorithm \ref{Merg
 \label{MergeUneven}
 \end{algorithm}
 
-\subsection{Running time}
-In this section we will give a brief overview of the overall running time of the algorithm we have created. We generally view $n$ as $O(max(|A|, |O|, |B|)$ or $O(max(|X|, |Y|)$  or $O(|M|)$ depending on the input parameters. $t$ and $t'$ are the running times of input functions in order.
+Generally our merge has been working with structural equality. This means that if one branch moved a chunk of code into a block, and the opposite branch changed something in the chunk of code, we have no way of handling this.
 
-\begin{tabular}{l | l }
-Algorithm & Upper bound \\ \hline
-TwoWayMatching(X, Y) & $O(n^2 \cdot t)$ \\
-ThreeWayMatching(A, O, B) & $O(n^2 \cdot t)$ \\
+$MergeUneven$ is called in case of an unsolvable conflict in Algorithm \ref{MergeUneven}, and tries to handle the scenario of inserted sub-block in the code - for example wrapping a couple of lines of code in an if-statement. It takes an unstable chunk as input, that contains a sequence of nodes that cannot be matched. MergeUneven looks for nodes in the chunks that contains sub-blocks which might create a stable match. It works as can be seen in Figure \ref{UeventreeProcess}. Below is a description of each step.
+
+\begin{figure}
+   \centerline{\includegraphics[scale=0.55]{drawings/html/EditedFlattenedMerge.eps}}
+   \caption{Process of merging uneven trees.}
+   \label{UeventreeProcess}
+\end{figure}
+
+\paragraph{Flattening} $MergeUneven$ starts by flatting the input lists, in the sense that for any node found in the input lists that contains a sub-statement or a block, we bring these statements into the top level. During the flattening we remember the parent of each node, as can be seen in the left columns of the Flattened-item in the figure. Looking at the flattened list of child and parent elements,  it is obvious that chunks of continuous parent items in any of the three lists is a sub-block.
+
+\paragraph{Matching} Afterwards we run $PriorityChunking$ on the child elements of the flattened lists. If some statements have been moved to a subscope for these conflicts, this matches these statements with the ones in the other branches scope. As mentioned above, a continuous sequence of keys in the three branches means a sub-block. The same is the case in this matching: For each branch, we are able to track opening and closing sub-scopes by looking at the change between the last observed parent element, and at the current. This means we can isolate chunks of matches that happen in specific scopes. After isolating these, we can merge the parents, and for each continuous sequence of parent items, we can output a block around them.
+
+
+\paragraph{Runnning time} 
+\todo[inline]{Write me!}
+
+
+\subsection{Running time}
+In this section we will give a brief overview of the overall running time of the algorithm we have created. In Table \ref{RunningTimeTable}, we generally view $n$ as $O(max(|A|, |O|, |B|)$, $O(max(|X|, |Y|)$  or $O(|M|)$ depending on the input parameters. $t$ and $t'$ are the running times of input functions in order.
+
+Further, it can be said:
+
+\begin{enumerate}
+\item For MergeFile, $c$ is the running time of its internal conflicthandler; MergeSyntax.
+\item For MergeSyntax, $m$ is the number of matches. $c$ is the running time of the conflict-handler; MergeSequence and MergeNode if a conflicts happens.
+\end{enumerate}
+
+\begin{table}
+\begin{tabular}{l | l  }
+\textbf{Algorithm} & \textbf{Upper bound} \\ \hline
+TwoWayMatching(X, Y, eq) & $O(n^2 \cdot t)$ \\
+ThreeWayMatching(A, O, B, eq) & $O(n^2 \cdot t)$ \\
 Chunking(M) & $O(n)$ \\
 PriorityChunking(A, O, B, eq, sim) & $O(n^2(t + t')$ \\
-TwoWayCostMatching(X, Y, t) & $O(n^2 \log n)$ \\
-Three-way set matching(A, O, B) & $O(n^2 \log n)$ \\
+TwoWayCostMatching(X, Y, cost) & $O(n^2 \log n)$ \\
+ThreeWayCostMatching(A, O, B, cost) & $O(n^2 \log n)$ \\
 Reordering(A, O, B) & $O(n^2)$ \\
+
+MergeSequence(A, O, B, eq, ch) & $O(n^2 \cdot t)$  or  $O(n^2 \cdot t +  t')$ \\
 
 Equality(X, Y)  & $O(n)$ \\
 Similar(X, Y) & $O(n^4)$ \\
 
-Merge(A, O, B, eq, ch) & $O(n^2 \cdot t)$  or  $O(n^2 \cdot t +  t')$ \\
-MergeFile(A, O, B) & $O(n^2 + c)$  \\
-MergeSyntax(A, O, B) & $O(n^3 \log n)$ \\
-MergeNode(A, O, B) & $O(n^3 + n^6)$ \\
-\end{tabular}
 
-The main entry point for our algorithm is \texttt{MergeFile}. It is inputted sequences.
+MergeFile(A, O, B) & $O(n^2 + c)$ \\
+MergeSyntax(A, O, B) & $O(n^3 \log n + m \cdot c)$ \\
+MergeNode(A, O, B) & $O(n^4 + n^7)$ \\
+\end{tabular}
+\caption{Running times for all algorithms}
+\label{RunningTimeTable}
+\end{table}
+
+In the below we use three variables to define the input sizes. $l$ is number of lines of a file, $n_s$ is the number of nodes used to structure a code file, $l_f$ is the number of lines in a function and $n_f$ is the number of nodes in a function. $m$ is the number of matches from the structure matcher. The overall upper bound for our entire algorithm becomes:
+
+\begin{equation}
+O(l^2 + n_s^3 \log n_s + m ( l_{f}^2 + n_{f}^4 + n_{f}^7)) \nonumber
+\end{equation}
+
+A couple of notes about this running time:
+
+\begin{itemize}
+	\item Most of the running time are quite crude upper bounds.
+	\item For most files in a commit, more often than not the running time will be $l^2$, due to the sequence-merging succeeding.
+	\item For most matches, the running time is $l_f^2$ due to sequence-merging succeeding on this function.
+	\item In the running from MergeNode, $O(n^4 + n^7)$, the $n^7$ part only happens when there is no equality in the tree; which hopefully happens only a few times in the entire merge.
+\end{itemize}
 
 
 \clearpage

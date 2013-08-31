@@ -73,7 +73,9 @@ morestring=[b]',
 
 \clearpage 
 \section{Introduction}
+In this thesis we will investigate merging algorithms. During a merging process, conflicts will naturally occur if a single part is changed in both branches, into different things. Most widely used merging tools treat code as flat text files, and compare each line of code without considering the structure of the code. 
 
+The purpose of this project is to investigate if it is practical to create merge tools that break concrete syntax into syntax trees and do tree merging on these instead, and if such syntax-aware merging would reduce the amount of conflict in branch-merging.
 
 \clearpage 
 \section{Background}
@@ -87,10 +89,6 @@ Merging source code is an inherent part of software development. It has gone thr
 A line based approach to works relatively well with files that are structured for computer input but also readable by humans, such as many source files and XML files. It works well, since line breaks often are used to make the structured data easily readable for humans; it is common for XML files to have opening and closing XML-tags on their own lines, and conventions of most programming languages have only one statement per line. In some programming languages, Python for example, line breaks are a part of the structure of the code - which makes them even more suitable for this approach.
 
 Conventions of XML and source code can be broken. An entire XML-file can be a single line, and have the exact same meaning. Similarly function bodies can be written on a single line in many programming languages, without the compiler caring. A merging approach that considers the structure of the input files can clearly be helpful for files that are not structured with line breaks. This is not a common case for files inside version control systems. A better case for improving version control by introducing structural knowledge, is where a single line contains structure.
-
-\todo[inline]{Dette hører nok til et andet sted}
-\todo[inline]{Er formålet med dette speciale at fixe "ikke bruger-læsbar-merging"?}
-\todo[inline]{Tal om autogenereret kode, som placeres i VCS}
 
 A conflict can be defined in a few ways for line based tools. In the \texttt{diff3}, a conflict is a sequence of lines, that is changed in both branches, and is not separated by a single line that is unchanged in both branches. Such a conflict detection scheme is clearly an approximation. It is oblivious to the structure of the data and one could craft input that output does not fit the structure of the input as in figure \ref{WrongMergeFromLineBasedApproach2}. Further, the  actual meaning of the merged data is not considered at all - even if it is structurally valid, it might semantically be nonsense, even though a conflicts is not produced - see figure \ref{WrongMergeFromLineBasedApproach}.
 
@@ -228,12 +226,6 @@ One commonly used tool for merging is \texttt{diff3}. \citet{Khanna} investigate
 
 Common algorithms for merging are state based. They compare the final state of branches, and create a series of operations that transform one document from one state into another. \citet{Lippe} described a different approach, where editing tools remember the operations used to transform the data, and where the merge process is a matter of applying the transformations from both branches in the right order to minimize the number of conflicts.
 
-%\todo[inline]{Mention whitespace ignoring}
-%\todo[inline]{Mention horizontal differincing}
-%\todo[inline]{Talk about prettyprinters.}
-%\todo[inline]{Point out that merges might not compile.}
-
-
 \subsection{Programming languages}
 In this section we look into the process that a program goes through in the process up until execution, to give an overview of how this process gets us to syntax trees, and to look into what kind of consequences this process has for regenerating concrete syntax when given a syntax tree.
 
@@ -280,14 +272,10 @@ Research in the area has shown that the problem generally can be solved in cubic
 
 Tree-merging in itself is not a time consuming problem if an edit script is provided; the computational heavy part is to generate this edit script. The different existing merging algorithms that exists for three-way merging on trees generally describe different properties that are desirable for how to resolve conflicts, or when to produce them. \citet{lindholm} describes a merging algorithm for XML documents, \citet{Horwitz,Asklund,Olav} describes merging properties interesting for program code.
 
-\todo[inline]{Ting der arbejder på tvaers af sprog: \\
-- Semistroctored Merge: Rethinking Merge in Revision Control Systems \\
-- Diff/TS: A tool for fine grained....
-}
 \clearpage
 
 \section{Our approach}
-\todo[inline]{Write me}
+In this section we will outline our approach to syntax tree merging and our reasons behind it, give an outline of the process that we build our merging algorithm around and discuss how this algorithm will fundamentally work with the syntax trees. 
 
 \paragraph{Overall goal} The overall goal of the algorithm is to reduce the amount of \textit{trivial conflicts} of merges. We say \textit{trivial} conflicts since reducing conflicts in general cannot be a goal in itself: We cannot prove if a merge produces the correct behaviour of a program. Therefore we focus on solving only conflicts where a conflict either have no semantic meaning, or where we syntactically can see a meaningful way of reassembling a line that otherwise conflicts. More on this in section \ref{TrivialConflict}.
 
@@ -460,22 +448,13 @@ In the end, we decided to only work on semantic trees and we decided that our al
 \clearpage
 
 \section{Merging toolbox}
-\todo[inline]{Rephrase a little}
+In this section we will provide several algorithm that are fundamental tools in creating our merging algorithm for syntax trees as well as the line based merge. Section \ref{UtilitiyMethods} provides functions for matching and manipulating sets and sequences generally. Section \ref{SequenceMerging} describes a general algorithm for merging sequences.  In Section \ref{EqSim} we provide functions that can decide if syntax trees are equal or similar.
 
-This section describes the algorithms written for the code-merging tool. Section \ref{UtilitiyMethods} lists a couple of functions that are used generally throughout the later sections. Section \ref{MergingFiles} describe the general file merging functions; the entry point for our algorithm. 
-
-We will be doing run-time analysis through the section. When doing this we will interchangeably refer to the number of items in a set or sequence $x$ as $|x|$.
-
-
-\todo[inline]{UtilitiyMethods \\
-SequenceMerging \\
-EqSim}
+The idea of two-way sequence matching, three-way sequence matching, chunking and sequence merging is based on the descriptions of \texttt{diff3} in \citet{Khanna}. We describe them more generally, since they are used for implementing our tree-merging algorithm.
 
 \subsection{Sequences and sets}
 \label{UtilitiyMethods}
 This section describes a series of methods that can match and manipulate sets an sequences in a way that is useful for sequence and tree merging. In some cases we motivate their existence in this section, but in other cases the motivation might first become clear in the later sections.
-
-The idea of two-way sequence matching, three-way sequence matching, chunking and file merging is based on the descriptions of \texttt{diff3} in \citet{Khanna}. However, we describe them generally, since they are used for implementing our tree-merging algorithm.
 
 \subsubsection{Two-way sequence matching}
 \begin{wrapfigure}{r}{0.4\textwidth}
@@ -1093,8 +1072,10 @@ Given that two nodes are only equal if they are of the same node-type, most of t
 O(n^4) \nonumber
 \end{equation}
 \clearpage
-\section{C\# Specific implementation}
-Section \ref{SyntaxBreakDown} describe the syntactic breakdown of files. Section \ref{MergingClasses} describe the structure matcher that matches and merges methods in classes. Section \ref{MergingFunction} focus on merging syntax trees that are matched. Section \ref{MergingUnevenSection} describe our approach to merging branches where matched nodes have moved in or out of sub-blocks.
+\section{Merging code files}
+In this section we will describe our overall implementation of a tree merging algorithm. We write the algorithm in C\# and for the C\# language, however most of the work should be applicable for many other languages with similar structures.
+
+Section \ref{MergingFiles} desribe the main entry point for the mering of files. Section \ref{SyntaxBreakDown} describe the parsing from concrete source into syntax trees. Section \ref{MergingClasses} describe the structure matcher that matches and merges methods in classes. Section \ref{MergingFunction} focus on merging syntax trees that are matched. At the end of the section we give an overall analysis of the running time of the entire merging process.
 
 \subsection{Merging files}
 \label{MergingFiles}
@@ -1260,7 +1241,7 @@ This function has some properties that are helpful, given the above consideratio
 \paragraph{Running time} The running time for the cost function for classes and namespaces is $O(1)$. Defining the cost of functions is dependant on the size of the input lists $n_x$ and $n_y$. We run a two-way matching on the two input lists with function running in $O(1)$ time; this gives an running time of $O(n_x n_y)$.
 
 \subsection{Merging methods}
-\todo[inline]{Explain that running times are at the end of the section}
+In this section we describe the functions used to all nodes from the method level and downwards in the syntax trees. All the functions in this chapter are mutually recursive and because of this we analyse their runnning times at the end of the entire section instead of analysing them individually.
 
 \label{MergingFunction}
 \subsubsection{Merging nodes}
@@ -1481,7 +1462,6 @@ Algorithm \ref{MergeUneven} is called in case of an unresolvable unstable chunk 
 \paragraph{Flattening} $MergeUneven$ starts by flattening the input lists, in the sense that for any node found in the input lists that contains a substatement or a block, we bring these statements into the top level. During the flattening we remember the parent of each node, as can be seen in the left columns of the Flattened-item in the figure. Looking at the flattened list of child and parent elements,  it is obvious that chunks of continuous parent items in any of the three lists is a sub-block.
 
 \paragraph{Matching} Afterwards we run $PriorityChunking$ on the child elements of the flattened lists. If some statements have been moved to a subscope for these conflicts, this matches these statements with the ones in the other branches scope. As mentioned above, a continuous sequence of keys in the three branches means a sub-block. The same is the case in this matching: For each branch, we are able to track opening and closing sub-scopes by looking at the change between the last observed parent element, and at the current. This means we can isolate chunks of matches that happen in specific scopes. After isolating these, we can merge the parents, and for each continuous sequence of parent items, we can output a block around them.
-
 
 \paragraph{Runnning time} 
 \todo[inline]{Write me!}

@@ -252,9 +252,8 @@ In C, for example, the construct $a[i]$ is a shorthand for $*(a + i)$ and should
 Given the purpose of this thesis, the choice of syntax tree is important for us: We traverse syntax nodes and want to generate concrete syntax - which means we want a syntax tree that is as closely corresponding to the grammatical constructs of the language.
 
 \subsubsection{Pre-processing and comments}
+\label{PreprocessComments}
 When looking at the syntax tree, a lot of information is not immediately available: Everything from the preprocessing phase, syntactic sugar, whitespace and comments. While this information is not immediately available in the structure of the syntax tree most of this information can be found, if we annotate each node with the concrete syntax that generated it. 
-
-\todo[inline]{Preprocessing}
 
 \clearpage
 \section{Related work}
@@ -808,9 +807,9 @@ O(\max(|X|, |Y|)^2 \log (\max(|X|, |Y|)) \nonumber
     	\State Find a set of compatible prices with respect to $M'$
     \EndWhile
     
-	\State $r \gets $  $(x, \epsilon)$ or $(\epsilon, y)$ for each matching containing an auxiliary node, 
-    \State ~~~~~ all matchings not containing auxilary nodes,
-    \State ~~~~~ $(x, \epsilon)$ or $(\epsilon, y)$ for each item not added to $G$    
+	\State $r \gets $  $(x, \epsilon)$ or $(\epsilon, y)$ for each matching containing an auxiliary node $\cup$
+    \State ~~~~~ $(x, \epsilon)$ or $(\epsilon, y)$ for each item not added to $G$ $\cup$
+    \State ~~~~~ all matchings not containing auxilary nodes 
     \State \Return $r$
 \EndFunction
 \end{algorithmic}
@@ -1428,43 +1427,8 @@ Given these chunks we handle them in three different ways:
 \end{algorithmic}
 \end{algorithm}
 
-\subsubsection{Running time}
-While merging a syntax tree, our worst case scenario is to visit every node in all three input trees one time. For each visit to a node, we will be doing some work, depending on what kind of node it is:
 
-\begin{itemize}
-\item If it is a fixed structural node, each node will run in $O(1)$; excluding the recursive call.
-\item If it is a list-node, each node will perform a unordered matching on the input lists; taking $t_u$ time.
-\item If it is a block-node, each node will perform a ordered matching on the input lists; taking $t_o$ time.
-\end{itemize}
-
-The above running times is excluding the work that the recursive calls will make; only describing what work will be contributed to the running time by each node. If $n$ is the sum of nodes in all three input trees, A, O and B, the overall running time will be:
-
-\begin{equation}
-O(n \cdot \max(t_u, t_o)) \nonumber
-\end{equation}
-
-\paragraph{MergeList} MergeList is dominated by the running time of cost-matching, which is $O(m^2 \log m)$, where $m$ is the biggest of the three input sets. $m$ is smaller than $n$ in our case; any list in the three must be smaller than the size of the tree. We get an overall time for $t_u$ to be $O(m^2 \log m)$.
-
-\paragraph{MergeBlock} MergeBlock is done with PriorityChunk, which has the running time of $O(|O| (|A| + |B|)(t + t'))$ where A, O and B is the input sequences, and $t$ and $t'$ is the running time of equality and similarity; in our case $t$ is $O(n)$ and $t'$ is $O(n^4)$. If we upper bound $|A|$, $|O|$ and $|B|$ as $n$, we get an overall running time of:
-
-\begin{equation}
-O(n (n + n)(n + n^4)) \nonumber
-\end{equation}
-
-Which can be simplified into:
-
-\begin{equation}
-O(n^3 + n^6) \nonumber
-\end{equation}
-
-Note in this expression that $n^3$ is due to the equality-stable chunk, and that $n^6$ is due to similarity-stable chunks; because of this we decide not to throw away $n^3$ because it will later allow us to argue about the overall running time of our algorithm.
-
-\paragraph{MergeNode} The overall running time for MergeNode thus become:
-\begin{equation}
-O(n^4 + n^7) \nonumber
-\end{equation}
-
-\subsection{Merging uneven trees}
+\subsubsection{Merging uneven trees}
 \label{MergingUnevenSection}
 
 \begin{algorithm}
@@ -1506,7 +1470,7 @@ O(n^4 + n^7) \nonumber
 
 Generally our merge has been working with structural equality. This means that if one branch moved a chunk of code into a block, and the opposite branch changed something in the chunk of code, we have no way of handling this.
 
-$MergeUneven$ is called in case of an unsolvable conflict in Algorithm \ref{MergeUneven}, and tries to handle the scenario of inserted sub-block in the code - for example wrapping a couple of lines of code in an if-statement. It takes an unstable chunk as input, that contains a sequence of nodes that cannot be matched. MergeUneven looks for nodes in the chunks that contains sub-blocks which might create a stable match. It works as can be seen in Figure \ref{UeventreeProcess}. Below is a description of each step.
+Algorithm \ref{MergeUneven} is called in case of an unresolvable unstable chunk in Algorithm \ref{MergeStatementList}. It attempts to do a merge on an unstable chunk of statement by identifying statements with sub-statements, like \textbf{if}, \textbf{while} and \textbf{for}, and merging with the sub-statements of such a statement instead. This allows us to merge the scenario where one branch has wrapped a couple of lines of code in an \textbf{if}-statement, and another branch has changed something in those lines of code. The overall process can be seen in Figure \ref{UeventreeProcess}. 
 
 \begin{figure}
    \centerline{\includegraphics[scale=0.55]{drawings/html/EditedFlattenedMerge.eps}}
@@ -1514,13 +1478,50 @@ $MergeUneven$ is called in case of an unsolvable conflict in Algorithm \ref{Merg
    \label{UeventreeProcess}
 \end{figure}
 
-\paragraph{Flattening} $MergeUneven$ starts by flatting the input lists, in the sense that for any node found in the input lists that contains a sub-statement or a block, we bring these statements into the top level. During the flattening we remember the parent of each node, as can be seen in the left columns of the Flattened-item in the figure. Looking at the flattened list of child and parent elements,  it is obvious that chunks of continuous parent items in any of the three lists is a sub-block.
+\paragraph{Flattening} $MergeUneven$ starts by flattening the input lists, in the sense that for any node found in the input lists that contains a substatement or a block, we bring these statements into the top level. During the flattening we remember the parent of each node, as can be seen in the left columns of the Flattened-item in the figure. Looking at the flattened list of child and parent elements,  it is obvious that chunks of continuous parent items in any of the three lists is a sub-block.
 
 \paragraph{Matching} Afterwards we run $PriorityChunking$ on the child elements of the flattened lists. If some statements have been moved to a subscope for these conflicts, this matches these statements with the ones in the other branches scope. As mentioned above, a continuous sequence of keys in the three branches means a sub-block. The same is the case in this matching: For each branch, we are able to track opening and closing sub-scopes by looking at the change between the last observed parent element, and at the current. This means we can isolate chunks of matches that happen in specific scopes. After isolating these, we can merge the parents, and for each continuous sequence of parent items, we can output a block around them.
 
 
 \paragraph{Runnning time} 
 \todo[inline]{Write me!}
+
+
+\subsubsection{Running time}
+While merging a syntax tree, our worst case scenario is to visit every node in all three input trees one time. For each visit to a node, we will be doing some work, depending on what kind of node it is:
+
+\begin{itemize}
+\item If it is a fixed structural node, each node will run in $O(1)$; excluding the recursive call.
+\item If it is a list-node, each node will perform a unordered matching on the input lists; taking $t_u$ time.
+\item If it is a block-node, each node will perform a ordered matching on the input lists; taking $t_o$ time.
+\end{itemize}
+
+The above running times is excluding the work that the recursive calls will make; only describing what work will be contributed to the running time by each node. If $n$ is the sum of nodes in all three input trees, A, O and B, the overall running time will be:
+
+\begin{equation}
+O(n \cdot \max(t_u, t_o)) \nonumber
+\end{equation}
+
+\paragraph{MergeList} MergeList is dominated by the running time of cost-matching, which is $O(m^2 \log m)$, where $m$ is the biggest of the three input sets. $m$ is smaller than $n$ in our case; any list in the three must be smaller than the size of the tree. We get an overall time for $t_u$ to be $O(m^2 \log m)$.
+
+\paragraph{MergeBlock} MergeBlock is done with PriorityChunk, which has the running time of $O(|O| (|A| + |B|)(t + t'))$ where A, O and B is the input sequences, and $t$ and $t'$ is the running time of equality and similarity; in our case $t$ is $O(n)$ and $t'$ is $O(n^4)$. If we upper bound $|A|$, $|O|$ and $|B|$ as $n$, we get an overall running time of:
+
+\begin{equation}
+O(n (n + n)(n + n^4)) \nonumber
+\end{equation}
+
+Which can be simplified into:
+
+\begin{equation}
+O(n^3 + n^6) \nonumber
+\end{equation}
+
+Note in this expression that $n^3$ is due to the equality-stable chunk, and that $n^6$ is due to similarity-stable chunks; because of this we decide not to throw away $n^3$ because it will later allow us to argue about the overall running time of our algorithm.
+
+\paragraph{MergeNode} The overall running time for MergeNode thus become:
+\begin{equation}
+O(n^4 + n^7) \nonumber
+\end{equation}
 
 
 \subsection{Running time}
@@ -1576,18 +1577,23 @@ A couple of notes about this running time:
 
 \clearpage
 \section{Future work}
+Several questions are left unanswered at the end of this implementation. In this section I will give a brief overview of these.
 
+\paragraph{Evaluation of the output merges} While we abstractly have reasoned about every single part of the solution made, we have only tried to run the algorithm on small toy examples; not on real-life scenarios. A reasonable extension of this project would be to find repositories of C\# code and evaluate how well conflicts are actually handled: if we avoid conflicts in this approach, and how well the merges we produce line up with the code that manual merging has produced in these repositories.
 
+\paragraph{Evaluation of the actual running time} We have provided an analysis that shows the asymptotic upper bound for an entire run of the algorithm in big O notation, and have provided arguments for why the most time consuming parts of the algorithm is only rarely hit. This is reasonable first step, however big O is also a quite forgiving measurement and this analysis by no means provides evidence that the algorithm will perform well in real-life scenarios. Evaluating the actual running time of the algorithm on real-life source code, as well as source code constructed to trigger the most time consuming parts of the algorithm.
 
-\todo[inline]{Things we did not do: \\
-- Evaluate the practical running time of the algorithm \\
-- Evaluate the actual output of the algorithm \\
-- Struktur-matcher og merger \\
-- Renaming \\
-- Comments og preprocesser \\
-- Better three-way matching for reordering? \\
-- Using costs of needlemann-wunchs to create better diffs?
-}
+\paragraph{Better structure matching and merging} The structure matcher that we provide is quite limited; most notably it cannot match members of classes or namespaces if they have been moved to another parent node. Further it only considers the identifiers for the namespaces or classs that are being compared; this give a quite big potential for problems when restructuring the namespace- and class-hierarchies in files.
+
+Line based merging has fewer difficulties in this regard; when restructuring happens in one branch, this branch will only be changing the lines that make up the structure; the rest of the lines are unaffected, and if another branch has made changes within functions, this will be merged perfectly.
+
+\paragraph{Renaming} As noted in Section \ref{TrivialConflict} one possibility of trivial conflicts that we could have looked into could be what happens with variable renaming. 
+
+\paragraph{Whitespace, comments and preprocessing directives} As noted in Section \ref{PreprocessComments} the syntax tree abstracts detail like comments, whitespace and preprocessing directives out. This will not be a problem for the line based merging that we do, however we have not considered this in our structural merge; our returned code will be completely stripped of comments, preprocessing and whitespace. Enabling this would however be essential for this to be practically useful.
+
+\paragraph{Stable reordering} As noted in Section \ref{ThreeWayReorderingAlgorithmSec} the behaviour of our reordering function depends heavily on the result of three-way sequence matching, which unfortunately is a little ambiguous due to our two-way sequence matching algorithm only providing one of the possible results of the input sequences instead of all of them.
+
+\paragraph{Cost-based two-way sequence matching} The abstraction we made over Needlemann-Wunch allowing only a specific cost-scheme based on a boolean function has simplified our matchings considerably. However, Needlemann-Wunch also provide the ability to define costs between items in the input sequences. This might be useful, and lower the running time of our algorithm, if used in the priority-chunking function.
 
 \clearpage
 \section{Conclusion}

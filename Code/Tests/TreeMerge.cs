@@ -67,17 +67,17 @@ namespace Tests
         {
             var right = @"void F()
                         {
-                            G(""N"");
+                            O.G(""N"");
                         }
                         ";
             var bas = @"void F()
                         {
-                            G(""O"");
+                            O.G(""O"");
                         }   
                         ";
             var left = @"void F()
                         {
-                            H(""O"");
+                            O.H(""O"");
                         }
                         ";
             var x = new SyntaxNodeSmartDiff();

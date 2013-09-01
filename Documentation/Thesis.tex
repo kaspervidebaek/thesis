@@ -1613,7 +1613,7 @@ Method call changed in one branch, and parameter changed in the other branch.
 \begin{lstlisting}[language=CSharp]
 void F()
 {
-	H("O");
+	O.G(""N"");
 }
 \end{lstlisting}
 \columnbreak
@@ -1622,8 +1622,8 @@ void F()
 \begin{lstlisting}[language=CSharp]
 void F()
 {
-	G("O");
-}   
+	O.G(""O"");
+}
 \end{lstlisting}
 \columnbreak
 
@@ -1631,7 +1631,7 @@ void F()
 \begin{lstlisting}[language=CSharp]
 void F()
 {
-	G("N");
+	O.H(""O"");
 }
 \end{lstlisting}
 \columnbreak
@@ -1640,7 +1640,7 @@ void F()
 \begin{lstlisting}[language=CSharp]
 F(int a, string b, int i)
 {
-	H("N");
+	O.H("N");
 }
 \end{lstlisting}
 \end{multicols*}

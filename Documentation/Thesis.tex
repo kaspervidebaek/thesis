@@ -1,4 +1,4 @@
-\title{Merging syntax trees}
+\title{Algorithms for merging syntax trees}
 
 \documentclass[11pt]{article}
 \usepackage[utf8]{inputenc}
@@ -16,12 +16,13 @@
 \usepackage{wrapfig}
 \usepackage[noend]{algpseudocode} 
 \usepackage{algorithm}
-
+\usepackage{rotating}
 
 \renewcommand{\algorithmicforall}{\textbf{for each}}
 
 \lstdefinelanguage{CSharp}
 {
+basicstyle=\scriptsize,
 sensitive=true,
 morekeywords=[1]{
 abstract, as, base, break, case,
@@ -73,9 +74,11 @@ morestring=[b]',
 
 \clearpage 
 \section{Introduction}
-In this thesis we will investigate merging algorithms. During a merging process, conflicts will naturally occur if a single part is changed in both branches, into different things. Most widely used merging tools treat code as flat text files, and compare each line of code without considering the structure of the code. 
+This Master’s Thesis has been written in the period from March to September 2013 at the IT University of Copenhagen under supervision of Thore Husfeldt.
 
-The purpose of this project is to investigate if it is practical to create merge tools that break concrete syntax into syntax trees and do tree merging on these instead, and if such syntax-aware merging would reduce the amount of conflict in branch-merging.
+In this thesis we will investigate the topic of automatic merging source code in version control systems. We will investigate the line-based tools in use today, and the conflicts that naturally occur when merging source code with them. We will look into benefit and shortcomings of changing from such a line-based approach into more structure-awareness; specifically we will look into whether structure awareness give better merge results, and if the overhead in running time that such structure awareness brings is worth the effort.
+
+We will present an algorithmic toolbox for merging an matching, and use this framework to create an algorithm that can do three-way merge of C\# code. We will motivate the algorithm theoretically and do a upper bound analysis of the algorithm.
 
 \clearpage 
 \section{Background}
@@ -999,6 +1002,7 @@ The sequence based merging algorithm from Algorithm \ref{Genericmergingalgorithm
 \subsection{Equality and similarity}
 \label{EqSim}
 In this section we define equality and similarity on syntax nodes.
+\todo[inline]{Motivate why these functions are important}
 
 \subsubsection{Equality}
 The equality function defines whether or not two nodes taken from syntax-trees in different branches are equal to each other.
@@ -1391,16 +1395,20 @@ Given these chunks we handle them in three different ways:
 \Function{MergeBlock}{A, O, B}
     \State try  a textual merge of the statements.
     \If{that does not work}
+    	\State $o \gets [\,]$
         \State $chunk \gets $ \Call{PriorityChunk}{A, O, B, equality, similarity}
         \ForAll{chunks}
             \If{chunk is primaryequal}
                 \State \Return $chunk.O$
             \ElsIf{chunk is secondary equal}
-                \State for each line \Return \Call{MergeNode}{A, O, B}
+                \State for each line add \Call{MergeNode}{A, O, B} to $o$
             \ElsIf{either A and O or O and B are equal}
-                \State add the opposite chunk.
+                \State add the opposite chunk to $o$
             \Else
-                \State attempt uneven merging
+                \State add \Call{MergeUneven}{chunk}  to $o$
+                \If{MergeUneven fails}
+                	\State add chunk as conflicting to $o$
+                \EndIf
             \EndIf
         \EndFor
     \EndIf
@@ -1414,35 +1422,39 @@ Given these chunks we handle them in three different ways:
 
 \begin{algorithm}
 \begin{algorithmic}
-\Function{MergeUneven}{A, O, B}
-    \State Flatten the three list. Any statement with a subblock, has the statements in this subblock added to it, keeping parent item mapping
-    \State Prioritydiff the three flattened lists.
-
-    \State Parentitems = [nil, nil, nil]
-    \ForAll{$chunk$ in $chunks$}
-        \If{$chunk$ is stable}
-            \If{lastitem O is null and B and A is not}
-                \State \Return conflict
-			\EndIf
-            \If{any parentitem has changed since last iteration}
-                \If{last parent item as a block block}
-                    \State print "\}"
-                \EndIf
-                \If{a current parent item exists}
-                    \State print(merge(parentitems))
-                    \If{currentparentitems merrits block}
-                    	\State print "\{"
-                    \EndIf
-                \EndIf
-			\EndIf
-            \State print merge(child item)
-
-        \ElsIf{$A$ or $B$ is insertion}
-                \State add A or B, updating their corresponding parentitem,
-                \State and adding starting and ending items, as above
+\Function{MergeUneven}{$A$, $O$, $B$}
+    \State $(a, o, b) \gets $ Flatten the $A$, $O$ and $B$ list.
+    \State $c' \gets$ \Call{PriorityChunk}{$a$, $o$, $b$}
+    \State $l \gets $[null, null, null$]$
+    \State $o \gets [\,]$
+    \ForAll{$c$ in $c'$}
+        \If{$c$ is stable}
+    		\ForAll{$m$ in $c$}
+	            \If{$m_O$ is null and $m_B$ and $m_A$ is not null}
+        	        \State \Return conflict
+				\EndIf
+            	\If{$m_A$, $m_O$ or $m_B$ has changed since last iteration}
+	                \If{relevant $l$-item was a block}
+                	    \State add \texttt{\{} to $o$
+    	            \EndIf
+        	        \If{$m_A$, $m_O$ or $m_B$ is not null}
+            	        \State add \Call{MergeBlockStart}{$P(m_\texttt{relevant item})$} to $o$
+                	    \If{parent of $m_A$, $m_O$ or $m_B$ is a block}
+                    		\State add \texttt{\}} to $o$
+	                    \EndIf
+    	            \EndIf
+				\EndIf
+            	\State add \Call{MergeNode}{$m_A$, $m_O$, $m_B$} to $o$
+            	\State $l \gets [P(m_A), P(m_O), P(m_B)]$
+			\EndFor
+        \ElsIf{$c$ is a stable insertion-chunk}
+        	\ForAll{$m$ in $c_A$ or $c_B$}
+        		\State add braces at the same conditions as above
+	        	\State add $m$ to $o$
+	        	\State $l_\texttt{relevant item} \gets P(m)$
+			\EndFor    	    
         \EndIf
    \EndFor
-
 \EndFunction
 \end{algorithmic}
 \caption{Uneven branch merging algorithm}
@@ -1459,13 +1471,11 @@ Algorithm \ref{MergeUneven} is called in case of an unresolvable unstable chunk 
    \label{UeventreeProcess}
 \end{figure}
 
-\paragraph{Flattening} $MergeUneven$ starts by flattening the input lists, in the sense that for any node found in the input lists that contains a substatement or a block, we bring these statements into the top level. During the flattening we remember the parent of each node, as can be seen in the left columns of the Flattened-item in the figure. Looking at the flattened list of child and parent elements,  it is obvious that chunks of continuous parent items in any of the three lists is a sub-block.
+\paragraph{Flattening} MergeUneven starts by flattening the input lists, in the sense that for any node found in the input lists that contains a substatement or a block, we bring these statements into the top level. During the flattening we remember the parent of each node, as can be seen in the left columns of the Flattened-item in the figure. Looking at the flattened list of child and parent elements,  it is obvious that chunks of continuous parent items in any of the three lists is a sub-block.
 
-\paragraph{Matching} Afterwards we run $PriorityChunking$ on the child elements of the flattened lists. If some statements have been moved to a subscope for these conflicts, this matches these statements with the ones in the other branches scope. As mentioned above, a continuous sequence of keys in the three branches means a sub-block. The same is the case in this matching: For each branch, we are able to track opening and closing sub-scopes by looking at the change between the last observed parent element, and at the current. This means we can isolate chunks of matches that happen in specific scopes. After isolating these, we can merge the parents, and for each continuous sequence of parent items, we can output a block around them.
+\paragraph{Matching} Afterwards we run PriorityChunking on the child elements of the flattened lists. If some statements have been moved to a subscope for these conflicts, this matches these statements with the ones in the other branches scope. As mentioned above, a continuous sequence of keys in the three branches means a sub-block. The same is the case in this matching: For each branch, we are able to track opening and closing sub-scopes by looking at the change between the last observed parent element, and at the current. This means we can isolate chunks of matches that happen in specific scopes. After isolating these, we can merge the parents, and for each continuous sequence of parent items, we can output a block around them.
 
-\paragraph{Runnning time} 
-\todo[inline]{Write me!}
-
+\paragraph{Running time} This algorithm is dominated by PriorityChunking, which runs in $O(n^2(t+t'))$ time. In this case $t$ is equality, running $O(n)$ time and $t'$ is similarity, running $O(n^4)$ time, giving an overall running time of $O(n^3+n^6)$.
 
 \subsubsection{Running time}
 While merging a syntax tree, our worst case scenario is to visit every node in all three input trees one time. For each visit to a node, we will be doing some work, depending on what kind of node it is:
@@ -1484,7 +1494,7 @@ O(n \cdot \max(t_u, t_o)) \nonumber
 
 \paragraph{MergeList} MergeList is dominated by the running time of cost-matching, which is $O(m^2 \log m)$, where $m$ is the biggest of the three input sets. $m$ is smaller than $n$ in our case; any list in the three must be smaller than the size of the tree. We get an overall time for $t_u$ to be $O(m^2 \log m)$.
 
-\paragraph{MergeBlock} MergeBlock is done with PriorityChunk, which has the running time of $O(|O| (|A| + |B|)(t + t'))$ where A, O and B is the input sequences, and $t$ and $t'$ is the running time of equality and similarity; in our case $t$ is $O(n)$ and $t'$ is $O(n^4)$. If we upper bound $|A|$, $|O|$ and $|B|$ as $n$, we get an overall running time of:
+\paragraph{MergeBlock} MergeBlock runs PriorityChunk, which has the running time of $O(|O| (|A| + |B|)(t + t'))$ where A, O and B is the input sequences, and $t$ and $t'$ is the running time of equality and similarity; in our case $t$ is $O(n)$ and $t'$ is $O(n^4)$. If we upper bound $|A|$, $|O|$ and $|B|$ as $n$, we get an overall running time of:
 
 \begin{equation}
 O(n (n + n)(n + n^4)) \nonumber
@@ -1527,7 +1537,7 @@ Reordering(A, O, B) & $O(n^2)$ \\
 
 MergeSequence(A, O, B, eq, ch) & $O(n^2 \cdot t)$  or  $O(n^2 \cdot t +  t')$ \\
 
-Equality(X, Y)  & $O(n)$ \\
+Equality(X, Y) & $O(n)$ \\
 Similar(X, Y) & $O(n^4)$ \\
 
 
@@ -1554,10 +1564,92 @@ A couple of notes about this running time:
 	\item In the running from MergeNode, $O(n^4 + n^7)$, the $n^7$ part only happens when there is no equality in the tree; which hopefully happens only a few times in the entire merge.
 \end{itemize}
 
+\subsection{Merging examples}
+Here we will provide some examples of runs of the implemented merging algorithm for some source written in C\#. 
+
+\begin{sidewaysfigure}
+Reordering parameters and arguments in one branch, while inserting a new in another:
+\begin{multicols*}{4}
+\textbf{A}
+\begin{lstlisting}[language=CSharp]
+void F(string b, int a)
+{
+F('test', 1);
+}
+\end{lstlisting}
+\columnbreak
+
+\textbf{O}
+\begin{lstlisting}[language=CSharp]
+void F(int a, string b)
+{
+F(1, 'test');
+}   
+\end{lstlisting}
+\columnbreak
+
+\textbf{B}
+\begin{lstlisting}[language=CSharp]
+F(int a, string b, int i)
+{
+F(1, 'test', 2);
+}
+\end{lstlisting}
+\columnbreak
+
+\textbf{Result}
+\begin{lstlisting}[language=CSharp]
+F(int a, string b, int i)
+{
+F(1, 'test', 2);
+}
+\end{lstlisting}
+\end{multicols*}
+
+
+Method call changed in one branch, and parameter changed in the other branch.
+\begin{multicols*}{4}
+\textbf{A}
+\begin{lstlisting}[language=CSharp]
+void F()
+{
+	H("O");
+}
+\end{lstlisting}
+\columnbreak
+
+\textbf{O}
+\begin{lstlisting}[language=CSharp]
+void F()
+{
+	G("O");
+}   
+\end{lstlisting}
+\columnbreak
+
+\textbf{B}
+\begin{lstlisting}[language=CSharp]
+void F()
+{
+	G("N");
+}
+\end{lstlisting}
+\columnbreak
+
+\textbf{Result}
+\begin{lstlisting}[language=CSharp]
+F(int a, string b, int i)
+{
+	H("N");
+}
+\end{lstlisting}
+\end{multicols*}
+\end{sidewaysfigure}
+
 
 \clearpage
 \section{Future work}
-Several questions are left unanswered at the end of this implementation. In this section I will give a brief overview of these.
+Several questions are left unanswered at the end of this thesis. In this section I will give a brief overview of these.
 
 \paragraph{Evaluation of the output merges} While we abstractly have reasoned about every single part of the solution made, we have only tried to run the algorithm on small toy examples; not on real-life scenarios. A reasonable extension of this project would be to find repositories of C\# code and evaluate how well conflicts are actually handled: if we avoid conflicts in this approach, and how well the merges we produce line up with the code that manual merging has produced in these repositories.
 
@@ -1567,7 +1659,7 @@ Several questions are left unanswered at the end of this implementation. In this
 
 Line based merging has fewer difficulties in this regard; when restructuring happens in one branch, this branch will only be changing the lines that make up the structure; the rest of the lines are unaffected, and if another branch has made changes within functions, this will be merged perfectly.
 
-\paragraph{Renaming} As noted in Section \ref{TrivialConflict} one possibility of trivial conflicts that we could have looked into could be what happens with variable renaming. 
+\paragraph{Renaming} As noted in Section \ref{TrivialConflict} one scenario of trivial conflicts that we could have looked into could be what happens with variable renaming. 
 
 \paragraph{Whitespace, comments and preprocessing directives} As noted in Section \ref{PreprocessComments} the syntax tree abstracts detail like comments, whitespace and preprocessing directives out. This will not be a problem for the line based merging that we do, however we have not considered this in our structural merge; our returned code will be completely stripped of comments, preprocessing and whitespace. Enabling this would however be essential for this to be practically useful.
 
@@ -1577,6 +1669,29 @@ Line based merging has fewer difficulties in this regard; when restructuring hap
 
 \clearpage
 \section{Conclusion}
+In this thesis we have investigated the topic of automatic merging of source code using structure awareness to resolve conflicts.
+
+We found that automatic conflict-resolution cannot be a goal in itself with a structure aware tool, and defined four specific scenarios where a structure aware tool could be more forgiving with merging than a line-based tool: Reordered class members, reordering parameter lists and argument lists, merging statements where different lines have changed and merging when an identifier has changed. Of these four scenarios, we implemented three of these four scenarios.
+
+We found that generally tree-merging of complete syntax trees is not practical in version control due to time consumption being much higher for tree merging than sequence merging. As a consequence we created an algorithm that relied on tree merging only as a last resort, after trying line-based merging on both entire files and individual methods.
+
+We divided the process of merging syntax trees into two processes: class-merging and method-merging. The merging classes is done by unordered matching of methods; thereby resolving conflicts caused by moving methods around within classes. When doing structured merging of method, we created an algorithm that would investigate match not only if nodes are equal, but also if they are similar enough to be merged; thereby we created an algorithm that allowed us to merge on a much more fine grained level than lines.
+
+While we have substantiated our decisions and analysed the consequences of our choices throughout the thesis, we have yet to run tests of real life code on the algorithm, as such we cannot provide any empirical evidence to how well this algorithm actually performs.
+
+\todo[inline]{Node that we added "one block down" detection}
+
+\todo[inline]{We have found: \\
+- Tree merging is generally not applicable for VCS \\
+- Line-based with fallback is, hwoever. \\
+-- This creates high variance  \\
+- Added Line-based function \\
+- Trivial conflicts in tree-based ; we should not resovle all conflict. \\
+- Created general three-way set-matching algorithm \\
+- Similarity of functions \\
+- Created an overall merging algorithm \\
+- Running time asymptoticly high, but several factors point towards practically applicable\\
+- More investigation is needed.}
 
 \clearpage
 

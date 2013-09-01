@@ -11,30 +11,15 @@ namespace ConsoleApp
     {
         static void Main(string[] args)
         {
-            /*var w = new Tests.DiffTests();
-            w.TestMergeFromDiff3Paper();*/
-
-            var z = new Tests.SmartDiffTests();
-            z.TestExampleTreeMerge();
-
-            Console.ReadLine();
-            return;
+            var x = new Tests.TreeMerge();
             var y = new Tests.ReorderingTests();
-            y.TestDeleteInsert();
+            var z = new Tests.SmartDiffTests();
+            var w = new Tests.DiffTests();
 
-            //var x = new Tests.TreeMerge();
-            //x.TreeChangeInsertIfLikeOnPaper();
-            //x.TreeChangeInsertSimpleBlock();
-            //x.TreeChangeIfMoveOutsideBlock();
-            //x.TreeChangeInsertIfLikeOnPaper();
-#if true
-            //x.TreeChangeIfFromStatementToBlock();
-            //x.TreeChangeIfFromBlockToStatement();
-            //x.TreeChangeInsertIfAsBlock();
-            //x.TreeChangeInsertIfAsStatement();
+            x.TreeChangeSameline();
+            
 
-#endif
-            //x.TreeChangeInsertTwoNewIfStatements();
+
             Console.ReadLine();
             /*
             var x = new List<Tuple<string, int>>

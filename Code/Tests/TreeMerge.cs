@@ -60,6 +60,37 @@ namespace Tests
         //
         #endregion
 
+
+        [TestMethod]
+        [TestCategory("TreeMerge")]
+        public void TreeChangeSameline()
+        {
+            var right = @"void F()
+                        {
+                            G(""N"");
+                        }
+                        ";
+            var bas = @"void F()
+                        {
+                            G(""O"");
+                        }   
+                        ";
+            var left = @"void F()
+                        {
+                            H(""O"");
+                        }
+                        ";
+            var x = new SyntaxNodeSmartDiff();
+
+            var lTree = x.SyntaxFromLines(left);
+            var bTree = x.SyntaxFromLines(bas);
+            var rTree = x.SyntaxFromLines(right);
+
+            var merge = x.MergeNode(lTree, bTree, rTree);
+
+            Console.WriteLine(merge);
+        }
+
         [TestMethod]
         [TestCategory("TreeMerge")]
         public void TreeChangeTwoToSame()
@@ -119,6 +150,7 @@ namespace Tests
 
             var merge = x.MergeNode(lTree, bTree, rTree);
             Console.WriteLine(merge);
+            Console.ReadLine();
         }
 
 
@@ -139,7 +171,7 @@ namespace Tests
                         ".Replace('\'', '"'); ;
             var left = @"static void TreeChangeTwoToSame(int a, string b, int newInt)
                         {
-                            TreeChangeTwoToSame(1);
+                            TreeChangeTwoToSame(1, 'test', 2);
                         }
                         ".Replace('\'', '"'); ;
             var x = new SyntaxNodeSmartDiff();

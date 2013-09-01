@@ -925,8 +925,6 @@ namespace SyntaxDiff
             }
             else
             {
-
-                throw new NotImplementedException();
                 int cost = 4;
 
                 if (getIdentifier(x) == getIdentifier(y))

@@ -96,6 +96,8 @@ In this thesis we will investigate the topic of automatic merging source code in
 
 We will present a series of algorithms for merging and matching in general, and use these to create an algorithm that can do three-way merge of C\# code. We will motivate the algorithm theoretically and do an upper bound analysis of the algorithm.
 
+\paragraph{Source code} The source code for the implementation found in this thesis can be found at \url{https://github.com/kaspervidebaek/thesis}
+
 \clearpage 
 \section{Background}
 In this section we give a background for the problem statement of this thesis. We briefly describe version control systems, the concept of automatic merging and programming language concepts which all contribute to understanding the problem we investigate.
@@ -1454,7 +1456,7 @@ Given these chunks we handle them in three different ways:
                 	    \State add \texttt{\{} to $o$
     	            \EndIf
         	        \If{$m_A$, $m_O$ or $m_B$ is not null}
-            	        \State add \Call{MergeBlockStart}{$P(m_\texttt{relevant item})$} to $o$
+            	        \State add \Call{MergeNode}{condition of $P(m)$} to $o$
                 	    \If{parent of $m_A$, $m_O$ or $m_B$ is a block}
                     		\State add \texttt{\}} to $o$
 	                    \EndIf
@@ -1471,6 +1473,7 @@ Given these chunks we handle them in three different ways:
 			\EndFor    	    
         \EndIf
    \EndFor
+   \State \Return $o$
 \EndFunction
 \end{algorithmic}
 \caption{Uneven branch merging algorithm}

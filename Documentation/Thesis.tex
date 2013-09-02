@@ -246,7 +246,7 @@ Automatic merging can never actually give us any guarantees. Proving if any prog
 One commonly used tool for merging is \texttt{diff3}. \citet{Khanna} investigated the algorithm of this tool, by regarding a file as a sequence where each line is an item in the sequence. They set up a number of expectations of what one expects from a merge, and showed that many of these assumptions do not hold: conflicts can happen even when only unrelated regions are changed, differencing after a merge does not produce empty output, merging fails when both branches are different from the ancestor and so forth. Even though this is the case, \texttt{diff3} continues to be widely used with few complaints of it shortcomings --- it seems that the situations where \texttt{diff3} breaks are uncommon in practice.
 
 Common algorithms for merging are state based. They compare the final state of branches, and create a series of operations that transform a document from one state into another. \citet{Lippe} described a different approach, where editing tools remember the operations used to transform the data, and where the merge process is a matter of applying the transformations from both branches in the right order to minimize the number of conflicts.
-
+\clearpage
 \subsection{Programming languages}
 In this section we look into the process a program goes through up until execution. Further, we give an overview of the consequences this process has for regenerating concrete syntax.
 
@@ -439,7 +439,7 @@ So what do we do? If we can match nodes in the syntax tree of the branches when 
 \item If a identifier has been renamed in one branch, while somebody has added a new reference to it, in the opposite branch, this generate merge that gives an compile error.
 \end{itemize}
 
-It might be possible to detect a rename of an identifier and apply it to the trees of the other branches before doing an actual merge, and thereby avoid conflicts.
+It might be possible to detect a rename of an identifier and apply it to the other branches before doing an actual, merge to avoid conflicts.
 
 \subsection{Handling syntax trees}
 \paragraph{Tree matching algorithms} Using regular tree matching algorithms on entire syntax trees takes cubic time of the number of nodes in the trees. Further, the number of nodes generated from a line of code can be high. A test on a tree generated from C\# files gave matching times of up to two minutes. This test was run on a relatively complex, but not unheard of 700-line C\# file, which gave a syntax tree with around 3800 nodes. This problem however, becomes a lot smaller if we only use it on method bodies - then it might be a viable option.
@@ -452,7 +452,7 @@ However, operations on trees can also be moves; nodes can be moved up or down in
 
 We abandoned the general tree matching approach, and created a matching algorithm that worked entirely on the same levels of the two input trees: Move operations are not detected up and down in the tree. This removes the above challenge. After creating such a matching, we can do a top-down recursion and create a \textit{matching tree}; a tree where each leaf is a matching between the three trees. 
 
-The next step is to chunk these trees. Chunking is the part of the matching algorithms that divide them into stable and unstable parts, to identify updates. This definition becomes mindbogling in the matching tree generated, and we wound up abandoning the general tree-matching approach altogether.
+The next step is to chunk these trees. Chunking is the part of the matching algorithms that divide them into stable and unstable parts, to identify updates. This definition becomes mindbogling in the matching tree generated, and we wound up abandoning the general tree-matching approach.
  
 \paragraph{Semantic vs. non-semantic tree-merging} A syntax-tree has a built-in semantic, that cannot be broken. Each node has some specific children with a specific type and purpose. A syntax tree can also be viewed as a tree with generic nodes with arbitrary arity. The later option is the option that allow us to run general tree-merging algorithms on the syntax trees.
 
@@ -583,11 +583,11 @@ Each column in a matching keeps the order of the input sequences, and the intuit
   \label{CunkingAlgorithm}
 \end{algorithm}
 
-\begin{wrapfigure}{r}{0.5\textwidth}
-   \centerline{\includegraphics[scale=0.4]{drawings/eps/threewaymatching-chunking.eps}}
+\begin{figure}
+   \centerline{\includegraphics[scale=0.6]{drawings/eps/threewaymatching-chunking.eps}}
    \caption{Chunking a matching. Grey areas are unstable chunks and white areas are stable.}
    \label{Chunking}
-\end{wrapfigure}
+\end{figure}
 
 Given a three-way sequence matching, a single match can be defined as \textit{stable} or \textit{unstable}; if a matching has been found in all input sequences $A$, $O$ and $B$ it is stable. Otherwise it is unstable. This notion is quite useful for performing a merge; it is reasonable to assume that a stable match, does not need to be merged.
 
@@ -1693,7 +1693,7 @@ Line based merging has fewer difficulties in this regard; when restructuring hap
 \section{Conclusion}
 In this thesis we have investigated the topic of automatic merging of source code using structure awareness to resolve conflicts.
 
-We found that automatic conflict-resolution cannot be a goal in itself with a structure aware tool, and defined four specific scenarios where a structure aware tool could be more forgiving with merging than a line-based tool: Reordered class members, reordering parameter lists and argument lists, merging statements where different lines have changed and merging when an identifier has changed. Of these four scenarios, we implemented three of these four scenarios.
+We found that automatic conflict-resolution cannot be a goal in itself with a structure aware tool, and defined four specific scenarios where a structure aware tool could be more forgiving with merging than a line-based tool: Reordered class members, reordering parameter lists and argument lists, merging statements where different lines have changed and merging when an identifier has changed. We implemented three of these four scenarios.
 
 We found that generally tree-merging of complete syntax trees is not practical in version control due to time consumption being much higher for tree merging than sequence merging. As a consequence we created an algorithm that relied on tree merging only as a last resort, after trying line-based merging on both entire files and individual methods.
 
